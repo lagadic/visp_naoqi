@@ -63,10 +63,12 @@ void vpNaoqiGrabber::open()
   if (! m_isOpen) {
     // Create a proxy to ALVideoDevice on the robot
     m_camProxy = new AL::ALVideoDeviceProxy(m_robotIp, m_robotPort);
-
     // Subscribe a client image requiring 320*240 and BGR colorspace
-    std::string subscriberID = "subscriberID";
-    m_clientName = m_camProxy->subscribe(subscriberID, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+    m_clientName = "subscriberID";
+    m_camProxy->unsubscribeAllInstances(m_clientName);
+    m_clientName = m_camProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+    //std::cout << m_clientName << std::endl;
+
 
     // Select the camera left(0) or right(1)
     m_camProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, 0);
@@ -83,9 +85,9 @@ void vpNaoqiGrabber::open()
      * 5 = time stamp (micro seconds)
      * 6 = image buffer (size of width * height * number of layers)
      */
-    AL::ALValue img = m_camProxy->getImageRemote(m_clientName);
-    m_width  = (int) img[0];
-    m_height = (int) img[1];
+    m_img = m_camProxy->getImageRemote(m_clientName);
+    m_width  = (int) m_img[0];
+    m_height = (int) m_img[1];
     m_camProxy->releaseImage(m_clientName);
 
     m_isOpen = true;
@@ -96,17 +98,28 @@ void vpNaoqiGrabber::cleanup()
 {
   if (m_camProxy != NULL) {
     m_camProxy->unsubscribe(m_clientName);
+    //m_camProxy->unsubscribeAllInstances(m_clientName);
     delete m_camProxy;
   }
   m_isOpen = false;
 }
 
+/*!
+
+  The image is copied.
+
+ */
 void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I)
 {
   struct timeval timestamp;
   acquire(I, timestamp);
 }
 
+/*!
+
+  The image is copied.
+
+ */
 void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestamp)
 {
   if (! m_isOpen)
@@ -123,17 +136,17 @@ void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestam
    * 5 = time stamp (micro seconds)
    * 6 = image buffer (size of width * height * number of layers)
    */
-  AL::ALValue img = m_camProxy->getImageRemote(m_clientName);
+  m_img = m_camProxy->getImageRemote(m_clientName);
 
-  m_width  = (int) img[0];
-  m_height = (int) img[1];
-  double tv_sec  = (double)img[4];
-  double tv_usec = (double)img[5];
+  m_width  = (int) m_img[0];
+  m_height = (int) m_img[1];
+  double tv_sec  = (double)m_img[4];
+  double tv_usec = (double)m_img[5];
   timestamp.tv_sec  = (unsigned long) tv_sec;
   timestamp.tv_usec = (unsigned long) tv_usec;
 
   // Access the image buffer (6th field) and assign it to the ViSP image container
-  unsigned char *img_buffer = (unsigned char *) img[6].GetBinary();
+  unsigned char *img_buffer = (unsigned char *) m_img[6].GetBinary();
 
   // Tells to ALVideoDevice that it can give back the image buffer to the
   // driver. Optional after a getImageRemote but MANDATORY after a getImageLocal.
@@ -143,6 +156,13 @@ void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestam
   vpImageConvert::BGRToGrey(img_buffer, (unsigned char *)I.bitmap, m_width, m_height);
 }
 
+/*!
+
+  The image is not copied. Here we just update to pointer to the NaoQi image.
+
+  \warning Should be improved to detect the type cv::CV_8UC3, cv::CV_8UC1
+ */
+
 void vpNaoqiGrabber::acquire(cv::Mat &I)
 {
   struct timeval timestamp;
@@ -150,6 +170,9 @@ void vpNaoqiGrabber::acquire(cv::Mat &I)
 }
 
 /*!
+
+  The image is not copied. Here we just update to pointer to the NaoQi image.
+
   \warning Should be improved to detect the type cv::CV_8UC3, cv::CV_8UC1
  */
 void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
@@ -168,12 +191,12 @@ void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
    * 5 = time stamp (micro seconds)
    * 6 = image buffer (size of width * height * number of layers)
    */
-  AL::ALValue img = m_camProxy->getImageRemote(m_clientName);
+  m_img = m_camProxy->getImageRemote(m_clientName);
 
-  m_width  = (int) img[0];
-  m_height = (int) img[1];
-  double tv_sec  = (double)img[4];
-  double tv_usec = (double)img[5];
+  m_width  = (int) m_img[0];
+  m_height = (int) m_img[1];
+  double tv_sec  = (double)m_img[4];
+  double tv_usec = (double)m_img[5];
   timestamp.tv_sec  = (unsigned long) tv_sec;
   timestamp.tv_usec = (unsigned long) tv_usec;
 
@@ -185,16 +208,12 @@ void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
   //  }
 
   // Access the image buffer (6th field) and assign it to the opencv image container
-  I.data = (unsigned char*) img[6].GetBinary();
+  I.data = (unsigned char*) m_img[6].GetBinary();
 
-  // Tells to ALVideoDevice that it can give back the image buffer to the
-  // driver. Optional after a getImageRemote but MANDATORY after a getImageLocal.
-  //m_camProxy->releaseImage(m_clientName);
-}
+  //cv::imshow("images", I);
 
-void vpNaoqiGrabber::release()
-{
   // Tells to ALVideoDevice that it can give back the image buffer to the
   // driver. Optional after a getImageRemote but MANDATORY after a getImageLocal.
   m_camProxy->releaseImage(m_clientName);
 }
+

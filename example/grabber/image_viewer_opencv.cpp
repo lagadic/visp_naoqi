@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
     // Create an OpenCV window to display the images
     cv::namedWindow("images");
 
+
+
     // Main loop. Exit when pressing ESC
     while ((char) cv::waitKey(30) != 27) {
 
@@ -67,7 +69,6 @@ int main(int argc, char* argv[])
 
       // Display the image on screen
       cv::imshow("images", I);
-      g.release();
 
       std::cout << "Loop time: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
     }

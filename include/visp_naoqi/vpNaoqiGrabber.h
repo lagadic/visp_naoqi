@@ -89,8 +89,6 @@ public:
     m_fps = fps;
   }
 
-  void release();
-
 protected:
   AL::ALVideoDeviceProxy *m_camProxy;
   std::string m_robotIp;
@@ -100,6 +98,7 @@ protected:
   bool m_isOpen;
   int m_width;
   int m_height;
+  AL::ALValue m_img;
 };
 
 #endif
