@@ -232,16 +232,54 @@ void vpNaoqiRobot::setAngles(const AL::ALValue& names, const AL::ALValue& angles
   m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
 }
 
+vpHomogeneousMatrix vpNaoqiRobot::getTransfEndEffector(const std::string &endEffectorName)
+{
 
-vpMatrix vpNaoqiRobot::getJacobian(const std::string &endEffectorName)
+   vpHomogeneousMatrix cMe;
+
+   // Transformation matrix from HeadRoll to CameraLeft
+  if (endEffectorName == "CameraLeft")
+  {
+    cMe[0][0] = -1.;
+    cMe[1][0] = 0.;
+    cMe[2][0] =  0.;
+
+    cMe[0][1] = 0.;
+    cMe[1][1] = -1.;
+    cMe[2][1] =  0.;
+
+    cMe[0][2] = 0.;
+    cMe[1][2] = 0.;
+    cMe[2][2] =  1.;
+
+    cMe[0][3] = 0.04;
+    cMe[1][3] = 0.09938;
+    cMe[2][3] =  0.11999;
+
+
+
+  }
+
+  else
+  {
+
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Transformation matrix that you requested is not implemented. Valid values: CameraLeft.");
+  }
+ return cMe;
+
+}
+
+
+vpMatrix vpNaoqiRobot::getJacobian(const std::string &lastJointName)
 {
 
   vpMatrix eJe;
 
-  if (endEffectorName == "Head")
+  if (lastJointName == "Head")
   {
 
-    std::vector<float> q = m_motionProxy->getAngles(endEffectorName,true);
+    std::vector<float> q = m_motionProxy->getAngles(lastJointName,true);
 
     //std::cout << "Joint value:" << q << std::endl;
 
@@ -279,18 +317,22 @@ vpMatrix vpNaoqiRobot::getJacobian(const std::string &endEffectorName)
     eJe[4][3]= 0;
     eJe[5][3]= 1;
   }
-  else if (endEffectorName == "RArm")
+  else if (lastJointName == "RArm")
   {
-    std::cout << "Jacobian RArm not avaible yet' "<< std::endl;
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Jacobian RArm not avaible yet");
   }
 
-  else if (endEffectorName == "LArm")
+  else if (lastJointName == "LArm")
   {
-    std::cout << "Jacobian LArm not avaible yet' "<< std::endl;
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Jacobian LArm not avaible yet");
   }
   else
   {
-    std::cout << "End-effector name not recognized. Please choose one above 'Head', 'Larm' or 'Rarm' "<< std::endl;
+
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "End-effector name not recognized. Please choose one above 'Head', 'Larm' or 'Rarm' ");
 
   }
 return eJe;

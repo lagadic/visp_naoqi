@@ -48,6 +48,7 @@
 #include <alproxies/almotionproxy.h>
 #include <alerror/alerror.h>
 #include <visp/vpMatrix.h>
+#include <visp/vpHomogeneousMatrix.h>
 
 
 
@@ -114,15 +115,26 @@ public:
    */
   void setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed);
 
-  /*!
-    Get the Jacobian specifying and end effector name
 
-    \param endEffectorName : Name of the end effector. Allowed values are "Head",
+  /*!
+    Get the Transformation matrix to the end-effectors
+
+    \param endEffectorName : Name of the end effector. Allowed values are "CameraLeft",
+    "CameraRight" for the fixed camera on the head, "RHand" and "LHand" for end-effector on the arms.
+
+    \return The transformation matrix to the end-effectors (computed from the last joint of the chain ending with the end-effector. )
+   */
+  vpHomogeneousMatrix getTransfEndEffector(const std::string &endEffectorName);
+
+  /*!
+    Get the Jacobian specifying the last joint
+
+    \param endEffectorName : Name of the last joint. Allowed values are "Head",
     "LArm" for left arm and "RArm" for right arm.
 
     \return The actual jacobian.
    */
- vpMatrix getJacobian(const std::string &endEffectorName);
+ vpMatrix getJacobian(const std::string &lastJointName);
 
 protected:
   AL::ALMotionProxy *m_motionProxy;
