@@ -128,6 +128,13 @@ int main(int argc, char* argv[])
     }
 
 
+   {
+      //Get the actual Jacobian of the Head
+      vpMatrix eJe = robot.getJacobian("Head");
+      std::cout << "Jacobian of the Head: "<< std::endl << eJe << std::endl;
+
+    }
+
 
     std::cout << "The end" << std::endl;
   }

@@ -47,6 +47,7 @@
 // Aldebaran includes
 #include <alproxies/almotionproxy.h>
 #include <alerror/alerror.h>
+#include <visp/vpMatrix.h>
 
 
 
@@ -112,6 +113,16 @@ public:
 
    */
   void setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed);
+
+  /*!
+    Get the Jacobian specifying and end effector name
+
+    \param endEffectorName : Name of the end effector. Allowed values are "Head",
+    "LArm" for left arm and "RArm" for right arm.
+
+    \return The actual jacobian.
+   */
+ vpMatrix getJacobian(const std::string &endEffectorName);
 
 protected:
   AL::ALMotionProxy *m_motionProxy;

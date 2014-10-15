@@ -222,12 +222,77 @@ std::vector<std::string> vpNaoqiRobot::getJointNames(const std::string &chainNam
 
 std::vector<float> vpNaoqiRobot::getAngles(const AL::ALValue& names, const bool& useSensors)
 {
-  std::vector<float> commandAngles = m_motionProxy->getAngles(names, useSensors);
-  return commandAngles;
+  std::vector<float> sensorAngles = m_motionProxy->getAngles(names, useSensors);
+  return sensorAngles;
 }
 
 
 void vpNaoqiRobot::setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed)
 {
   m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
+}
+
+
+vpMatrix vpNaoqiRobot::getJacobian(const std::string &endEffectorName)
+{
+
+  vpMatrix eJe;
+
+  if (endEffectorName == "Head")
+  {
+
+    std::vector<float> q = m_motionProxy->getAngles(endEffectorName,true);
+
+    //std::cout << "Joint value:" << q << std::endl;
+
+    const unsigned int nJoints= q.size();
+
+    eJe.resize(6,nJoints);
+
+    double d3 = 0.09511;
+
+    eJe[0][0]= d3*cos(q[4])*sin(q[2]);
+    eJe[1][0]= -d3*sin(q[2])*sin(q[4]);
+    eJe[2][0]= 0;
+    eJe[3][0]= cos(q[2] + q[3])*sin(q[4]);
+    eJe[4][0]= cos(q[2] + q[3])*cos(q[4]);
+    eJe[5][0]=  -sin(q[2] + q[3]);
+
+    eJe[0][1]= d3*sin(q[3])*sin(q[4]);
+    eJe[1][1]= d3*cos(q[4])*sin(q[3]);
+    eJe[2][1]= d3*cos(q[3]);
+    eJe[3][1]=  cos(q[4]);
+    eJe[4][1]= -sin(q[4]);
+    eJe[5][1]= 0;
+
+    eJe[0][2]= 0;
+    eJe[1][2]= 0;
+    eJe[2][2]= 0;
+    eJe[3][2]= cos(q[4]);
+    eJe[4][2]= -sin(q[4]);
+    eJe[5][2]= 0;
+
+    eJe[0][3]= 0;
+    eJe[1][3]= 0;
+    eJe[2][3]= 0;
+    eJe[3][3]= 0;
+    eJe[4][3]= 0;
+    eJe[5][3]= 1;
+  }
+  else if (endEffectorName == "RArm")
+  {
+    std::cout << "Jacobian RArm not avaible yet' "<< std::endl;
+  }
+
+  else if (endEffectorName == "LArm")
+  {
+    std::cout << "Jacobian LArm not avaible yet' "<< std::endl;
+  }
+  else
+  {
+    std::cout << "End-effector name not recognized. Please choose one above 'Head', 'Larm' or 'Rarm' "<< std::endl;
+
+  }
+return eJe;
+
 }
