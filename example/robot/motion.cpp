@@ -75,6 +75,8 @@ int main(int argc, char* argv[])
 
       robot.stop(jointNames);
     }
+
+
     {
       // Test with a chain of joints
       std::string chain = "Head";
@@ -93,6 +95,16 @@ int main(int argc, char* argv[])
       }
 
       robot.stop(chain);
+
+    }
+
+
+    {
+      // Get the position of the joints
+      std::string names = "Body";
+      bool useSensors   = true;
+      std::vector<float> commandAngles = robot.getAngles(names, useSensors);
+      std::cout << "Sensor angles: " << std::endl << commandAngles << std::endl;
 
     }
 

@@ -67,7 +67,7 @@ public:
   void setCollisionProtection(bool protection)
   {
     m_collisionProtection = protection;
-  };
+  }
 
   void setRobotIp(const std::string &robotIp)
   {
@@ -82,6 +82,8 @@ public:
 
   void stop(const std::vector<std::string> &jointNames);
   void stop(const std::string &chainName);
+
+  std::vector<float> getAngles(const AL::ALValue& names, const bool& useSensors);
 
 protected:
   AL::ALMotionProxy *m_motionProxy;

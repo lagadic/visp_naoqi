@@ -220,3 +220,8 @@ std::vector<std::string> vpNaoqiRobot::getJointNames(const std::string &chainNam
   return jointNames;
 }
 
+std::vector<float> vpNaoqiRobot::getAngles(const AL::ALValue& names, const bool& useSensors)
+{
+  std::vector<float> commandAngles = m_motionProxy->getAngles(names, useSensors);
+  return commandAngles;
+}
