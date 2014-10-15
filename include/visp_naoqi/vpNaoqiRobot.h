@@ -60,9 +60,6 @@ public:
   vpNaoqiRobot();
   virtual ~vpNaoqiRobot();
   void cleanup();
-
-  std::vector<std::string> getJointNames(const std::string &chainName);
-
   void open();
   void setCollisionProtection(bool protection)
   {
@@ -74,6 +71,16 @@ public:
     m_robotIp = robotIp;
   }
 
+  /*!
+    Get the name of all the joints of the chain.
+
+    \param chainName : Name of the chain. Allowed values are "Head",
+    "LArm" for left arm and "RArm" for right arm.
+
+    \return The name of the joints.
+   */
+  std::vector<std::string> getJointNames(const std::string &chainName);
+
   void setStiffness(const std::vector<std::string> &jointNames, float stiffness);
   void setStiffness(const std::string &chainName, float stiffness);
 
@@ -83,7 +90,27 @@ public:
   void stop(const std::vector<std::string> &jointNames);
   void stop(const std::string &chainName);
 
+
+
+  /*!
+    Get the angles of all the joints of the chain.
+
+    \param names :  Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+    \param useSensors :  If true, sensor angles will be returned.
+
+    \return 	Joint angles in radians.
+   */
   std::vector<float> getAngles(const AL::ALValue& names, const bool& useSensors);
+
+
+  /*!
+    Get the angles of all the joints of the chain.
+
+    \param names :  Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+    \param angles :  One or more angles in radians.
+    \param fractionMaxSpeed :  The fraction of maximum speed to use.
+
+   */
   void setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed);
 
 protected:

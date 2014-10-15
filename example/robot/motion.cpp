@@ -120,8 +120,6 @@ int main(int argc, char* argv[])
        for (unsigned int i=0; i < jointPos.size(); i++)
        jointPos[i] = vpMath::rad(0);
 
-
-
        float fractionMaxSpeed  = 0.1f;
        robot.setStiffness(jointNames, 1.f);
        qi::os::sleep(1.0f);
