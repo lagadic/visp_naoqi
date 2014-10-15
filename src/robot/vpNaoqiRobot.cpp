@@ -225,3 +225,9 @@ std::vector<float> vpNaoqiRobot::getAngles(const AL::ALValue& names, const bool&
   std::vector<float> commandAngles = m_motionProxy->getAngles(names, useSensors);
   return commandAngles;
 }
+
+
+void vpNaoqiRobot::setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed)
+{
+  m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
+}

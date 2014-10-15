@@ -108,6 +108,29 @@ int main(int argc, char* argv[])
 
     }
 
+
+
+    {
+      // Example showing how to set angles, using a fraction of max speed
+       std::vector<std::string> jointNames;
+       jointNames.push_back("NeckYaw");
+       jointNames.push_back("NeckPitch");
+
+       std::vector<float> jointPos( jointNames.size() );
+       for (unsigned int i=0; i < jointPos.size(); i++)
+       jointPos[i] = vpMath::rad(0);
+
+
+
+       float fractionMaxSpeed  = 0.1f;
+       robot.setStiffness(jointNames, 1.f);
+       qi::os::sleep(1.0f);
+       robot.setAngles(jointNames, jointPos, fractionMaxSpeed);
+
+    }
+
+
+
     std::cout << "The end" << std::endl;
   }
   catch (const vpException &e)

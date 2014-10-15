@@ -84,6 +84,7 @@ public:
   void stop(const std::string &chainName);
 
   std::vector<float> getAngles(const AL::ALValue& names, const bool& useSensors);
+  void setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed);
 
 protected:
   AL::ALMotionProxy *m_motionProxy;
