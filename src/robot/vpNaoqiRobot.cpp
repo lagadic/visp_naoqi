@@ -325,8 +325,81 @@ vpMatrix vpNaoqiRobot::getJacobian(const std::string &lastJointName)
 
   else if (lastJointName == "LArm")
   {
-    throw vpRobotException (vpRobotException::readingParametersError,
-                            "Jacobian LArm not avaible yet");
+
+    std::vector<float> q = m_motionProxy->getAngles(lastJointName,true);
+
+    std::cout << "Joint value:" << q << std::endl;
+
+    const unsigned int nJoints = q.size()-1; // -1 because we don't consider the last joint LHand
+
+    float q10, q11, q12, q13, q14, q15;
+
+    q10 = q[1]; //LShoulderYaw
+    q11 = q[2]; //LElbowRoll
+    q12 = q[3]; //LElbowYaw
+    q13 = q[4]; //LWristRoll
+    q14 = q[5]; //LWristYaw
+    q15 = q[6]; //LWristPitch
+
+
+    float g9 = 2.7053 ;
+    float b9 = 0.0279;
+    float alpha9 = 1.729254202933720;
+    float d9 =  0.0758;
+    float phi9 = 3.068152048225621;
+    float phi10 = 0.430457;
+    float phi11 = 0.17452;
+    float r9 = 0.1765;
+    float r11 =  0.205;
+    float r13 =  0.1823;
+
+    eJe.resize(6,nJoints);
+
+    eJe[0][0]=r13*sin(phi11 + q11)*sin(phi10)*sin(q10)*sin(q13)*sin(q15) - r13*cos(phi10)*cos(q13)*sin(q10)*sin(q12)*sin(q15) - r13*cos(q10)*cos(q13)*sin(phi10)*sin(q12)*sin(q15) + r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*sin(q15) - r11*cos(phi11 + q11)*cos(q13)*sin(phi10)*sin(q10)*sin(q15) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*sin(q13)*sin(q15) + r13*cos(phi10)*cos(q15)*sin(q10)*sin(q12)*sin(q13)*sin(q14) + r13*cos(q10)*cos(q15)*sin(phi10)*sin(q12)*sin(q13)*sin(q14) + r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*sin(q15) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q14)*cos(q15)*sin(q12) - r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q15)*sin(q13)*sin(q14) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*cos(q15)*sin(q14) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*sin(q13)*sin(q15) - r13*cos(phi11 + q11)*cos(q12)*cos(q13)*sin(phi10)*sin(q10)*sin(q15) + r11*sin(phi11 + q11)*cos(q14)*cos(q15)*sin(phi10)*sin(q10)*sin(q12) + r11*cos(phi11 + q11)*cos(q15)*sin(phi10)*sin(q10)*sin(q13)*sin(q14) + r13*sin(phi11 + q11)*cos(q13)*cos(q15)*sin(phi10)*sin(q10)*sin(q14) + r11*sin(phi11 + q11)*cos(q12)*sin(phi10)*sin(q10)*sin(q13)*sin(q15) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*cos(q15)*sin(q14) - r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q15)*sin(q13)*sin(q14) + r11*sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(phi10)*sin(q10)*sin(q14) + r13*cos(phi11 + q11)*cos(q12)*cos(q15)*sin(phi10)*sin(q10)*sin(q13)*sin(q14);
+    eJe[0][1]=r11*sin(phi11 + q11)*cos(q13)*sin(q15) + r13*cos(phi11 + q11)*sin(q13)*sin(q15) + r11*cos(phi11 + q11)*cos(q14)*cos(q15)*sin(q12) + r13*cos(phi11 + q11)*cos(q13)*cos(q15)*sin(q14) + r11*cos(phi11 + q11)*cos(q12)*sin(q13)*sin(q15) + r13*sin(phi11 + q11)*cos(q12)*cos(q13)*sin(q15) - r11*sin(phi11 + q11)*cos(q15)*sin(q13)*sin(q14) + r11*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(q14) - r13*sin(phi11 + q11)*cos(q12)*cos(q15)*sin(q13)*sin(q14);
+    eJe[0][2]=-r13*sin(q12)*(cos(q13)*sin(q15) - cos(q15)*sin(q13)*sin(q14));
+    eJe[0][3]=r13*sin(q13)*sin(q15) + r13*cos(q13)*cos(q15)*sin(q14);
+    eJe[0][4]=0;
+    eJe[0][5]=0;
+    eJe[0][6]=0;
+    eJe[1][0]=r13*sin(phi11 + q11)*cos(q15)*sin(phi10)*sin(q10)*sin(q13) - r13*cos(phi10)*cos(q13)*cos(q15)*sin(q10)*sin(q12) - r13*cos(q10)*cos(q13)*cos(q15)*sin(phi10)*sin(q12) + r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*cos(q15) - r11*cos(phi11 + q11)*cos(q13)*cos(q15)*sin(phi10)*sin(q10) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q15)*sin(q13) - r13*cos(phi10)*sin(q10)*sin(q12)*sin(q13)*sin(q14)*sin(q15) - r13*cos(q10)*sin(phi10)*sin(q12)*sin(q13)*sin(q14)*sin(q15) + r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*cos(q15) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q15)*sin(q13) - r13*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(phi10)*sin(q10) + r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q14)*sin(q12)*sin(q15) + r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*sin(q13)*sin(q14)*sin(q15) + r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*sin(q14)*sin(q15) + r11*sin(phi11 + q11)*cos(q12)*cos(q15)*sin(phi10)*sin(q10)*sin(q13) - r11*sin(phi11 + q11)*cos(q14)*sin(phi10)*sin(q10)*sin(q12)*sin(q15) - r11*cos(phi11 + q11)*sin(phi10)*sin(q10)*sin(q13)*sin(q14)*sin(q15) - r13*sin(phi11 + q11)*cos(q13)*sin(phi10)*sin(q10)*sin(q14)*sin(q15) + r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*sin(q14)*sin(q15) + r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*sin(q13)*sin(q14)*sin(q15) - r11*sin(phi11 + q11)*cos(q12)*cos(q13)*sin(phi10)*sin(q10)*sin(q14)*sin(q15) - r13*cos(phi11 + q11)*cos(q12)*sin(phi10)*sin(q10)*sin(q13)*sin(q14)*sin(q15);
+    eJe[1][1]=r11*sin(phi11 + q11)*cos(q13)*cos(q15) + r13*cos(phi11 + q11)*cos(q15)*sin(q13) + r11*cos(phi11 + q11)*cos(q12)*cos(q15)*sin(q13) + r13*sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q15) - r11*cos(phi11 + q11)*cos(q14)*sin(q12)*sin(q15) - r13*cos(phi11 + q11)*cos(q13)*sin(q14)*sin(q15) + r11*sin(phi11 + q11)*sin(q13)*sin(q14)*sin(q15) + r13*sin(phi11 + q11)*cos(q12)*sin(q13)*sin(q14)*sin(q15) - r11*cos(phi11 + q11)*cos(q12)*cos(q13)*sin(q14)*sin(q15);
+    eJe[1][2]=-r13*sin(q12)*(cos(q13)*cos(q15) + sin(q13)*sin(q14)*sin(q15));
+    eJe[1][3]=r13*cos(q15)*sin(q13) - r13*cos(q13)*sin(q14)*sin(q15);
+    eJe[1][4]=0;
+    eJe[1][5]=0;
+    eJe[1][6]=0;
+    eJe[2][0]=r13*cos(phi10)*cos(q14)*sin(q10)*sin(q12)*sin(q13) - r11*sin(phi11 + q11)*sin(phi10)*sin(q10)*sin(q12)*sin(q14) + r13*cos(q10)*cos(q14)*sin(phi10)*sin(q12)*sin(q13) - r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q14)*sin(q13) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*cos(q14) + r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*sin(q12)*sin(q14) + r11*cos(phi11 + q11)*cos(q14)*sin(phi10)*sin(q10)*sin(q13) + r13*sin(phi11 + q11)*cos(q13)*cos(q14)*sin(phi10)*sin(q10) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*cos(q14) - r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q14)*sin(q13) + r11*sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q14)*sin(phi10)*sin(q10) + r13*cos(phi11 + q11)*cos(q12)*cos(q14)*sin(phi10)*sin(q10)*sin(q13);
+    eJe[2][1]=r13*cos(phi11 + q11)*cos(q13)*cos(q14) - r11*cos(phi11 + q11)*sin(q12)*sin(q14) - r11*sin(phi11 + q11)*cos(q14)*sin(q13) - r13*sin(phi11 + q11)*cos(q12)*cos(q14)*sin(q13) + r11*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q14);
+    eJe[2][2]=r13*cos(q14)*sin(q12)*sin(q13);
+    eJe[2][3]=r13*cos(q13)*cos(q14);
+    eJe[2][4]=0;
+    eJe[2][5]=0;
+    eJe[2][6]=0;
+    eJe[3][0]=cos(phi10 + q10)*sin(phi11 + q11)*cos(q13)*sin(q15) + sin(phi10 + q10)*cos(q12)*cos(q14)*cos(q15) - sin(phi10 + q10)*sin(q12)*sin(q13)*sin(q15) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q14)*cos(q15)*sin(q12) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*sin(q13)*sin(q15) - cos(phi10 + q10)*sin(phi11 + q11)*cos(q15)*sin(q13)*sin(q14) - sin(phi10 + q10)*cos(q13)*cos(q15)*sin(q12)*sin(q14) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(q14);
+    eJe[3][1]=sin(phi11 + q11)*cos(q14)*cos(q15)*sin(q12) - cos(phi11 + q11)*cos(q13)*sin(q15) + cos(phi11 + q11)*cos(q15)*sin(q13)*sin(q14) + sin(phi11 + q11)*cos(q12)*sin(q13)*sin(q15) + sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(q14);
+    eJe[3][2]=cos(q12)*cos(q14)*cos(q15) - sin(q12)*sin(q13)*sin(q15) - cos(q13)*cos(q15)*sin(q12)*sin(q14);
+    eJe[3][3]=cos(q15)*sin(q13)*sin(q14) - cos(q13)*sin(q15);
+    eJe[3][4]=cos(q14)*cos(q15);
+    eJe[3][5]=-sin(q15);
+    eJe[3][6]=0;
+    eJe[4][0]=cos(phi10 + q10)*sin(phi11 + q11)*cos(q13)*cos(q15) - sin(phi10 + q10)*cos(q12)*cos(q14)*sin(q15) - sin(phi10 + q10)*cos(q15)*sin(q12)*sin(q13) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q15)*sin(q13) - cos(phi10 + q10)*cos(phi11 + q11)*cos(q14)*sin(q12)*sin(q15) + cos(phi10 + q10)*sin(phi11 + q11)*sin(q13)*sin(q14)*sin(q15) + sin(phi10 + q10)*cos(q13)*sin(q12)*sin(q14)*sin(q15) - cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q13)*sin(q14)*sin(q15);
+    eJe[4][1]=sin(phi11 + q11)*cos(q12)*cos(q15)*sin(q13) - cos(phi11 + q11)*cos(q13)*cos(q15) - sin(phi11 + q11)*cos(q14)*sin(q12)*sin(q15) - cos(phi11 + q11)*sin(q13)*sin(q14)*sin(q15) - sin(phi11 + q11)*cos(q12)*cos(q13)*sin(q14)*sin(q15);
+    eJe[4][2]=cos(q13)*sin(q12)*sin(q14)*sin(q15) - cos(q15)*sin(q12)*sin(q13) - cos(q12)*cos(q14)*sin(q15);
+    eJe[4][3]=- cos(q13)*cos(q15) - sin(q13)*sin(q14)*sin(q15);
+    eJe[4][4]=-cos(q14)*sin(q15);
+    eJe[4][5]=-cos(q15);
+    eJe[4][6]=0;
+    eJe[5][0]=cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q14) - cos(phi10 + q10)*cos(phi11 + q11)*sin(q12)*sin(q14) - cos(phi10 + q10)*sin(phi11 + q11)*cos(q14)*sin(q13) - sin(phi10 + q10)*cos(q13)*cos(q14)*sin(q12) - sin(phi10 + q10)*cos(q12)*sin(q14);
+    eJe[5][1]=cos(phi11 + q11)*cos(q14)*sin(q13) - sin(phi11 + q11)*sin(q12)*sin(q14) + sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q14);
+    eJe[5][2]=- cos(q12)*sin(q14) - cos(q13)*cos(q14)*sin(q12);
+    eJe[5][3]=cos(q14)*sin(q13);
+    eJe[5][4]=-sin(q14);
+    eJe[5][5]=0;
+    eJe[5][6]=1;
+
+
+
   }
   else
   {

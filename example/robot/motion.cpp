@@ -42,6 +42,7 @@
 
 #include <visp/vpMath.h>
 #include <visp/vpTime.h>
+#include <visp/vpColVector.h>
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
@@ -128,22 +129,73 @@ int main(int argc, char* argv[])
 //    }
 
 
-   {
-      //Get the actual Jacobian of the Head
-      vpMatrix eJe = robot.getJacobian("Head");
-      std::cout << "Jacobian of the Head: "<< std::endl << eJe << std::endl;
+//    {
+//      //Get the actual Jacobian of the Head
+//      vpMatrix eJe = robot.getJacobian("Head");
+//      std::cout << "Jacobian of the Head: "<< std::endl << eJe << std::endl;
 
-   }
-
-   {
-      //Get Transformation matrix between Frame HeadRoll and CameraLeft
-
-       vpHomogeneousMatrix cMe = robot.getTransfEndEffector("CameraLeft");
-       std::cout << "Transformation matrix between Frame HeadRoll and CameraLeft is : "<< cMe << std::endl;
+//    }
 
 
 
-   }
+    {
+      // Get the actual Jacobian of the Larm
+      vpMatrix eJe = robot.getJacobian("LArm");
+      std::cout << "Jacobian of the LArm: "<< std::endl << eJe << std::endl;
+
+      const std::string chainName = "LArm";
+
+      // Velocity end effector
+      vpColVector X;
+      X.resize(6);
+      X[0]= 0.0;
+      X[1]= 0.01;
+      X[2]= 0.0;
+      X[3]= 0.0;
+      X[4]= 0.0;
+      X[5]= 0.0;
+
+
+      const float lambda = 0.3;
+
+      vpColVector qdot;
+      qdot = lambda * eJe.pseudoInverse() * X;
+
+      std::cout << "Qdot: "<< std::endl << qdot << std::endl;
+      std::cout << "Qdot size: "<< qdot.size() << std::endl;
+
+
+      std::vector<float> jointVel( robot.getJointNames( chainName ).size() );
+
+      for (unsigned int i=0; i < jointVel.size(); i++)
+              jointVel[i] = qdot[i];
+
+
+      double t_initial = vpTime::measureTimeSecond();
+      while (vpTime::measureTimeSecond() < t_initial+10)
+      {
+        robot.setVelocity(chainName, jointVel);
+      }
+
+      robot.stop(chainName);
+
+
+
+    }
+
+//    {
+//      //Get Transformation matrix between Frame HeadRoll and CameraLeft
+
+//      vpHomogeneousMatrix cMe = robot.getTransfEndEffector("CameraLeft");
+//      std::cout << "Transformation matrix between Frame HeadRoll and CameraLeft is : "<< cMe << std::endl;
+
+
+
+
+//    }
+
+
+
 
 
 
