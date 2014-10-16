@@ -33,6 +33,7 @@
  *
  * Authors:
  * Fabien Spindler
+ * Giovanni Claudio
  *
  *****************************************************************************/
 #ifndef vpNaoqiRobot_h
@@ -41,18 +42,50 @@
 #include <iostream>
 #include <string>
 
-// ViSP includes
-#include <visp/vpRobotException.h>
-
 // Aldebaran includes
 #include <alproxies/almotionproxy.h>
 #include <alerror/alerror.h>
+
+// ViSP includes
+#include <visp/vpColVector.h>
 #include <visp/vpMatrix.h>
+#include <visp/vpRobotException.h>
 
 
 
 /*!
-  This class allows to get images from the robot remotely.
+  This class allows to control the robot remotely.
+
+  The following example shows how to use this class to move NeckYaw and NeckPitch joints in velocity.
+  \code
+  #include <visp_naoqi/vpNaoqiRobot.h>
+
+  int main()
+  {
+    vpNaoqiRobot robot;
+    robot.open();
+
+    // Test with a vector of joints
+    std::vector<std::string> jointNames;
+    jointNames.push_back("NeckYaw");
+    jointNames.push_back("NeckPitch");
+
+    std::vector<float> jointVel( jointNames.size() );
+    for (unsigned int i=0; i < jointVel.size(); i++)
+      jointVel[i] = vpMath::rad(2);
+
+    robot.setStiffness(jointNames, 1.f);
+
+    double t_initial = vpTime::measureTimeSecond();
+    while (vpTime::measureTimeSecond() < t_initial+3)
+    {
+      robot.setVelocity(jointNames, jointVel);
+    }
+
+    robot.stop(jointNames);
+  }
+  \endcode
+
  */
 class vpNaoqiRobot
 {
@@ -60,75 +93,136 @@ public:
 
   vpNaoqiRobot();
   virtual ~vpNaoqiRobot();
+
+  /*!
+    Destroy the connexion to the motion proxy.
+   */
   void cleanup();
+
+  /*!
+    Get the Jacobian specifying an end effector chain name.
+
+    \param chainName : Name of the end effector. Allowed values are "Head",
+    "LArm" for left arm and "RArm" for right arm.
+
+    \return The actual jacobian.
+   */
+  vpMatrix get_eJe(const std::string &chainName) const;
+  /*!
+    Get the name of all the joints of the chain.
+
+    \param names :  Names the joints, chains, "Body", "JointActuators",
+    "Joints" or "Actuators".
+
+    \return The name of the joints.
+   */
+  std::vector<std::string> getBodyNames(const std::string &names) const;
+  vpColVector getJointMin(const AL::ALValue& names) const;
+  vpColVector getJointMax(const AL::ALValue& names) const;
+
+  /*!
+    Get the position of all the joints of the chain.
+
+    \param names :  Names the joints, chains, "Body", "JointActuators",
+    "Joints" or "Actuators".
+    \param useSensors :  If true, sensor positions will be returned. If
+    false, it will be the command.
+
+    \return Joint position in radians.
+   */
+  vpColVector getPosition(const AL::ALValue& names, const bool& useSensors=true) const;
+
+  /*!
+   Return the video proxy used to grab images.
+
+   \code
+   #include <visp_naoqi/vpNaoqiRobot.h>
+
+   int main()
+   {
+     vpNaoqiRobot robot;
+     ...
+     robot.open();
+     AL::ALMotionProxy *motionProxy = robot.getProxy();
+   }
+   \endcode
+   \return The address of the video proxy.
+  */
+ AL::ALMotionProxy *getProxy() const
+ {
+   return m_motionProxy;
+ }
+
+  /*!
+    Open the connection with the robot.
+    All the parameters should be set before calling this function.
+    \code
+    #include <visp_naoqi/vpNaoqiRobot.h>
+
+    int main()
+    {
+      vpNaoqiRobot robot;
+      robot.setRobotIp("131.254.13.37");
+      robot.open();
+    }
+    \endcode
+   */
+
   void open();
+
+  /*!
+    Enable/disable the collision protection.
+    In the constructor, the collision protection is enabled by default.
+    \param protection : true to enable collision protection, false to disable.
+   */
   void setCollisionProtection(bool protection)
   {
     m_collisionProtection = protection;
   }
 
+  /*!
+    Set the position of all the joints of the chain.
+
+    \param names :  Names the joints, chains, "Body", "JointActuators", "Joints" or "Actuators".
+    \param angles :  One or more joint positions in radians.
+    \param fractionMaxSpeed : The fraction of maximum speed to use. Value should be comprised between 0 and 1.
+
+   */
+  void setPosition(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed);
+  /*!
+    Set the position of all the joints of the chain.
+
+    \param names :  Names the joints, chains, "Body", "JointActuators", "Joints" or "Actuators".
+    \param jointPosition :  One or more joint positions in radians.
+    \param fractionMaxSpeed : The fraction of maximum speed to use. Value should be comprised between 0 and 1.
+
+   */
+  void setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed);
+
+  /*!
+    Set the robot ip address.
+    In the constructor, the default ip is set to "198.18.0.1".
+    \param robotIp : New robot ip address.
+
+    \sa open()
+  */
   void setRobotIp(const std::string &robotIp)
   {
     m_robotIp = robotIp;
   }
 
-  /*!
-    Get the name of all the joints of the chain.
+  void setStiffness(const AL::ALValue& names, float stiffness);
 
-    \param chainName : Name of the chain. Allowed values are "Head",
-    "LArm" for left arm and "RArm" for right arm.
+  void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
+  void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
 
-    \return The name of the joints.
-   */
-  std::vector<std::string> getJointNames(const std::string &chainName);
-
-  void setStiffness(const std::vector<std::string> &jointNames, float stiffness);
-  void setStiffness(const std::string &chainName, float stiffness);
-
-  void setVelocity(const std::vector<std::string> &jointNames, const std::vector<float> &jointVel);
-  void setVelocity(const std::string &chainName, const std::vector<float> &jointVel);
-
-  void stop(const std::vector<std::string> &jointNames);
-  void stop(const std::string &chainName);
-
-
-
-  /*!
-    Get the angles of all the joints of the chain.
-
-    \param names :  Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
-    \param useSensors :  If true, sensor angles will be returned.
-
-    \return 	Joint angles in radians.
-   */
-  std::vector<float> getAngles(const AL::ALValue& names, const bool& useSensors);
-
-
-  /*!
-    Get the angles of all the joints of the chain.
-
-    \param names :  Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
-    \param angles :  One or more angles in radians.
-    \param fractionMaxSpeed :  The fraction of maximum speed to use.
-
-   */
-  void setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed);
-
-  /*!
-    Get the Jacobian specifying and end effector name
-
-    \param endEffectorName : Name of the end effector. Allowed values are "Head",
-    "LArm" for left arm and "RArm" for right arm.
-
-    \return The actual jacobian.
-   */
- vpMatrix getJacobian(const std::string &endEffectorName);
+  void stop(const AL::ALValue& names);
 
 protected:
-  AL::ALMotionProxy *m_motionProxy;
-  std::string m_robotIp;
-  bool m_isOpen;
-  bool m_collisionProtection;
+  AL::ALMotionProxy *m_motionProxy; //!< Motion proxy
+  std::string m_robotIp; //!<  Robot Ethernet address
+  bool m_isOpen; //!< Proxy opened status
+  bool m_collisionProtection; //!< Collition protection enabling status
 };
 
 #endif
