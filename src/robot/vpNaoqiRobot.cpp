@@ -33,6 +33,7 @@
  *
  * Authors:
  * Fabien Spindler
+ * Giovanni Claudio
  *
  *****************************************************************************/
 
@@ -40,18 +41,39 @@
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
-
+/*!
+  Default constructor that set the default parameters as:
+  - robot ip address: "198.18.0.1"
+  - collision protection: enabled
+  */
 vpNaoqiRobot::vpNaoqiRobot()
   : m_motionProxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true)
 {
 
 }
 
+/*!
+  Destructor that call cleanup().
+ */
 vpNaoqiRobot::~vpNaoqiRobot()
 {
   cleanup();
 }
 
+/*!
+  Open the connection with the robot.
+  All the parameters should be set before calling this function.
+  \code
+  #include <visp_naoqi/vpNaoqiRobot.h>
+
+  int main()
+  {
+    vpNaoqiRobot robot;
+    robot.setRobotIp("131.254.13.37");
+    robot.open();
+  }
+  \endcode
+ */
 void vpNaoqiRobot::open()
 {
   if (! m_isOpen) {
@@ -92,39 +114,70 @@ void vpNaoqiRobot::cleanup()
   m_isOpen = false;
 }
 
-void vpNaoqiRobot::setStiffness(const std::vector<std::string> &jointNames, float stiffness)
+/*!
+  Set the stiffness to a chain name, or to a specific joint.
+  \param names :  Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+  \param stiffness : Stiffness parameter that should be between
+  0 (no stiffness) and 1 (full stiffness).
+ */
+void vpNaoqiRobot::setStiffness(const AL::ALValue& names, float stiffness)
 {
-  m_motionProxy->setStiffnesses(jointNames, AL::ALValue( stiffness ));
+  m_motionProxy->setStiffnesses(names, AL::ALValue( stiffness ));
 }
 
+/*!
+  Apply a velocity vector to a vector of joints.
+  \param names :  Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+  \param jointVel : Joint velocity vector with values expressed in rad/s.
+  \param verbose : If true activates printings.
+ */
 
-void vpNaoqiRobot::setStiffness(const std::string &chainName, float stiffness)
+void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose)
 {
-  // Get the names of all the joints in the group.
-  std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
-  if (jointNames.size()>0)
-    m_motionProxy->setStiffnesses(chainName, AL::ALValue( stiffness ));
-  else  {
-    throw vpRobotException (vpRobotException::readingParametersError,
-                            "The name of the chain is not valid.");
-  }
-
+  std::vector<float> jointVel_(jointVel.size());
+  for (unsigned int i=0; i< jointVel.size(); i++)
+    jointVel_[i] = jointVel[i];
+  setVelocity(names, jointVel_);
 }
 
-void vpNaoqiRobot::setVelocity(const std::vector<std::string> &jointNames, const std::vector<float> &jointVel)
+/*!
+  Apply a velocity vector to a vector of joints.
+
+  \todo Improve the function to be able to pass just one joint as names argument.
+
+  \param names :  Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+  \param jointVel : Joint velocity vector with values expressed in rad/s.
+  \param verbose : If true activates printings.
+ */
+void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &jointVel, bool verbose)
 {
-  if (jointNames.size() != jointVel.size() ) {
+  if (names.getSize() != jointVel.getSize() ) {
     throw vpRobotException (vpRobotException::readingParametersError,
                             "The dimensions of the joint array and the velocities array do not match.");
   }
+  std::vector<std::string> jointNames;
+  if (names.isString()) // Suppose to be a chain
+    jointNames = m_motionProxy->getBodyNames(names);
+  else if (names.isArray()) // Supposed to be a vector of joints
+    jointNames = names; // it a vector of joints
+  else
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Unable to decode the joint chain.");
 
-  for (unsigned i = 0 ; i < jointNames.size() ; ++i)
+  for (unsigned i = 0 ; i < jointVel.getSize() ; ++i)
   {
-    std::string jointName = jointNames.at(i);
-    float vel = jointVel.at(i);
+    std::string jointName = jointNames[i];
+    if (verbose)
+      std::cout << "Joint name: " << jointName << std::endl;
 
-    std::cout << "Desired velocity =  " << vel << "rad/s to the joint " << jointName << "." << std::endl;
-    std::cout << "\n";
+    float vel = jointVel[i];
+
+    if (verbose)
+      std::cout << "Desired velocity =  " << vel << "rad/s to the joint " << jointName << "." << std::endl;
+
     //Get the limits of the joint
     AL::ALValue limits = m_motionProxy->getLimits(jointName);
 
@@ -136,7 +189,8 @@ void vpNaoqiRobot::setVelocity(const std::vector<std::string> &jointNames, const
       //Reach qMax
       angle = limits[0][1];
       applymotion = 1;
-      std::cout << "Reach qMax (" << angle << ") ";
+      if (verbose)
+        std::cout << "Reach qMax (" << angle << ") ";
     }
 
     else if (vel < 0.0f)
@@ -144,7 +198,8 @@ void vpNaoqiRobot::setVelocity(const std::vector<std::string> &jointNames, const
       //Reach qMin
       angle = limits[0][0];
       applymotion = 1;
-      std::cout << "Reach qMin (" << angle << ") ";
+      if (verbose)
+        std::cout << "Reach qMin (" << angle << ") ";
     }
 
     if (applymotion)
@@ -152,134 +207,143 @@ void vpNaoqiRobot::setVelocity(const std::vector<std::string> &jointNames, const
       float fraction = fabs( float (vel/float(limits[0][2])));
       if (fraction >= 1.0 )
       {
-        std::cout << "Given velocity is too high: " <<  vel << "rad/s for " << jointName << "." << std::endl;
-        std::cout << "Max allowed is: " << limits[0][2] << "rad/s for "<< std::endl;
+        if (verbose) {
+          std::cout << "Given velocity is too high: " <<  vel << "rad/s for " << jointName << "." << std::endl;
+          std::cout << "Max allowed is: " << limits[0][2] << "rad/s for "<< std::endl;
+        }
         fraction = 1.0;
       }
       m_motionProxy->setAngles(jointName,angle,fraction);
-      std::cout << "SET VELOCITY TO " <<  vel << "rad/s for " << jointName << "Angle: "<< angle << ". Fraction "
-                <<  fraction << std::endl;
-
-
+      if (verbose)
+        std::cout << "SET VELOCITY TO " <<  vel << "rad/s for " << jointName << "Angle: "<< angle
+                  << ". Fraction " <<  fraction << std::endl;
     }
     else
       m_motionProxy->changeAngles(jointName,0.0f,0.1f);
   }
-
 }
 
-
-
-void vpNaoqiRobot::setVelocity(const std::string &chainName, const std::vector<float> &jointVel)
+/*!
+  Stop the velocity applied to the joints.
+  \param names :  Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators" to stop.
+ */
+void vpNaoqiRobot::stop(const AL::ALValue &names)
 {
-
-  // Get the names of all the joints in the group.
-  std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
-  if (jointNames.size()>0)
-    vpNaoqiRobot::setVelocity(jointNames, jointVel);
-  else  {
+  std::vector<std::string> jointNames;
+  if (names.isString()) // Suppose to be a chain
+    jointNames = m_motionProxy->getBodyNames(names);
+  else if (names.isArray()) // Supposed to be a vector of joints
+    jointNames = names; // it a vector of joints
+  else
     throw vpRobotException (vpRobotException::readingParametersError,
-                            "The name of the chain is not valid.");
-  }
+                            "Unable to decode the joint chain.");
 
-}
-
-void vpNaoqiRobot::stop(const std::vector<std::string> &jointNames)
-{
-  //std::vector<float> jointVel(jointNames.size(), 0);
   for (unsigned i = 0 ; i < jointNames.size() ; ++i)
-    m_motionProxy->changeAngles(jointNames[i],0.0f,0.1f);
-}
-
-void vpNaoqiRobot::stop(const std::string &chainName)
-{
-  // Get the names of all the joints in the group.
-  std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
-  if ( jointNames.size() )
-    vpNaoqiRobot::stop(jointNames);
-  else {
-    throw vpRobotException (vpRobotException::readingParametersError,
-                            "The name of the chain is not valid.");
-  }
+    m_motionProxy->changeAngles(jointNames[i], 0.0f, 0.1f);
 }
 
 /*!
   Get the name of all the joints of the chain.
 
-  \param chainName : Name of the chain. Allowed values are "Head",
-  "LArm" for left arm and "RArm" for right arm.
+  \param names : Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
 
   \return The name of the joints.
  */
-std::vector<std::string> vpNaoqiRobot::getJointNames(const std::string &chainName)
+std::vector<std::string>
+vpNaoqiRobot::getBodyNames(const std::string &names) const
 {
   if (! m_isOpen)
     throw vpRobotException (vpRobotException::readingParametersError,
                             "The connexion with the robot was not open");
-  std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
+  std::vector<std::string> jointNames = m_motionProxy->getBodyNames(names);
   return jointNames;
 }
 
-std::vector<float> vpNaoqiRobot::getAngles(const AL::ALValue& names, const bool& useSensors)
+/*!
+  Get minimal joint values for a joint chain.
+
+  \return A vector that contains the minimal joint values
+  of the chain. All the values are expressed in radians.
+
+  \param names : Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+
+  \return The min angle of each joint of the chain.
+*/
+vpColVector
+vpNaoqiRobot::getJointMin(const AL::ALValue& names) const
+{
+  if (! m_isOpen)
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "The connexion with the robot was not open");
+  AL::ALValue limits = m_motionProxy->getLimits(names);
+  vpColVector min_limits(limits.getSize());
+  for (unsigned int i=0; i<limits.getSize(); i++)
+  {
+    min_limits[i] = limits[i][0];
+  }
+  return min_limits;
+}
+
+/*!
+  Get minimal joint values for a joint chain.
+
+  \return A vector that contains the minimal joint values
+  of the chain. All the values are expressed in radians.
+
+  \param names : Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+
+  \return The min angle of each joint of the chain.
+*/
+vpColVector
+vpNaoqiRobot::getJointMax(const AL::ALValue& names) const
+{
+  if (! m_isOpen)
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "The connexion with the robot was not open");
+  AL::ALValue limits = m_motionProxy->getLimits(names);
+  vpColVector max_limits(limits.getSize());
+  for (unsigned int i=0; i<limits.getSize(); i++)
+  {
+    max_limits[i] = limits[i][1];
+  }
+  return max_limits;
+}
+
+vpColVector vpNaoqiRobot::getPosition(const AL::ALValue& names, const bool& useSensors) const
 {
   std::vector<float> sensorAngles = m_motionProxy->getAngles(names, useSensors);
-  return sensorAngles;
+  vpColVector q(sensorAngles.size());
+  for(unsigned int i=0; i<sensorAngles.size(); i++)
+    q[i] = sensorAngles[i];
+  return q;
 }
 
 
-void vpNaoqiRobot::setAngles(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed)
-{
+void vpNaoqiRobot::setPosition(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed)
+{ 
   m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
 }
 
-vpHomogeneousMatrix vpNaoqiRobot::getTransfEndEffector(const std::string &endEffectorName)
+void vpNaoqiRobot::setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed)
 {
+  std::vector<float> angles(jointPosition.size());
+  for (unsigned int i=0; i<angles.size(); i++)
+    angles[i] = jointPosition[i];
 
-   vpHomogeneousMatrix cMe;
-
-   // Transformation matrix from HeadRoll to CameraLeft
-  if (endEffectorName == "CameraLeft")
-  {
-    cMe[0][0] = -1.;
-    cMe[1][0] = 0.;
-    cMe[2][0] =  0.;
-
-    cMe[0][1] = 0.;
-    cMe[1][1] = -1.;
-    cMe[2][1] =  0.;
-
-    cMe[0][2] = 0.;
-    cMe[1][2] = 0.;
-    cMe[2][2] =  1.;
-
-    cMe[0][3] = 0.04;
-    cMe[1][3] = 0.09938;
-    cMe[2][3] =  0.11999;
-
-
-
-  }
-
-  else
-  {
-
-    throw vpRobotException (vpRobotException::readingParametersError,
-                            "Transformation matrix that you requested is not implemented. Valid values: CameraLeft.");
-  }
- return cMe;
-
+  m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
 }
 
-
-vpMatrix vpNaoqiRobot::getJacobian(const std::string &lastJointName)
+vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 {
-
   vpMatrix eJe;
 
-  if (lastJointName == "Head")
+  if (chainName == "Head")
   {
-
-    std::vector<float> q = m_motionProxy->getAngles(lastJointName,true);
+    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
 
     //std::cout << "Joint value:" << q << std::endl;
 
@@ -317,16 +381,15 @@ vpMatrix vpNaoqiRobot::getJacobian(const std::string &lastJointName)
     eJe[4][3]= 0;
     eJe[5][3]= 1;
   }
-  else if (lastJointName == "RArm")
+  else if (chainName == "RArm")
   {
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Jacobian RArm not avaible yet");
   }
-
-  else if (lastJointName == "LArm")
+  else if (chainName == "LArm")
   {
 
-    std::vector<float> q = m_motionProxy->getAngles(lastJointName,true);
+    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
 
     std::cout << "Joint value:" << q << std::endl;
 
@@ -408,6 +471,39 @@ vpMatrix vpNaoqiRobot::getJacobian(const std::string &lastJointName)
                             "End-effector name not recognized. Please choose one above 'Head', 'Larm' or 'Rarm' ");
 
   }
-return eJe;
+  return eJe;
 
 }
+
+
+  vpHomogeneousMatrix vpNaoqiRobot::getTransfEndEffector(const std::string &endEffectorName)
+  {
+    vpHomogeneousMatrix cMe;
+
+    // Transformation matrix from HeadRoll to CameraLeft
+    if (endEffectorName == "CameraLeft")
+    {
+      cMe[0][0] = -1.;
+      cMe[1][0] = 0.;
+      cMe[2][0] =  0.;
+
+      cMe[0][1] = 0.;
+      cMe[1][1] = -1.;
+      cMe[2][1] =  0.;
+
+      cMe[0][2] = 0.;
+      cMe[1][2] = 0.;
+      cMe[2][2] =  1.;
+
+      cMe[0][3] = 0.04;
+      cMe[1][3] = 0.09938;
+      cMe[2][3] =  0.11999;
+    }
+
+    else
+    {
+      throw vpRobotException (vpRobotException::readingParametersError,
+                              "Transformation matrix that you requested is not implemented. Valid values: CameraLeft.");
+    }
+    return cMe;
+  }

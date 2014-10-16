@@ -56,91 +56,84 @@ int main(int argc, char* argv[])
 
     robot.open();
 
-//    {
-//      // Test with a vector of joints
-//      std::vector<std::string> jointNames;
-//      jointNames.push_back("NeckYaw");
-//      jointNames.push_back("NeckPitch");
+    {
+      // Test with a vector of joints
+      std::vector<std::string> jointNames;
+      jointNames.push_back("NeckYaw");
+      jointNames.push_back("NeckPitch");
 
-//      std::vector<float> jointVel( jointNames.size() );
-//      for (unsigned int i=0; i < jointVel.size(); i++)
-//        jointVel[i] = vpMath::rad(2);
+      std::cout << "Test " << jointNames << " velocity control" << std::endl;
 
-//      robot.setStiffness(jointNames, 1.f);
+      vpColVector jointVel( jointNames.size() );
+      for (unsigned int i=0; i < jointVel.size(); i++)
+        jointVel[i] = vpMath::rad(2);
 
-//      double t_initial = vpTime::measureTimeSecond();
-//      while (vpTime::measureTimeSecond() < t_initial+3)
-//      {
-//        robot.setVelocity(jointNames, jointVel);
-//      }
+      robot.setStiffness(jointNames, 1.f);
+      double t_initial = vpTime::measureTimeSecond();
+      while (vpTime::measureTimeSecond() < t_initial+3)
+      {
+        robot.setVelocity(jointNames, jointVel);
+      }
 
-//      robot.stop(jointNames);
-//    }
+      robot.stop(jointNames);
+    }
 
+    {
+      // Test with a chain of joints
+      std::string chain = "Head";
 
-//    {
-//      // Test with a chain of joints
-//      std::string chain = "Head";
+      std::cout << "Test " << chain << " velocity control" << std::endl;
 
-//      robot.setStiffness(chain, 1.f);
+      robot.setStiffness(chain, 1.f);
 
-//      std::vector<float> jointVel( robot.getJointNames( chain ).size() );
-//      for (unsigned int i=0; i < jointVel.size(); i++)
-//        jointVel[i] = vpMath::rad(-2);
+      vpColVector jointVel( robot.getBodyNames( chain ).size() );
+      for (unsigned int i=0; i < jointVel.size(); i++)
+        jointVel[i] = vpMath::rad(-2);
 
+      double t_initial = vpTime::measureTimeSecond();
+      while (vpTime::measureTimeSecond() < t_initial+3)
+      {
+        robot.setVelocity(chain, jointVel);
+      }
 
-//      double t_initial = vpTime::measureTimeSecond();
-//      while (vpTime::measureTimeSecond() < t_initial+3)
-//      {
-//        robot.setVelocity(chain, jointVel);
-//      }
-
-//      robot.stop(chain);
-
-//    }
-
-
-//    {
-//      // Get the position of the joints
-//      std::string names = "Body";
-//      bool useSensors   = true;
-//      std::vector<float> commandAngles = robot.getAngles(names, useSensors);
-//      std::cout << "Sensor angles: " << std::endl << commandAngles << std::endl;
-
-//    }
+      robot.stop(chain);
+    }
 
 
+    {
+      // Get the position of the joints
+      std::string names = "Body";
+      std::cout << "Test " << names << " retrieving joint positions" << std::endl;
 
-//    {
-//      // Example showing how to set angles, using a fraction of max speed
-//       std::vector<std::string> jointNames;
-//       jointNames.push_back("NeckYaw");
-//       jointNames.push_back("NeckPitch");
+      vpColVector jointPositions = robot.getPosition(names);
+      std::vector<std::string> jointNames = robot.getBodyNames(names);
+      for (unsigned int i=0; i< jointPositions.size(); i++)
+        std::cout << "Sensor " << jointNames[i] << " position: " << jointPositions[i] << std::endl;
+    }
 
-//       std::vector<float> jointPos( jointNames.size() );
-//       for (unsigned int i=0; i < jointPos.size(); i++)
-//       jointPos[i] = vpMath::rad(0);
+    {
+      // Example showing how to set angles, using a fraction of max speed
+      std::vector<std::string> jointNames;
+      jointNames.push_back("NeckYaw");
+      jointNames.push_back("NeckPitch");
 
-//       float fractionMaxSpeed  = 0.1f;
-//       robot.setStiffness(jointNames, 1.f);
-//       qi::os::sleep(1.0f);
-//       robot.setAngles(jointNames, jointPos, fractionMaxSpeed);
+      std::cout << "Test " << jointNames << " position control" << std::endl;
 
-//    }
+      std::vector<float> jointPos( jointNames.size() );
+      for (unsigned int i=0; i < jointPos.size(); i++)
+        jointPos[i] = vpMath::rad(0);
 
-
-//    {
-//      //Get the actual Jacobian of the Head
-//      vpMatrix eJe = robot.getJacobian("Head");
-//      std::cout << "Jacobian of the Head: "<< std::endl << eJe << std::endl;
-
-//    }
-
+      float fractionMaxSpeed  = 0.1f;
+      robot.setStiffness(jointNames, 1.f);
+      qi::os::sleep(1.0f);
+      robot.setPosition(jointNames, jointPos, fractionMaxSpeed);
+      qi::os::sleep(2.0f); // Tempo to allow to reach the position
+    }
 
 
     {
       // Get the actual Jacobian of the Larm
-      vpMatrix eJe = robot.getJacobian("LArm");
+      vpMatrix eJe = robot.get_eJe("LArm");
       std::cout << "Jacobian of the LArm: "<< std::endl << eJe << std::endl;
 
       const std::string chainName = "LArm";
@@ -149,7 +142,7 @@ int main(int argc, char* argv[])
       vpColVector X;
       X.resize(6);
       X[0]= 0.0;
-      X[1]= 0.01;
+      X[1]= 0.0;
       X[2]= 0.0;
       X[3]= 0.0;
       X[4]= 0.0;
@@ -158,6 +151,7 @@ int main(int argc, char* argv[])
 
       const float lambda = 0.3;
 
+      std::cout << "Test to apply a cartesian velocity to the LArm: " << X.t() << std::endl;
       vpColVector qdot;
       qdot = lambda * eJe.pseudoInverse() * X;
 
@@ -165,7 +159,7 @@ int main(int argc, char* argv[])
       std::cout << "Qdot size: "<< qdot.size() << std::endl;
 
 
-      std::vector<float> jointVel( robot.getJointNames( chainName ).size() );
+      std::vector<float> jointVel( robot.getBodyNames( chainName ).size() );
 
       for (unsigned int i=0; i < jointVel.size(); i++)
               jointVel[i] = qdot[i];
@@ -178,27 +172,22 @@ int main(int argc, char* argv[])
       }
 
       robot.stop(chainName);
-
-
-
     }
 
-//    {
-//      //Get Transformation matrix between Frame HeadRoll and CameraLeft
+    {
+      //Get Transformation matrix between Frame HeadRoll and CameraLeft
 
-//      vpHomogeneousMatrix cMe = robot.getTransfEndEffector("CameraLeft");
-//      std::cout << "Transformation matrix between Frame HeadRoll and CameraLeft is : "<< cMe << std::endl;
+      vpHomogeneousMatrix cMe = robot.getTransfEndEffector("CameraLeft");
+      std::cout << "Transformation matrix between Frame HeadRoll and CameraLeft is : "<< cMe << std::endl;
+    }
 
-
-
-
-//    }
-
-
-
-
-
-
+    {
+      //Get the actual Jacobian of the Head
+      std::string names = "Head";
+      std::cout << "Test " << names << " Jacobian" << std::endl;
+      vpMatrix eJe = robot.get_eJe(names);
+      std::cout << "Jacobian eJe of the " << names << ": "<< std::endl << eJe << std::endl;
+    }
 
     std::cout << "The end" << std::endl;
   }

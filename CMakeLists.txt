@@ -29,3 +29,23 @@ qi_use_lib(image_viewer_opencv visp_naoqi)
 
 qi_create_bin(motion example/robot/motion.cpp)
 qi_use_lib(motion visp_naoqi)
+
+# doxygen
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+  ## check if dot available
+  if(DOXYGEN_DOT_EXECUTABLE)
+   set(PROJECT_HAVE_DOT "yes")
+  else()
+    set(PROJECT_HAVE_DOT "no")
+  endif()
+  ## we need latex for doxygen because of the formulas
+  find_package(LATEX)
+   
+  configure_file(${PROJECT_SOURCE_DIR}/doc/config-doxygen.cmake
+    ${PROJECT_BINARY_DIR}/doc/config-doxygen
+    @ONLY )
+
+  add_custom_target(html-doc ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/config-doxygen) 
+endif()
+

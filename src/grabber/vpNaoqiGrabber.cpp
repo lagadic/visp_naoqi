@@ -33,6 +33,7 @@
  *
  * Authors:
  * Fabien Spindler
+ * Giovanni Claudio
  *
  *****************************************************************************/
 
@@ -46,13 +47,22 @@
 
 #include <visp_naoqi/vpNaoqiGrabber.h>
 
+/*!
+  Default constructor that set the default parameters as:
+  - robot ip address: "198.18.0.1"
+  - robot port: 9559
+  - camera framerate: 30 fps
+  */
 vpNaoqiGrabber::vpNaoqiGrabber()
-  : m_camProxy(NULL), m_robotIp("198.18.0.1"),
+  : m_videoProxy(NULL), m_robotIp("198.18.0.1"),
     m_robotPort(9559), m_fps(30), m_isOpen(false), m_width(0), m_height(0)
 {
 
 }
 
+/*!
+  Destructor that call cleanup().
+ */
 vpNaoqiGrabber::~vpNaoqiGrabber()
 {
   cleanup();
@@ -62,16 +72,16 @@ void vpNaoqiGrabber::open()
 {
   if (! m_isOpen) {
     // Create a proxy to ALVideoDevice on the robot
-    m_camProxy = new AL::ALVideoDeviceProxy(m_robotIp, m_robotPort);
+    m_videoProxy = new AL::ALVideoDeviceProxy(m_robotIp, m_robotPort);
     // Subscribe a client image requiring 320*240 and BGR colorspace
     m_clientName = "subscriberID";
-    m_camProxy->unsubscribeAllInstances(m_clientName);
-    m_clientName = m_camProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+    m_videoProxy->unsubscribeAllInstances(m_clientName);
+    m_clientName = m_videoProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
     //std::cout << m_clientName << std::endl;
 
 
     // Select the camera left(0) or right(1)
-    m_camProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, 0);
+    m_videoProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, 0);
 
     // update image size
     /* Retrieve an image from the camera.
@@ -85,10 +95,10 @@ void vpNaoqiGrabber::open()
      * 5 = time stamp (micro seconds)
      * 6 = image buffer (size of width * height * number of layers)
      */
-    m_img = m_camProxy->getImageRemote(m_clientName);
+    m_img = m_videoProxy->getImageRemote(m_clientName);
     m_width  = (int) m_img[0];
     m_height = (int) m_img[1];
-    m_camProxy->releaseImage(m_clientName);
+    m_videoProxy->releaseImage(m_clientName);
 
     m_isOpen = true;
   }
@@ -96,10 +106,10 @@ void vpNaoqiGrabber::open()
 
 void vpNaoqiGrabber::cleanup()
 {
-  if (m_camProxy != NULL) {
-    m_camProxy->unsubscribe(m_clientName);
-    //m_camProxy->unsubscribeAllInstances(m_clientName);
-    delete m_camProxy;
+  if (m_videoProxy != NULL) {
+    m_videoProxy->unsubscribe(m_clientName);
+    //m_videoProxy->unsubscribeAllInstances(m_clientName);
+    delete m_videoProxy;
   }
   m_isOpen = false;
 }
@@ -136,7 +146,7 @@ void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestam
    * 5 = time stamp (micro seconds)
    * 6 = image buffer (size of width * height * number of layers)
    */
-  m_img = m_camProxy->getImageRemote(m_clientName);
+  m_img = m_videoProxy->getImageRemote(m_clientName);
 
   m_width  = (int) m_img[0];
   m_height = (int) m_img[1];
@@ -150,7 +160,7 @@ void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestam
 
   // Tells to ALVideoDevice that it can give back the image buffer to the
   // driver. Optional after a getImageRemote but MANDATORY after a getImageLocal.
-  m_camProxy->releaseImage(m_clientName);
+  m_videoProxy->releaseImage(m_clientName);
 
   I.resize(m_height, m_width);
   vpImageConvert::BGRToGrey(img_buffer, (unsigned char *)I.bitmap, m_width, m_height);
@@ -191,7 +201,7 @@ void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
    * 5 = time stamp (micro seconds)
    * 6 = image buffer (size of width * height * number of layers)
    */
-  m_img = m_camProxy->getImageRemote(m_clientName);
+  m_img = m_videoProxy->getImageRemote(m_clientName);
 
   m_width  = (int) m_img[0];
   m_height = (int) m_img[1];
@@ -214,6 +224,6 @@ void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
 
   // Tells to ALVideoDevice that it can give back the image buffer to the
   // driver. Optional after a getImageRemote but MANDATORY after a getImageLocal.
-  m_camProxy->releaseImage(m_clientName);
+  m_videoProxy->releaseImage(m_clientName);
 }
 
