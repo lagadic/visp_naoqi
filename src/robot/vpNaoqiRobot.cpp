@@ -315,8 +315,7 @@ vpNaoqiRobot::getJointMax(const AL::ALValue& names) const
 
 vpColVector vpNaoqiRobot::getPosition(const AL::ALValue& names, const bool& useSensors) const
 {
-
-  std::vector<float> sensorAngles = m_motionProxy->getPosition(names, useSensors);
+  std::vector<float> sensorAngles = m_motionProxy->getAngles(names, useSensors);
   vpColVector q(sensorAngles.size());
   for(unsigned int i=0; i<sensorAngles.size(); i++)
     q[i] = sensorAngles[i];
@@ -344,8 +343,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
   if (chainName == "Head")
   {
-
-    std::vector<float> q = m_motionProxy->getPosition(chainName,true);
+    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
 
     //std::cout << "Joint value:" << q << std::endl;
 
@@ -385,18 +383,54 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
   }
   else if (chainName == "RArm")
   {
-    std::cout << "Jacobian RArm not avaible yet' "<< std::endl;
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Jacobian RArm not avaible yet");
   }
-
   else if (chainName == "LArm")
   {
-    std::cout << "Jacobian LArm not avaible yet' "<< std::endl;
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Jacobian LArm not avaible yet");
   }
   else
   {
-    std::cout << "End-effector name not recognized. Please choose one above 'Head', 'Larm' or 'Rarm' "<< std::endl;
+
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "End-effector name not recognized. Please choose one above 'Head', 'Larm' or 'Rarm' ");
 
   }
   return eJe;
 
 }
+
+
+  vpHomogeneousMatrix vpNaoqiRobot::getTransfEndEffector(const std::string &endEffectorName)
+  {
+    vpHomogeneousMatrix cMe;
+
+    // Transformation matrix from HeadRoll to CameraLeft
+    if (endEffectorName == "CameraLeft")
+    {
+      cMe[0][0] = -1.;
+      cMe[1][0] = 0.;
+      cMe[2][0] =  0.;
+
+      cMe[0][1] = 0.;
+      cMe[1][1] = -1.;
+      cMe[2][1] =  0.;
+
+      cMe[0][2] = 0.;
+      cMe[1][2] = 0.;
+      cMe[2][2] =  1.;
+
+      cMe[0][3] = 0.04;
+      cMe[1][3] = 0.09938;
+      cMe[2][3] =  0.11999;
+    }
+
+    else
+    {
+      throw vpRobotException (vpRobotException::readingParametersError,
+                              "Transformation matrix that you requested is not implemented. Valid values: CameraLeft.");
+    }
+    return cMe;
+  }

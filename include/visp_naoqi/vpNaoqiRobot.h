@@ -48,6 +48,7 @@
 
 // ViSP includes
 #include <visp/vpColVector.h>
+#include <visp/vpHomogeneousMatrix.h>
 #include <visp/vpMatrix.h>
 #include <visp/vpRobotException.h>
 
@@ -198,6 +199,17 @@ public:
 
    */
   void setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed);
+
+
+  /*!
+    Get the Transformation matrix to the end-effectors
+
+    \param endEffectorName : Name of the end effector. Allowed values are "CameraLeft",
+    "CameraRight" for the fixed camera on the head, "RHand" and "LHand" for end-effector on the arms.
+
+    \return The transformation matrix to the end-effectors (computed from the last joint of the chain ending with the end-effector. )
+   */
+  vpHomogeneousMatrix getTransfEndEffector(const std::string &endEffectorName);
 
   /*!
     Set the robot ip address.

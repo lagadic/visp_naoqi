@@ -138,6 +138,13 @@ int main(int argc, char* argv[])
     }
 
 
+    {
+      //Get Transformation matrix between Frame HeadRoll and CameraLeft
+
+      vpHomogeneousMatrix cMe = robot.getTransfEndEffector("CameraLeft");
+      std::cout << "Transformation matrix between Frame HeadRoll and CameraLeft is : "<< cMe << std::endl;
+    }
+
     std::cout << "The end" << std::endl;
   }
   catch (const vpException &e)
