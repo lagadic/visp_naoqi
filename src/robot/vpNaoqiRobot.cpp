@@ -110,6 +110,7 @@ void vpNaoqiRobot::cleanup()
 {
   if (m_motionProxy != NULL) {
     delete m_motionProxy;
+    m_motionProxy = NULL;
   }
   m_isOpen = false;
 }
