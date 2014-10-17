@@ -108,8 +108,8 @@ void vpNaoqiGrabber::cleanup()
 {
   if (m_videoProxy != NULL) {
     m_videoProxy->unsubscribe(m_clientName);
-    //m_videoProxy->unsubscribeAllInstances(m_clientName);
     delete m_videoProxy;
+    m_videoProxy = NULL;
   }
   m_isOpen = false;
 }
