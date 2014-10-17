@@ -391,9 +391,11 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
     std::vector<float> q = m_motionProxy->getAngles(chainName,true);
 
-    std::cout << "Joint value:" << q << std::endl;
+    q.pop_back(); // we don't consider the last joint LHand
 
-    const unsigned int nJoints = q.size()-1; // -1 because we don't consider the last joint LHand
+    //std::cout << "Joint value:" << q << std::endl;
+
+    const unsigned int nJoints = q.size();
 
     float q10, q11, q12, q13, q14, q15;
 
@@ -497,8 +499,17 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
       cMe[0][3] = 0.04;
       cMe[1][3] = 0.09938;
-      cMe[2][3] =  0.11999;
+      cMe[2][3] = -0.11999;
     }
+
+    // Transformation matrix from LWristPitch to TargetLArm
+    else if (endEffectorName == "TargetLArm")
+    {
+      cMe[0][3] = 0.05;
+      cMe[1][3] = 0.026;
+      cMe[2][3] = 0.0;
+    }
+
 
     else
     {
