@@ -1,13 +1,24 @@
-
 cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 
 project(visp_naoqi)
+
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 # this lets you find the qibuild cmake frameworl
 find_package(qibuild)
 
 find_package(VISP REQUIRED)
 
+# include metapod library
+include(metapod.cmake)
+
+#define and search for metapod library
+#set(WITH_METAPODFROMURDF TRUE)
+set(model_name "romeo")
+
+ADD_SAMPLEURDFMODEL(${model_name})
+
+include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
 include_directories("include")
 qi_create_lib(visp_naoqi 
   SRC
@@ -18,6 +29,7 @@ qi_create_lib(visp_naoqi
 )
 
 qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
+target_link_libraries(visp_naoqi metapod_${model_name})
 qi_stage_lib(visp_naoqi)
 
 # examples

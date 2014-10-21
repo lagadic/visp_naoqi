@@ -41,6 +41,19 @@
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
+#include <romeo.hh>
+# include <metapod/tools/print.hh>
+# include <metapod/tools/initconf.hh>
+//# include <metapod/algos/jac.hh>
+#include <metapod/algos/jac_point_chain.hh>
+# include <metapod/tools/jcalc.hh>
+
+using namespace metapod;
+
+typedef double LocalFloatType;
+typedef romeo<LocalFloatType> RomeoModel;
+
+
 /*!
   Default constructor that set the default parameters as:
   - robot ip address: "198.18.0.1"
@@ -342,7 +355,46 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 {
   vpMatrix eJe;
 
-  if (chainName == "Head")
+  if (chainName == "Head_metapod")
+  {
+    RomeoModel::confVector q;
+    std::vector<float> qmp = m_motionProxy->getAngles("Head",true);
+        const unsigned int nJoints= qmp.size();
+        eJe.resize(6,nJoints);
+
+    for(unsigned int i=0;i<nJoints;i++)
+      q[i] = qmp[i];
+
+    RomeoModel robot;
+      jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
+
+      static const bool includeFreeFlyer = false;
+      static const int offset = 0;
+      typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::HeadRollLink, offset, includeFreeFlyer> jac;
+      jac::Jacobian J = jac::Jacobian::Zero();
+      jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+      for(unsigned int i=0;i<3;i++)
+        for(unsigned int j=0;j<nJoints;j++)
+        {
+          eJe[i][j]=J(i+3,RomeoModel::NeckYawLink+j-1);
+          eJe[i+3][j]=J(i,RomeoModel::NeckYawLink+j-1);
+
+        }
+
+
+
+      //std::cout << "metapod_Jac:" <<std::endl << J;
+
+
+
+
+
+
+
+  }
+
+  else if (chainName == "Head")
   {
     std::vector<float> q = m_motionProxy->getAngles(chainName,true);
 
