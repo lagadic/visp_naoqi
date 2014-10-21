@@ -209,7 +209,7 @@ public:
 
     \return The transformation matrix to the end-effectors (computed from the last joint of the chain ending with the end-effector. )
    */
-  vpHomogeneousMatrix getTransfEndEffector(const std::string &endEffectorName);
+  vpHomogeneousMatrix get_cMe(const std::string &endEffectorName);
 
   /*!
     Set the robot ip address.

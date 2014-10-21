@@ -479,11 +479,11 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 }
 
 
-  vpHomogeneousMatrix vpNaoqiRobot::getTransfEndEffector(const std::string &endEffectorName)
+  vpHomogeneousMatrix vpNaoqiRobot::get_cMe(const std::string &endEffectorName)
   {
     vpHomogeneousMatrix cMe;
 
-    // Transformation matrix from HeadRoll to CameraLeft
+    // Transformation matrix from CameraLeft to HeadRoll
     if (endEffectorName == "CameraLeft")
     {
       cMe[0][0] = -1.;
@@ -503,16 +503,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
       cMe[2][3] = -0.11999;
     }
 
-    // Transformation matrix from LWristPitch to TargetLArm
-    else if (endEffectorName == "TargetLArm")
-    {
-      cMe[0][3] = 0.05;
-      cMe[1][3] = 0.026;
-      cMe[2][3] = 0.0;
-    }
-
-
-    else
+   else
     {
       throw vpRobotException (vpRobotException::readingParametersError,
                               "Transformation matrix that you requested is not implemented. Valid values: CameraLeft.");

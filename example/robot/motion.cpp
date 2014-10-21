@@ -43,6 +43,7 @@
 #include <visp/vpMath.h>
 #include <visp/vpTime.h>
 #include <visp/vpColVector.h>
+#include <visp/vpVelocityTwistMatrix.h>
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
@@ -55,6 +56,52 @@ int main(int argc, char* argv[])
 
 
     robot.open();
+
+    {
+      // Velocity end effector
+      vpColVector v_o(6);
+      v_o = 0;
+      v_o[5] = vpMath::rad(5);
+
+      const std::string chainName = "LArm";
+
+      std::vector<std::string> jointNames = robot.getBodyNames(chainName);
+      jointNames.pop_back(); // Delete last joints LHand, that we don't consider in the servo
+
+
+      std::cout << "Test to apply a cartesian velocity to the object: " << v_o.t() << std::endl;
+      vpColVector q_dot;
+
+      // Constant transformation Target Frame to LArm end-effector (LWristPitch)
+      vpHomogeneousMatrix oMe_LArm;
+      oMe_LArm[0][3] = 0.05;
+      oMe_LArm[1][3] = 0.026;
+      oMe_LArm[2][3] = 0.0;
+      vpVelocityTwistMatrix oVe_LArm(oMe_LArm);
+      vpMatrix oJo; // Jacobian in the target (=object) frame
+
+      double t_initial = vpTime::measureTimeSecond();
+      while (vpTime::measureTimeSecond() < t_initial+7)
+      {
+        //** Set task eJe matrix
+        // Get the actual Jacobian of the Larm
+        vpMatrix eJe_LArm = robot.get_eJe("LArm");
+
+        std::cout << "Jacobian of the LArm: "<< std::endl << eJe_LArm << std::endl;
+
+        oJo = oVe_LArm * eJe_LArm;
+        std::cout << "Jacobian of the object: "<< std::endl << eJe_LArm << std::endl;
+
+        q_dot = oJo.pseudoInverse() * v_o;
+
+        std::cout << "q_dot: " << q_dot.t() << std::endl;
+
+        robot.setVelocity(jointNames, q_dot);
+      }
+
+      robot.stop(chainName);
+      return 0;
+    }
 
     {
       // Test with a vector of joints
@@ -177,7 +224,7 @@ int main(int argc, char* argv[])
     {
       //Get Transformation matrix between Frame HeadRoll and CameraLeft
 
-      vpHomogeneousMatrix cMe = robot.getTransfEndEffector("CameraLeft");
+      vpHomogeneousMatrix cMe = robot.get_cMe("CameraLeft");
       std::cout << "Transformation matrix between Frame HeadRoll and CameraLeft is : "<< cMe << std::endl;
     }
 
