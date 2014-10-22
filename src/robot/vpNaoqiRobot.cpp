@@ -358,21 +358,44 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 {
   vpMatrix eJe;
 
-  if (chainName == "Head_metapod")
+  if (chainName == "Head")
   {
+    //Jacobian matrix w.r.t the torso
+    vpMatrix tJe;
+
+    //confVector q for Romeo has size 24 (6 + 18dof of the robot, we don't consider the Legs and the fingers)
     RomeoModel::confVector q;
+
+    // Get the names of the joints in the chain we want to control
+    std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
+
+    // Get the angles of the joints in the chain we want to control
     std::vector<float> qmp = m_motionProxy->getAngles("Head",true);
-        const unsigned int nJoints= qmp.size();
-        eJe.resize(6,nJoints);
 
-    for(unsigned int i=0;i<nJoints;i++)
-       //q[i] = 0.5;
-      q[i] = qmp[i];
+     const unsigned int nJoints= qmp.size();
 
-    RomeoModel robot;
+     //Resize the Jacobians
+     eJe.resize(6,nJoints);
+     tJe.resize(6,nJoints);
+
+     // Create a robot instance of Metapod
+     RomeoModel robot;
+
+     //Get the index of the position of the q of the first joint of the chain in the confVector
+     int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYawLink>(robot.nodes).q_idx);
+
+
+     // Copy the angle values of the joint in the confVector in the right position
+     // In this case is +6 because in the first 6 positions there is the FreeFlyer
+     for(unsigned int i=0;i<nJoints;i++)
+       q[i+index_confVec] = qmp[i];
+
+     std::cout << "index:" << index_confVec<< std::endl;
+
+      // Compute the Jacobian tJe
       jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
 
-      static const bool includeFreeFlyer = false;
+      static const bool includeFreeFlyer = true;
       static const int offset = 0;
       typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::HeadRollLink, offset, includeFreeFlyer> jac;
       jac::Jacobian J = jac::Jacobian::Zero();
@@ -381,12 +404,33 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
       for(unsigned int i=0;i<3;i++)
         for(unsigned int j=0;j<nJoints;j++)
         {
-          eJe[i][j]=J(i+3,RomeoModel::NeckYawLink+j-1);
-          eJe[i+3][j]=J(i,RomeoModel::NeckYawLink+j-1);
+          tJe[i][j]=J(i+3, index_confVec +j);
+          tJe[i+3][j]=J(i, index_confVec +j);
 
         }
 
       std::cout << "metapod_Jac:" <<std::endl << J;
+
+      // Now we want to transform tJe to eJe
+
+      std::vector<float> torsoMHeadRoll_ = m_motionProxy->getTransform(jointNames[nJoints-1], 0, true); // get transformation  matrix between torso and HeadRoll
+      vpHomogeneousMatrix torsoMHeadRoll;
+      unsigned int k=0;
+      for(unsigned int i=0; i< 4; i++)
+        for(unsigned int j=0; j< 4; j++)
+          torsoMHeadRoll[i][j] = torsoMHeadRoll_[k++];
+
+      //std::cout << "torsoMHeadRoll:" <<std::endl << torsoMHeadRoll << std::endl;
+
+      vpVelocityTwistMatrix HeadRollVLtorso(torsoMHeadRoll.inverse());
+
+      for(unsigned int i=0; i< 3; i++)
+        for(unsigned int j=0; j< 3; j++)
+          HeadRollVLtorso[i][j+3] = 0;
+
+
+      // Transform the matrix
+      eJe = HeadRollVLtorso *tJe;
 
 
   }
@@ -463,16 +507,21 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     eJe.resize(6,nJoints);
     tJe.resize(6,nJoints);
 
-    // Copy the angle values of the joint in the confVector in the right position (to be improved to be general)
+    // Create a robot instance of Metapod
+    RomeoModel robot;
+
+    //Get the index of the position of the q of the first joint of the chain in the confVector
+    int index_confVec = (boost::fusion::at_c<RomeoModel::LShoulderPitchLink>(robot.nodes).q_idx);
+
+    // Copy the angle values of the joint in the confVector in the right position
     // In this case is +6 because in the first 6 positions there is the FreeFlyer
     for(unsigned int i=0;i<nJoints;i++)
-      q[i+6] = qmp[i];
+      q[i+index_confVec] = qmp[i];
 
-
+    std::cout << "index:" << index_confVec<< std::endl;
     //std::cout << "confVector:" <<std::endl << q << std::endl;
 
-    // Create a robot instance of Metapod and compute the Jacobian tJe
-    RomeoModel robot;
+    // Compute the Jacobian tJe
     jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
 
     static const bool includeFreeFlyer = false;
@@ -489,7 +538,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
       }
 
-    // std::cout << "metapod_Jac:" <<std::endl << J << std::endl;
+   std::cout << "metapod_Jac:" <<std::endl << J << std::endl;
 
     // Now we want to transform tJe to eJe
 
@@ -634,6 +683,27 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
       cMe[1][3] = 0.09938;
       cMe[2][3] = -0.11999;
     }
+
+    else if (endEffectorName == "CameraLeft_aldebaran")
+    {
+
+      vpHomogeneousMatrix eMc_ald;
+
+      eMc_ald[0][3] = 0.11999;
+      eMc_ald[1][3] = 0.04;
+      eMc_ald[2][3] = 0.09938;
+
+      vpHomogeneousMatrix cam_alMe_camvisp;
+      for(unsigned int i=0; i<3; i++)
+      cam_alMe_camvisp[i][i] = 0; // remove identity
+      cam_alMe_camvisp[0][2] = 1.;
+      cam_alMe_camvisp[1][0] = -1.;
+      cam_alMe_camvisp[2][1] = -1.;
+
+     cMe = (eMc_ald * cam_alMe_camvisp).inverse();
+
+    }
+
 
    else
     {
