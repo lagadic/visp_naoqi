@@ -17,8 +17,8 @@ include(metapod.cmake)
 set(model_name "romeo")
 
 ADD_SAMPLEURDFMODEL(${model_name})
-
 include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
+
 include_directories("include")
 qi_create_lib(visp_naoqi 
   SRC

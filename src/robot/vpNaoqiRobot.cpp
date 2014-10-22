@@ -363,6 +363,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
         eJe.resize(6,nJoints);
 
     for(unsigned int i=0;i<nJoints;i++)
+       //q[i] = 0.5;
       q[i] = qmp[i];
 
     RomeoModel robot;
@@ -382,63 +383,103 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
         }
 
-
-
-      //std::cout << "metapod_Jac:" <<std::endl << J;
-
-
-
-
-
+      std::cout << "metapod_Jac:" <<std::endl << J;
 
 
   }
 
-  else if (chainName == "Head")
-  {
-    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
+//  else if (chainName == "Head")
+//  {
+//    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
 
-    //std::cout << "Joint value:" << q << std::endl;
+//    //std::cout << "Joint value:" << q << std::endl;
 
-    const unsigned int nJoints= q.size();
+//    const unsigned int nJoints= q.size();
 
-    eJe.resize(6,nJoints);
+//    eJe.resize(6,nJoints);
 
-    double d3 = 0.09511;
+//    double d3 = 0.09511;
 
-    eJe[0][0]= d3*cos(q[4])*sin(q[2]);
-    eJe[1][0]= -d3*sin(q[2])*sin(q[4]);
-    eJe[2][0]= 0;
-    eJe[3][0]= cos(q[2] + q[3])*sin(q[4]);
-    eJe[4][0]= cos(q[2] + q[3])*cos(q[4]);
-    eJe[5][0]=  -sin(q[2] + q[3]);
+//    eJe[0][0]= d3*cos(q[4])*sin(q[2]);
+//    eJe[1][0]= -d3*sin(q[2])*sin(q[4]);
+//    eJe[2][0]= 0;
+//    eJe[3][0]= cos(q[2] + q[3])*sin(q[4]);
+//    eJe[4][0]= cos(q[2] + q[3])*cos(q[4]);
+//    eJe[5][0]=  -sin(q[2] + q[3]);
 
-    eJe[0][1]= d3*sin(q[3])*sin(q[4]);
-    eJe[1][1]= d3*cos(q[4])*sin(q[3]);
-    eJe[2][1]= d3*cos(q[3]);
-    eJe[3][1]=  cos(q[4]);
-    eJe[4][1]= -sin(q[4]);
-    eJe[5][1]= 0;
+//    eJe[0][1]= d3*sin(q[3])*sin(q[4]);
+//    eJe[1][1]= d3*cos(q[4])*sin(q[3]);
+//    eJe[2][1]= d3*cos(q[3]);
+//    eJe[3][1]=  cos(q[4]);
+//    eJe[4][1]= -sin(q[4]);
+//    eJe[5][1]= 0;
 
-    eJe[0][2]= 0;
-    eJe[1][2]= 0;
-    eJe[2][2]= 0;
-    eJe[3][2]= cos(q[4]);
-    eJe[4][2]= -sin(q[4]);
-    eJe[5][2]= 0;
+//    eJe[0][2]= 0;
+//    eJe[1][2]= 0;
+//    eJe[2][2]= 0;
+//    eJe[3][2]= cos(q[4]);
+//    eJe[4][2]= -sin(q[4]);
+//    eJe[5][2]= 0;
 
-    eJe[0][3]= 0;
-    eJe[1][3]= 0;
-    eJe[2][3]= 0;
-    eJe[3][3]= 0;
-    eJe[4][3]= 0;
-    eJe[5][3]= 1;
-  }
+//    eJe[0][3]= 0;
+//    eJe[1][3]= 0;
+//    eJe[2][3]= 0;
+//    eJe[3][3]= 0;
+//    eJe[4][3]= 0;
+//    eJe[5][3]= 1;
+//  }
   else if (chainName == "RArm")
   {
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Jacobian RArm not avaible yet");
   }
+
+
+
+  else if (chainName == "LArm_metapod")
+  {
+    RomeoModel::confVector q;
+
+
+    std::vector<float> qmp = m_motionProxy->getAngles("LArm",true);
+
+    qmp.pop_back(); // we don't consider the last joint LHand
+
+    //std::cout << "Joint value:" << q << std::endl;
+
+    const unsigned int nJoints = qmp.size();
+
+
+    eJe.resize(6,nJoints);
+
+    for(unsigned int i=0;i<nJoints;i++)
+      //q[i] =0;
+      q[i] = qmp[i];
+
+    RomeoModel robot;
+      jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
+
+      static const bool includeFreeFlyer = false;
+      static const int offset = 0;
+      typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::l_wrist, offset, includeFreeFlyer> jac;
+      jac::Jacobian J = jac::Jacobian::Zero();
+      jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+      for(unsigned int i=0;i<3;i++)
+        for(unsigned int j=0;j<nJoints;j++)
+        {
+          eJe[i][j]=J(i+3,RomeoModel::torso+j);
+          eJe[i+3][j]=J(i,RomeoModel::torso+j);
+
+        }
+
+      std::cout << "metapod_Jac:" <<std::endl << J << std::endl;
+
+
+  }
+
+
+
   else if (chainName == "LArm")
   {
 
