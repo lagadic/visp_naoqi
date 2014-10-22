@@ -512,9 +512,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     // Transform the matrix
     eJe = torsoVLWristP *tJe;
 
-    std::cout << "torsoVLWristP:" <<std::endl << torsoVLWristP << std::endl;
-
-
+   // std::cout << "torsoVLWristP:" <<std::endl << torsoVLWristP << std::endl;
 
 
   }
