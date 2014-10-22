@@ -155,10 +155,6 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const vpColVector &join
  */
 void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &jointVel, bool verbose)
 {
-  if (names.getSize() != jointVel.getSize() ) {
-    throw vpRobotException (vpRobotException::readingParametersError,
-                            "The dimensions of the joint array and the velocities array do not match.");
-  }
   std::vector<std::string> jointNames;
   if (names.isString()) // Suppose to be a chain
     jointNames = m_motionProxy->getBodyNames(names);
@@ -167,6 +163,11 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
   else
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Unable to decode the joint chain.");
+
+  if (jointNames.size() != jointVel.getSize() ) {
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "The dimensions of the joint array and the velocities array do not match.");
+  }
 
   for (unsigned i = 0 ; i < jointVel.getSize() ; ++i)
   {
