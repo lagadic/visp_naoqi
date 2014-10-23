@@ -639,9 +639,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
       }
 
-    std::cout << "metapod_Jac:" <<std::endl << J << std::endl;
-
-    std::cout << "metapod_Visp:" <<std::endl << tJe << std::endl;
 
     // Now we want to transform tJe to eJe
 
