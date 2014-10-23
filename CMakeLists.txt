@@ -10,13 +10,16 @@ find_package(qibuild)
 find_package(VISP REQUIRED)
 
 # include metapod library
-include(metapod.cmake)
+if(USE_METAPOD)
+  include(metapod.cmake)
+  #define and search for metapod library
+  #set(WITH_METAPODFROMURDF TRUE)
+  set(model_name "romeo")
 
-#define and search for metapod library
-#set(WITH_METAPODFROMURDF TRUE)
-set(model_name "romeo")
+  ADD_SAMPLEURDFMODEL(${model_name})
 
-ADD_SAMPLEURDFMODEL(${model_name})
+endif()
+
 
 include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
 include_directories("include")
@@ -29,7 +32,9 @@ qi_create_lib(visp_naoqi
 )
 
 qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
-target_link_libraries(visp_naoqi metapod_${model_name})
+if(USE_METAPOD)
+  target_link_libraries(visp_naoqi metapod_${model_name})
+endif()
 qi_stage_lib(visp_naoqi)
 
 # examples
