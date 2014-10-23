@@ -46,12 +46,34 @@
 
 #include <visp_naoqi/vpNaoqiGrabber.h>
 
+/*!
 
-int main(int argc, char* argv[])
+   Connect to Nao or Romeo robot, grab and display images using ViSP.
+   By default, this example connect to a robot with ip address: 198.18.0.1.
+   If you want to connect on an other robot, run:
+
+   ./image_viewer_visp -ip <robot ip address>
+
+   Example:
+
+   ./image_viewer_visp -ip 169.254.168.230
+ */
+int main(int argc, const char* argv[])
 {
   try
   {
+    std::string opt_ip;
+
+    if (argc == 3) {
+      if (std::string(argv[1]) == "-ip")
+        opt_ip = argv[2];
+    }
+
     vpNaoqiGrabber g;
+    if (! opt_ip.empty()) {
+      std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
+      g.setRobotIp(opt_ip);
+    }
 
     g.open();
 
