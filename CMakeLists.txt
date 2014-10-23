@@ -20,8 +20,8 @@ if(USE_METAPOD)
 
 endif()
 
-
 include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
+
 include_directories("include")
 qi_create_lib(visp_naoqi 
   SRC
@@ -46,6 +46,11 @@ qi_use_lib(image_viewer_opencv visp_naoqi)
 
 qi_create_bin(motion example/robot/motion.cpp)
 qi_use_lib(motion visp_naoqi)
+
+
+qi_create_bin(test_jacobian example/robot/test_jacobian.cpp)
+qi_use_lib(test_jacobian visp_naoqi)
+
 
 # doxygen
 find_package(Doxygen)

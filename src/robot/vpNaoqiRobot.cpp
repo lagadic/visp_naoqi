@@ -38,6 +38,7 @@
  *****************************************************************************/
 
 
+#include <visp/vpVelocityTwistMatrix.h>
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
@@ -329,6 +330,17 @@ vpNaoqiRobot::getJointMax(const AL::ALValue& names) const
   return max_limits;
 }
 
+
+/*!
+Gets the angles of the joints
+
+ \return Joint angles in radians.
+
+ \param names : Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+        useSensors – If true, sensor angles will be returned
+
+*/
+
 vpColVector vpNaoqiRobot::getPosition(const AL::ALValue& names, const bool& useSensors) const
 {
   std::vector<float> sensorAngles = m_motionProxy->getAngles(names, useSensors);
@@ -339,11 +351,32 @@ vpColVector vpNaoqiRobot::getPosition(const AL::ALValue& names, const bool& useS
 }
 
 
+/*!
+Set the position of the joints
+
+ \param names:  The name or names of joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+
+ \param angles: One or more angles in radians
+
+ \param fractionMaxSpeed – The fraction of maximum speed to use
+
+*/
+
 void vpNaoqiRobot::setPosition(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed)
 { 
   m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
 }
 
+/*!
+Set the position of the joints using vpColVector of Visp
+
+ \param names:  The name or names of joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+
+ \param jointPosition: One or more angles in radians (vpColVector)
+
+ \param fractionMaxSpeed – The fraction of maximum speed to use
+
+*/
 void vpNaoqiRobot::setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed)
 {
   std::vector<float> angles(jointPosition.size());
@@ -353,43 +386,88 @@ void vpNaoqiRobot::setPosition(const AL::ALValue& names, const vpColVector &join
   m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
 }
 
+/*!
+  Get Jacobian eJe for a joint chain.
+
+  \return Jacobian eJe starting from the torso
+
+  \param chainName : Name of the ChainName, can be "Head", "LArm" or "RArm".
+
+*/
 vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 {
   vpMatrix eJe;
 
-  if (chainName == "Head_metapod")
+  if (chainName == "Head")
   {
 #ifdef USE_METAPOD
+    //Jacobian matrix w.r.t the torso
+    vpMatrix tJe;
+
+    //confVector q for Romeo has size 24 (6 + 18dof of the robot, we don't consider the Legs and the fingers)
     RomeoModel::confVector q;
+
+    // Get the names of the joints in the chain we want to control
+    std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
+
+    // Get the angles of the joints in the chain we want to control
     std::vector<float> qmp = m_motionProxy->getAngles("Head",true);
-        const unsigned int nJoints= qmp.size();
-        eJe.resize(6,nJoints);
 
-    for(unsigned int i=0;i<nJoints;i++)
-      q[i] = qmp[i];
+    const unsigned int nJoints= qmp.size();
 
+    //Resize the Jacobians
+    eJe.resize(6,nJoints);
+    tJe.resize(6,nJoints);
+
+    // Create a robot instance of Metapod
     RomeoModel robot;
-      jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
 
-      static const bool includeFreeFlyer = false;
-      static const int offset = 0;
-      typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::HeadRollLink, offset, includeFreeFlyer> jac;
-      jac::Jacobian J = jac::Jacobian::Zero();
-      jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
-
-      for(unsigned int i=0;i<3;i++)
-        for(unsigned int j=0;j<nJoints;j++)
-        {
-          eJe[i][j]=J(i+3,RomeoModel::NeckYawLink+j-1);
-          eJe[i+3][j]=J(i,RomeoModel::NeckYawLink+j-1);
-
-        }
+    //Get the index of the position of the q of the first joint of the chain in the confVector
+    int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYawLink>(robot.nodes).q_idx);
 
 
+    // Copy the angle values of the joint in the confVector in the right position
+    // In this case is +6 because in the first 6 positions there is the FreeFlyer
+    for(unsigned int i=0;i<nJoints;i++)
+      q[i+index_confVec] = qmp[i];
 
-      //std::cout << "metapod_Jac:" <<std::endl << J;
+    // Compute the Jacobian tJe
+    jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
+
+    static const bool includeFreeFlyer = true;
+    static const int offset = 0;
+    typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::HeadRollLink, offset, includeFreeFlyer> jac;
+    jac::Jacobian J = jac::Jacobian::Zero();
+    jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+    for(unsigned int i=0;i<3;i++)
+      for(unsigned int j=0;j<nJoints;j++)
+      {
+        tJe[i][j]=J(i+3, index_confVec +j);
+        tJe[i+3][j]=J(i, index_confVec +j);
+
+      }
+
+    //std::cout << "metapod_Jac:" <<std::endl << J;
+
+    // Now we want to transform tJe to eJe
+
+    std::vector<float> torsoMHeadRoll_ = m_motionProxy->getTransform(jointNames[nJoints-1], 0, true); // get transformation  matrix between torso and HeadRoll
+    vpHomogeneousMatrix torsoMHeadRoll;
+    unsigned int k=0;
+    for(unsigned int i=0; i< 4; i++)
+      for(unsigned int j=0; j< 4; j++)
+        torsoMHeadRoll[i][j] = torsoMHeadRoll_[k++];
+
+    vpVelocityTwistMatrix HeadRollVLtorso(torsoMHeadRoll.inverse());
+
+    for(unsigned int i=0; i< 3; i++)
+      for(unsigned int j=0; j< 3; j++)
+        HeadRollVLtorso[i][j+3] = 0;
 
 
+    // Transform the matrix
+    eJe = HeadRollVLtorso *tJe;
 
 #else
     throw vpRobotException (vpRobotException::readingParametersError,
@@ -397,55 +475,203 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 #endif
 
 
-
   }
 
-  else if (chainName == "Head")
+  //  else if (chainName == "Head")
+  //  {
+  //    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
+
+  //    //std::cout << "Joint value:" << q << std::endl;
+
+  //    const unsigned int nJoints= q.size();
+
+  //    eJe.resize(6,nJoints);
+
+  //    double d3 = 0.09511;
+
+  //    eJe[0][0]= d3*cos(q[4])*sin(q[2]);
+  //    eJe[1][0]= -d3*sin(q[2])*sin(q[4]);
+  //    eJe[2][0]= 0;
+  //    eJe[3][0]= cos(q[2] + q[3])*sin(q[4]);
+  //    eJe[4][0]= cos(q[2] + q[3])*cos(q[4]);
+  //    eJe[5][0]=  -sin(q[2] + q[3]);
+
+  //    eJe[0][1]= d3*sin(q[3])*sin(q[4]);
+  //    eJe[1][1]= d3*cos(q[4])*sin(q[3]);
+  //    eJe[2][1]= d3*cos(q[3]);
+  //    eJe[3][1]=  cos(q[4]);
+  //    eJe[4][1]= -sin(q[4]);
+  //    eJe[5][1]= 0;
+
+  //    eJe[0][2]= 0;
+  //    eJe[1][2]= 0;
+  //    eJe[2][2]= 0;
+  //    eJe[3][2]= cos(q[4]);
+  //    eJe[4][2]= -sin(q[4]);
+  //    eJe[5][2]= 0;
+
+  //    eJe[0][3]= 0;
+  //    eJe[1][3]= 0;
+  //    eJe[2][3]= 0;
+  //    eJe[3][3]= 0;
+  //    eJe[4][3]= 0;
+  //    eJe[5][3]= 1;
+  //  }
+
+  else if (chainName == "LArm")
   {
-    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
+    //Jacobian matrix w.r.t the torso
+    vpMatrix tJe;
 
-    //std::cout << "Joint value:" << q << std::endl;
+    //confVector q for Romeo has size 24 (6 + 18dof of the robot, we don't consider the Legs and the fingers)
+    RomeoModel::confVector q;
 
-    const unsigned int nJoints= q.size();
+    // Get the names of the joints in the chain we want to control
+    std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
+    jointNames.pop_back(); // Delete last joints LHand, that we don't consider in the servo
 
+    // Get the angles of the joints in the chain we want to control
+    std::vector<float> qmp = m_motionProxy->getAngles(chainName,true);
+    qmp.pop_back(); // we don't consider the last joint LHand
+
+    const unsigned int nJoints = qmp.size();
+
+    //Resize the Jacobians
     eJe.resize(6,nJoints);
+    tJe.resize(6,nJoints);
 
-    double d3 = 0.09511;
+    // Create a robot instance of Metapod
+    RomeoModel robot;
 
-    eJe[0][0]= d3*cos(q[4])*sin(q[2]);
-    eJe[1][0]= -d3*sin(q[2])*sin(q[4]);
-    eJe[2][0]= 0;
-    eJe[3][0]= cos(q[2] + q[3])*sin(q[4]);
-    eJe[4][0]= cos(q[2] + q[3])*cos(q[4]);
-    eJe[5][0]=  -sin(q[2] + q[3]);
+    //Get the index of the position of the q of the first joint of the chain in the confVector
+    int index_confVec = (boost::fusion::at_c<RomeoModel::LShoulderPitchLink>(robot.nodes).q_idx);
 
-    eJe[0][1]= d3*sin(q[3])*sin(q[4]);
-    eJe[1][1]= d3*cos(q[4])*sin(q[3]);
-    eJe[2][1]= d3*cos(q[3]);
-    eJe[3][1]=  cos(q[4]);
-    eJe[4][1]= -sin(q[4]);
-    eJe[5][1]= 0;
+    // Copy the angle values of the joint in the confVector in the right position
+    // In this case is +6 because in the first 6 positions there is the FreeFlyer
+    for(unsigned int i=0;i<nJoints;i++)
+      q[i+index_confVec] = qmp[i];
 
-    eJe[0][2]= 0;
-    eJe[1][2]= 0;
-    eJe[2][2]= 0;
-    eJe[3][2]= cos(q[4]);
-    eJe[4][2]= -sin(q[4]);
-    eJe[5][2]= 0;
+    // Compute the Jacobian tJe
+    jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
 
-    eJe[0][3]= 0;
-    eJe[1][3]= 0;
-    eJe[2][3]= 0;
-    eJe[3][3]= 0;
-    eJe[4][3]= 0;
-    eJe[5][3]= 1;
+    static const bool includeFreeFlyer = false;
+    static const int offset = 0;
+    typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::l_wrist, offset, includeFreeFlyer> jac;
+    jac::Jacobian J = jac::Jacobian::Zero();
+    jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+    for(unsigned int i=0;i<3;i++)
+      for(unsigned int j=0;j<nJoints;j++)
+      {
+        tJe[i][j]=J(i+3,RomeoModel::torso+j);
+        tJe[i+3][j]=J(i,RomeoModel::torso+j);
+
+      }
+
+    //std::cout << "metapod_Jac:" <<std::endl << J << std::endl;
+
+    // Now we want to transform tJe to eJe
+
+    std::vector<float> torsoMLWristP_ = m_motionProxy->getTransform(jointNames[nJoints-1], 0, true); // get transformation  matrix between torso and LWristPitch
+    vpHomogeneousMatrix torsoMLWristP;
+    unsigned int k=0;
+    for(unsigned int i=0; i< 4; i++)
+      for(unsigned int j=0; j< 4; j++)
+        torsoMLWristP[i][j] = torsoMLWristP_[k++];
+
+
+    vpVelocityTwistMatrix torsoVLWristP(torsoMLWristP.inverse());
+
+    for(unsigned int i=0; i< 3; i++)
+      for(unsigned int j=0; j< 3; j++)
+        torsoVLWristP[i][j+3] = 0;
+
+
+    // Transform the matrix
+    eJe = torsoVLWristP *tJe;
+
+
   }
+
+
   else if (chainName == "RArm")
   {
-    throw vpRobotException (vpRobotException::readingParametersError,
-                            "Jacobian RArm not avaible yet");
+    //Jacobian matrix w.r.t the torso
+    vpMatrix tJe;
+
+    //confVector q for Romeo has size 24 (6 + 18dof of the robot, we don't consider the Legs and the fingers)
+    RomeoModel::confVector q;
+
+    // Get the names of the joints in the chain we want to control
+    std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
+    jointNames.pop_back(); // Delete last joints LHand, that we don't consider in the servo
+
+    // Get the angles of the joints in the chain we want to control
+    std::vector<float> qmp = m_motionProxy->getAngles(chainName,true);
+    qmp.pop_back(); // we don't consider the last joint LHand
+
+    const unsigned int nJoints = qmp.size();
+
+    //Resize the Jacobians
+    eJe.resize(6,nJoints);
+    tJe.resize(6,nJoints);
+
+    // Create a robot instance of Metapod
+    RomeoModel robot;
+
+    //Get the index of the position of the q of the first joint of the chain in the confVector
+    int index_confVec = (boost::fusion::at_c<RomeoModel::RShoulderPitchLink>(robot.nodes).q_idx);
+
+    // Copy the angle values of the joint in the confVector in the right position
+    // In this case is +6 because in the first 6 positions there is the FreeFlyer
+    for(unsigned int i=0;i<nJoints;i++)
+      q[i+index_confVec] = qmp[i];
+
+    // Compute the Jacobian tJe
+    jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
+
+    static const bool includeFreeFlyer = true;
+    static const int offset = 0;
+    typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::r_wrist, offset, includeFreeFlyer> jac;
+    jac::Jacobian J = jac::Jacobian::Zero();
+    jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+    for(unsigned int i=0;i<3;i++)
+      for(unsigned int j=0;j<nJoints;j++)
+      {
+        tJe[i][j]=J(i+3,index_confVec+j);
+        tJe[i+3][j]=J(i,index_confVec+j);
+
+      }
+
+
+    // Now we want to transform tJe to eJe
+
+    std::vector<float> torsoMRWristP_ = m_motionProxy->getTransform(jointNames[nJoints-1], 0, true); // get transformation  matrix between torso and RWristPitch
+    vpHomogeneousMatrix torsoMRWristP;
+    unsigned int k=0;
+    for(unsigned int i=0; i< 4; i++)
+      for(unsigned int j=0; j< 4; j++)
+        torsoMRWristP[i][j] = torsoMRWristP_[k++];
+
+
+    vpVelocityTwistMatrix torsoVRWristP(torsoMRWristP.inverse());
+
+    for(unsigned int i=0; i< 3; i++)
+      for(unsigned int j=0; j< 3; j++)
+        torsoVRWristP[i][j+3] = 0;
+
+
+    // Transform the matrix
+    eJe = torsoVRWristP *tJe;
+
+
   }
-  else if (chainName == "LArm")
+
+
+
+
+  else if (chainName == "LArm_old")
   {
 
     std::vector<float> q = m_motionProxy->getAngles(chainName,true);
@@ -529,42 +755,69 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
   {
 
     throw vpRobotException (vpRobotException::readingParametersError,
-                            "End-effector name not recognized. Please choose one above 'Head', 'Larm' or 'Rarm' ");
+                            "End-effector name not recognized. Please choose one above 'Head', 'LArm' or 'RArm' ");
 
   }
   return eJe;
 
 }
 
+/*!
+  Get Homogeneous matrix cMe: from the camera to the last joint of the chain (HeadRoll).
 
-  vpHomogeneousMatrix vpNaoqiRobot::get_cMe(const std::string &endEffectorName)
+  \return Homogeneous matrix cMe: from the camera to the last joint of the chain (HeadRoll).
+
+  \param endEffectorName : Name of the camera.
+
+*/
+vpHomogeneousMatrix vpNaoqiRobot::get_cMe(const std::string &endEffectorName)
+{
+  vpHomogeneousMatrix cMe;
+
+  // Transformation matrix from CameraLeft to HeadRoll
+  if (endEffectorName == "CameraLeft")
   {
-    vpHomogeneousMatrix cMe;
+    cMe[0][0] = -1.;
+    cMe[1][0] = 0.;
+    cMe[2][0] =  0.;
 
-    // Transformation matrix from CameraLeft to HeadRoll
-    if (endEffectorName == "CameraLeft")
-    {
-      cMe[0][0] = -1.;
-      cMe[1][0] = 0.;
-      cMe[2][0] =  0.;
+    cMe[0][1] = 0.;
+    cMe[1][1] = -1.;
+    cMe[2][1] =  0.;
 
-      cMe[0][1] = 0.;
-      cMe[1][1] = -1.;
-      cMe[2][1] =  0.;
+    cMe[0][2] = 0.;
+    cMe[1][2] = 0.;
+    cMe[2][2] =  1.;
 
-      cMe[0][2] = 0.;
-      cMe[1][2] = 0.;
-      cMe[2][2] =  1.;
-
-      cMe[0][3] = 0.04;
-      cMe[1][3] = 0.09938;
-      cMe[2][3] = -0.11999;
-    }
-
-   else
-    {
-      throw vpRobotException (vpRobotException::readingParametersError,
-                              "Transformation matrix that you requested is not implemented. Valid values: CameraLeft.");
-    }
-    return cMe;
+    cMe[0][3] = 0.04;
+    cMe[1][3] = 0.09938;
+    cMe[2][3] = -0.11999;
   }
+
+  else if (endEffectorName == "CameraLeft_aldebaran")
+  {
+
+    vpHomogeneousMatrix eMc_ald;
+    eMc_ald[0][3] = 0.11999;
+    eMc_ald[1][3] = 0.04;
+    eMc_ald[2][3] = 0.09938;
+
+    vpHomogeneousMatrix cam_alMe_camvisp;
+    for(unsigned int i=0; i<3; i++)
+      cam_alMe_camvisp[i][i] = 0; // remove identity
+    cam_alMe_camvisp[0][2] = 1.;
+    cam_alMe_camvisp[1][0] = -1.;
+    cam_alMe_camvisp[2][1] = -1.;
+
+    cMe = (eMc_ald * cam_alMe_camvisp).inverse();
+
+  }
+
+
+  else
+  {
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Transformation matrix that you requested is not implemented. Valid values: CameraLeft.");
+  }
+  return cMe;
+}
