@@ -520,6 +520,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
   else if (chainName == "LArm")
   {
+#ifdef USE_METAPOD
     //Jacobian matrix w.r.t the torso
     vpMatrix tJe;
 
@@ -589,13 +590,17 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
     // Transform the matrix
     eJe = torsoVLWristP *tJe;
+#else
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Metapod is not installed");
 
-
+#endif // #ifdef USE_METAPOD
   }
 
 
   else if (chainName == "RArm")
   {
+#ifdef USE_METAPOD
     //Jacobian matrix w.r.t the torso
     vpMatrix tJe;
 
@@ -664,6 +669,11 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
     // Transform the matrix
     eJe = torsoVRWristP *tJe;
+#else
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Metapod is not installed");
+
+#endif // #ifdef USE_METAPOD
 
 
   }

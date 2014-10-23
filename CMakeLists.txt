@@ -9,6 +9,8 @@ find_package(qibuild)
 
 find_package(VISP REQUIRED)
 
+option(USE_METAPOD "Enable Metapod usage" ON)
+
 # include metapod library
 if(USE_METAPOD)
   include(metapod.cmake)
@@ -18,9 +20,10 @@ if(USE_METAPOD)
 
   ADD_SAMPLEURDFMODEL(${model_name})
 
+  include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
+  add_definition("-DUSE_METAPOD")
 endif()
 
-include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
 
 include_directories("include")
 qi_create_lib(visp_naoqi 
@@ -47,6 +50,8 @@ qi_use_lib(image_viewer_opencv visp_naoqi)
 qi_create_bin(motion example/robot/motion.cpp)
 qi_use_lib(motion visp_naoqi)
 
+qi_create_bin(head_control_head example/robot/head_control_head.cpp)
+qi_use_lib(head_control_head visp_naoqi)
 
 qi_create_bin(test_jacobian example/robot/test_jacobian.cpp)
 qi_use_lib(test_jacobian visp_naoqi)
