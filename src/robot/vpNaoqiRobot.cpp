@@ -330,6 +330,17 @@ vpNaoqiRobot::getJointMax(const AL::ALValue& names) const
   return max_limits;
 }
 
+
+/*!
+Gets the angles of the joints
+
+ \return Joint angles in radians.
+
+ \param names : Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+        useSensors – If true, sensor angles will be returned
+
+*/
+
 vpColVector vpNaoqiRobot::getPosition(const AL::ALValue& names, const bool& useSensors) const
 {
   std::vector<float> sensorAngles = m_motionProxy->getAngles(names, useSensors);
@@ -340,11 +351,32 @@ vpColVector vpNaoqiRobot::getPosition(const AL::ALValue& names, const bool& useS
 }
 
 
+ /*!
+Set the position of the joints
+
+ \param names:  The name or names of joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+
+ \param angles: One or more angles in radians
+
+ \param fractionMaxSpeed – The fraction of maximum speed to use
+
+*/
+
 void vpNaoqiRobot::setPosition(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed)
 { 
   m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
 }
 
+/*!
+Set the position of the joints using vpColVector of Visp
+
+ \param names:  The name or names of joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+
+ \param jointPosition: One or more angles in radians (vpColVector)
+
+ \param fractionMaxSpeed – The fraction of maximum speed to use
+
+*/
 void vpNaoqiRobot::setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed)
 {
   std::vector<float> angles(jointPosition.size());
@@ -354,6 +386,14 @@ void vpNaoqiRobot::setPosition(const AL::ALValue& names, const vpColVector &join
   m_motionProxy->setAngles(names, angles, fractionMaxSpeed);
 }
 
+/*!
+  Get Jacobian eJe for a joint chain.
+
+  \return Jacobian eJe starting from the torso
+
+  \param chainName : Name of the ChainName, can be "Head", "LArm" or "RArm".
+
+*/
 vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 {
   vpMatrix eJe;
@@ -566,8 +606,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
   }
 
-
-
   else if (chainName == "LArm_old")
   {
 
@@ -659,7 +697,14 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
 }
 
+/*!
+  Get Homogeneous matrix cMe: from the camera to the last joint of the chain (HeadRoll).
 
+  \return Homogeneous matrix cMe: from the camera to the last joint of the chain (HeadRoll).
+
+  \param endEffectorName : Name of the camera.
+
+*/
   vpHomogeneousMatrix vpNaoqiRobot::get_cMe(const std::string &endEffectorName)
   {
     vpHomogeneousMatrix cMe;
@@ -688,7 +733,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     {
 
       vpHomogeneousMatrix eMc_ald;
-
       eMc_ald[0][3] = 0.11999;
       eMc_ald[1][3] = 0.04;
       eMc_ald[2][3] = 0.09938;
