@@ -42,6 +42,11 @@ qi_use_lib(image_viewer_opencv visp_naoqi)
 qi_create_bin(motion example/robot/motion.cpp)
 qi_use_lib(motion visp_naoqi)
 
+
+qi_create_bin(test_jacobian example/robot/test_jacobian.cpp)
+qi_use_lib(test_jacobian visp_naoqi)
+
+
 # doxygen
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
