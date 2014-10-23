@@ -41,6 +41,7 @@
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
+#ifdef USE_METAPOD
 #include <romeo.hh>
 # include <metapod/tools/print.hh>
 # include <metapod/tools/initconf.hh>
@@ -52,7 +53,7 @@ using namespace metapod;
 
 typedef double LocalFloatType;
 typedef romeo<LocalFloatType> RomeoModel;
-
+#endif
 
 /*!
   Default constructor that set the default parameters as:
@@ -358,6 +359,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
   if (chainName == "Head_metapod")
   {
+#ifdef USE_METAPOD
     RomeoModel::confVector q;
     std::vector<float> qmp = m_motionProxy->getAngles("Head",true);
         const unsigned int nJoints= qmp.size();
@@ -389,7 +391,10 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
 
 
-
+#else
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Metapod is not installed");
+#endif
 
 
 
