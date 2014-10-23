@@ -130,6 +130,15 @@ public:
   }
 
   /*!
+    Return the ip address used to access to the robot.
+   */
+  std::string getRobotIp() const { return m_robotIp; }
+  /*!
+    Return the Ethernet port used to access to the robot.
+   */
+  int getRobotPort() const { return m_robotPort; }
+
+  /*!
     Open the connection with the robot.
     All the parameters should be set before calling this function.
     \code

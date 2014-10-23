@@ -155,6 +155,11 @@ public:
    return m_motionProxy;
  }
 
+ /*!
+   Return the ip address used to access to the robot.
+  */
+ std::string getRobotIp() const { return m_robotIp; }
+
   /*!
     Open the connection with the robot.
     All the parameters should be set before calling this function.
@@ -169,7 +174,6 @@ public:
     }
     \endcode
    */
-
   void open();
 
   /*!
