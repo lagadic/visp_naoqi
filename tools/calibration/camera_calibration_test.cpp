@@ -56,12 +56,17 @@
 #include <visp/vpDisplayOpenCV.h>
 #include <visp/vpDisplayD3D.h>
 #include <visp/vpDisplayGTK.h>
+#include <visp/vpDot2.h>
 #include <visp/vpIoTools.h>
 #include <visp/vpPoint.h>
 #include <visp/vpVideoReader.h>
 #include <visp/vpXmlParserCamera.h>
+#include <visp/vpPose.h>
+#include <visp/vpPixelMeterConversion.h>
+#include <visp/vpXmlParserCamera.h>
 
 #include <visp_naoqi/vpNaoqiGrabber.h>
+#include <visp_naoqi/vpNaoqiRobot.h>
 
 enum {
   NEW_IMAGE,
@@ -144,8 +149,6 @@ private:
 int main(int argc, const char ** argv)
 {
   try {
-    std::string outputFileName = "camera.xml";
-
     Settings s;
     const std::string inputSettingsFile = argc > 1 ? argv[1] : "default.cfg";
     if (! s.read(inputSettingsFile) ) {
@@ -163,9 +166,32 @@ int main(int argc, const char ** argv)
     // Start the calibration code
     vpImage<unsigned char> I;
 
+    vpNaoqiRobot robot;
+    robot.open();
+
     vpNaoqiGrabber g;
     g.open();
     g.acquire(I);
+
+    char filename[FILENAME_MAX];
+    vpCameraParameters cam;
+    vpXmlParserCamera p; // Create a XML parser
+    vpCameraParameters::vpCameraParametersProjType projModel; // Projection model
+    // Use a perspective projection model without distortion
+    projModel = vpCameraParameters::perspectiveProjWithDistortion;
+    // Parse the xml file "myXmlFile.xml" to find the intrinsic camera
+    // parameters of the camera named "myCamera" for the image sizes 640x480,
+    // for the projection model projModel. The size of the image is optional
+    // if camera parameters are given only for one image size.
+    sprintf(filename, "%s", "camera.xml");
+    if (p.parse(cam, filename, "Camera", projModel, I.getWidth(), I.getHeight()) != vpXmlParserCamera::SEQUENCE_OK) {
+      std::cout << "Cannot found camera parameters in file: " << filename << std::endl;
+      std::cout << "Loading default camera parameters" << std::endl;
+      cam.initPersProjWithoutDistortion(342.82, 342.60, 174.552518, 109.978367);
+    }
+
+    std::cout << "Camera parameters: " << cam << std::endl;
+
 
 #ifdef VISP_HAVE_X11
     vpDisplayX d(I);
@@ -178,7 +204,6 @@ int main(int argc, const char ** argv)
 #endif
 
     std::vector<vpPoint> model;
-    std::vector<vpCalibration> calibrator;
 
     for (int i=0; i< s.boardSize.height; i++) {
       for (int j=0; j< s.boardSize.width; j++) {
@@ -188,10 +213,8 @@ int main(int argc, const char ** argv)
       }
     }
 
-
     int nb_data = 0;
     int status = NEW_IMAGE;
-    char filename[FILENAME_MAX];
     std::vector<vpHomogeneousMatrix> t_cMo;
     std::vector<vpHomogeneousMatrix> t_tMh;
     vpHomogeneousMatrix hMc;
@@ -207,10 +230,30 @@ int main(int argc, const char ** argv)
         sprintf(filename, "/tmp/I%03d.png", nb_data);
         vpImageIo::write(I, filename);
 
+
+
+        std::vector<float> torsoMHead_ = robot.getProxy()->getTransform("HeadRoll", 0, true); // get torsoMHead of Aldebaran
+        vpHomogeneousMatrix torsoMHead;
+        unsigned int k=0;
+        for(unsigned int i=0; i< 4; i++)
+          for(unsigned int j=0; j< 4; j++)
+            torsoMHead[i][j] = torsoMHead_[k++];
+
+        std::cout << "Torso M Head:\n" << torsoMHead << std::endl;
+
+
+        sprintf(filename, "/tmp/tMh_%03d.txt", nb_data);
+        std::cout << "Save tMh to " << filename << std::endl;
+        std::ofstream f(filename);
+        torsoMHead.save(f);
+        t_tMh.push_back(torsoMHead);
+
         nb_data ++;
+
       }
       else if (ret && button ==vpMouseButton::button3) {
         status = CALIBRATE;
+
       }
       vpDisplay::flush(I);
     }
@@ -275,26 +318,38 @@ int main(int argc, const char ** argv)
         }
 
         // Calibration on a single mono image
-        vpCalibration calib;
-        calib.setLambda(0.5);
-        calib.clearPoint();
-        for (unsigned int i=0; i<model.size(); i++) {
-          calib.addPoint(model[i].get_oX(), model[i].get_oY(), model[i].get_oZ(), data[i]);
-        }
+        vpPose pose;
+        vpPoint P;
         vpHomogeneousMatrix cMo;
-        vpCameraParameters cam;
+        double x=0., y=0.;
+
+        for (unsigned int i=0; i<model.size(); i++) {
+          P.setWorldCoordinates(model[i].get_oX(), model[i].get_oY(), model[i].get_oZ());
+          vpPixelMeterConversion::convertPoint(cam, data[i], x, y);
+          P.set_x(x);
+          P.set_y(y);
+          pose.addPoint(P);
+        }
 
         // Set (u0,v0) in the middle of the image
-        double px = cam.get_px();
-        double py = cam.get_py();
-        double u0 = I.getWidth()/2;
-        double v0 = I.getHeight()/2;
-        cam.initPersProjWithoutDistortion(px, py, u0, v0);
+        //        double px = cam.get_px();
+        //        double py = cam.get_py();
+        //        double u0 = I.getWidth()/2;
+        //        double v0 = I.getHeight()/2;
+        //        cam.initPersProjWithoutDistortion(px, py, u0, v0);
 
-        if (calib.computeCalibration(vpCalibration::CALIB_VIRTUAL_VS, cMo, cam, false) == 0) {
-          //std::cout << "camera parameters: " << cam << std::endl;
-          calibrator.push_back(calib);
-        }
+        pose.computePose(vpPose::DEMENTHON_VIRTUAL_VS, cMo);
+        pose.computePose(vpPose::VIRTUAL_VS, cMo) ;
+        t_cMo.push_back(cMo);
+
+        std::cout << "Estimated pose on input data " << data_index << ": " << vpPoseVector(cMo).t() << std::endl;
+        std::cout << "Estimated pose on input data:\n " << cMo << std::endl;
+        sprintf(filename, "/tmp/cMo_%03d.txt", data_index);
+        std::cout << "Save cMo to " << filename << std::endl;
+        std::ofstream f(filename);
+        cMo.save(f);
+        vpDisplay::displayFrame(I, cMo, cam, 2*s.squareSize, vpColor::none, 3);
+        vpDisplay::flush(I);
       }
 
       if (found)
@@ -313,54 +368,9 @@ int main(int argc, const char ** argv)
       }
     }
 
-    // Now we consider the multi image calibration
-    // Calibrate by a non linear method based on virtual visual servoing
-    if (calibrator.empty()) {
-      std::cerr << "Unable to calibrate. Image processing failed !" << std::endl;
-      return 0;
-    }
-
-    std::cout << "\nCalibration without distorsion in progress on " << calibrator.size() << " images..." << std::endl;
-    vpCameraParameters cam;
-    double error;
-    if (vpCalibration::computeCalibrationMulti(vpCalibration::CALIB_VIRTUAL_VS, calibrator, cam, error, false) == 0) {
-      std::cout << cam << std::endl;
-      std::cout << "Global reprojection error: " << error << std::endl;
-#ifdef VISP_HAVE_XML2
-      vpXmlParserCamera xml;
-
-      if(xml.save(cam, outputFileName.c_str(), "Camera", I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
-        std::cout << "Camera parameters without distortion successfully saved in \"" << outputFileName << "\"" << std::endl;
-      else {
-        std::cout << "Failed to save the camera parameters without distortion in \"" << outputFileName << "\"" << std::endl;
-        std::cout << "A file with the same name exists. Remove it to be able to save the parameters..." << std::endl;
-      }
-#endif
-    }
-    else
-      std::cout << "Calibration without distortion failed." << std::endl;
-
-    std::cout << "\nCalibration with distorsion in progress on " << calibrator.size() << " images..." << std::endl;
-    if (vpCalibration::computeCalibrationMulti(vpCalibration::CALIB_VIRTUAL_VS_DIST, calibrator, cam, error, false) == 0) {
-      std::cout << cam << std::endl;
-      std::cout << "Global reprojection error: " << error << std::endl;
-
-#ifdef VISP_HAVE_XML2
-      vpXmlParserCamera xml;
-
-      if(xml.save(cam, outputFileName.c_str(), "Camera", I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
-        std::cout << "Camera parameters without distortion successfully saved in \"" << outputFileName << "\"" << std::endl;
-      else {
-        std::cout << "Failed to save the camera parameters without distortion in \"" << outputFileName << "\"" << std::endl;
-        std::cout << "A file with the same name exists. Remove it to be able to save the parameters..." << std::endl;
-      }
-#endif
-      std::cout << std::endl;
-    }
-    else
-      std::cout << "Calibration with distortion failed." << std::endl;
-
-    return 0;
+    // Tsai calibration
+    vpCalibration::calibrationTsai(t_cMo, t_tMh, hMc);
+    std::cout << "Extrinsic camera parameters: " << hMc << std::endl;
   }
   catch(vpException e) {
     std::cout << "Catch an exception: " << e << std::endl;
