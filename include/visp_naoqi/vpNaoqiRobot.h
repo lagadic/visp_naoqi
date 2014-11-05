@@ -102,6 +102,26 @@ public:
   void cleanup();
 
   /*!
+    Type of Robots
+  */
+typedef enum
+  {
+     robot_type_ROMEO,
+     robot_type_NAO
+
+  }robot_type;
+
+  /*!
+    Get the type of Robot
+
+   \return type of Robot
+   */
+  vpNaoqiRobot::robot_type getTypeRobot() const
+  {
+     return m_robot_type;
+  }
+
+  /*!
     Get the Jacobian specifying an end effector chain name.
 
     \param chainName : Name of the end effector. Allowed values are "Head",
@@ -240,6 +260,7 @@ protected:
   std::string m_robotIp; //!<  Robot Ethernet address
   bool m_isOpen; //!< Proxy opened status
   bool m_collisionProtection; //!< Collition protection enabling status
+  vpNaoqiRobot::robot_type m_robot_type;
 };
 
 #endif

@@ -46,7 +46,6 @@
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
-#define NAO
 
 
 /*!
@@ -84,15 +83,20 @@ int main(int argc, char* argv[])
     {
       // Test with a vector of joints
       std::vector<std::string> jointNames;
-#ifdef ROMEO
-      jointNames.push_back("NeckYaw");
-      jointNames.push_back("NeckPitch");
-#elif defined(NAO)
-      jointNames.push_back("HeadYaw");
-      jointNames.push_back("HeadPitch");
-#else
-#  error "You should have Romeo or Nao"
-#endif
+      if (robot.getTypeRobot() == robot.robot_type_ROMEO)
+      {
+        jointNames.push_back("NeckYaw");
+        jointNames.push_back("NeckPitch");
+      }
+      else if (robot.getTypeRobot() == robot.robot_type_NAO)
+      {
+        jointNames.push_back("HeadYaw");
+        jointNames.push_back("HeadPitch");
+      }
+      else
+        throw vpRobotException (vpRobotException::readingParametersError,
+                                "Unable to Recognize the type of the Robot.");
+
 
       std::cout << "Test " << jointNames << " velocity control" << std::endl;
 
