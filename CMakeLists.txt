@@ -59,8 +59,8 @@ qi_use_lib(test_jacobian visp_naoqi)
 qi_create_bin(camera_calibration tools/calibration/camera_calibration.cpp)
 qi_use_lib(camera_calibration visp_naoqi)
 
-qi_create_bin(camera_calibration_test tools/calibration/camera_calibration_test.cpp)
-qi_use_lib(camera_calibration_test visp_naoqi)
+qi_create_bin(camera_calibration_ext tools/calibration/camera_calibration_ext.cpp)
+qi_use_lib(camera_calibration_ext visp_naoqi)
 
 # doxygen
 find_package(Doxygen)
