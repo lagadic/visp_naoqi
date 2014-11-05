@@ -109,7 +109,7 @@ void vpNaoqiRobot::open()
 
     AL::ALValue one = AL::ALValue::array(std::string("ENABLE_DCM_LIKE_CLAMPING"),AL::ALValue(0));
     AL::ALValue two = AL::ALValue::array(std::string("CONTROL_USE_ACCELERATION_INTERPOLATOR"),AL::ALValue(1));
-    AL::ALValue tree = AL::ALValue::array(std::string("CONTROL_JOINT_MAX_ACCELERATION"),AL::ALValue(2.5));
+    AL::ALValue tree = AL::ALValue::array(std::string("CONTROL_JOINT_MAX_ACCELERATION"),AL::ALValue(5));
     config.arrayPush(one);
     config.arrayPush(two);
     config.arrayPush(tree);
@@ -256,8 +256,15 @@ void vpNaoqiRobot::stop(const AL::ALValue &names)
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Unable to decode the joint chain.");
 
+   std::vector<float> angles;
   for (unsigned i = 0 ; i < jointNames.size() ; ++i)
-    m_motionProxy->changeAngles(jointNames[i], 0.0f, 0.1f);
+  m_motionProxy->changeAngles(jointNames[i], 0.0f, 0.1f);
+//      {
+//    angles = m_motionProxy->getAngles(jointNames[i],true);
+//    m_motionProxy->setAngles(jointNames[i],angles[0],1.0);
+
+//  }
+
 }
 
 /*!
@@ -452,12 +459,9 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
     // Now we want to transform tJe to eJe
 
-    std::vector<float> torsoMHeadRoll_ = m_motionProxy->getTransform(jointNames[nJoints-1], 0, true); // get transformation  matrix between torso and HeadRoll
-    vpHomogeneousMatrix torsoMHeadRoll;
-    unsigned int k=0;
-    for(unsigned int i=0; i< 4; i++)
-      for(unsigned int j=0; j< 4; j++)
-        torsoMHeadRoll[i][j] = torsoMHeadRoll_[k++];
+
+    vpHomogeneousMatrix torsoMHeadRoll(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));// get transformation  matrix between torso and HeadRoll
+
 
     vpVelocityTwistMatrix HeadRollVLtorso(torsoMHeadRoll.inverse());
 
@@ -573,13 +577,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
     // Now we want to transform tJe to eJe
 
-    std::vector<float> torsoMLWristP_ = m_motionProxy->getTransform(jointNames[nJoints-1], 0, true); // get transformation  matrix between torso and LWristPitch
-    vpHomogeneousMatrix torsoMLWristP;
-    unsigned int k=0;
-    for(unsigned int i=0; i< 4; i++)
-      for(unsigned int j=0; j< 4; j++)
-        torsoMLWristP[i][j] = torsoMLWristP_[k++];
-
+    vpHomogeneousMatrix torsoMLWristP(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));
 
     vpVelocityTwistMatrix torsoVLWristP(torsoMLWristP.inverse());
 
@@ -652,12 +650,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
     // Now we want to transform tJe to eJe
 
-    std::vector<float> torsoMRWristP_ = m_motionProxy->getTransform(jointNames[nJoints-1], 0, true); // get transformation  matrix between torso and RWristPitch
-    vpHomogeneousMatrix torsoMRWristP;
-    unsigned int k=0;
-    for(unsigned int i=0; i< 4; i++)
-      for(unsigned int j=0; j< 4; j++)
-        torsoMRWristP[i][j] = torsoMRWristP_[k++];
+    vpHomogeneousMatrix torsoMRWristP(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));
 
 
     vpVelocityTwistMatrix torsoVRWristP(torsoMRWristP.inverse());

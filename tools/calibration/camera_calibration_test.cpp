@@ -230,14 +230,7 @@ int main(int argc, const char ** argv)
         sprintf(filename, "/tmp/I%03d.png", nb_data);
         vpImageIo::write(I, filename);
 
-
-
-        std::vector<float> torsoMHead_ = robot.getProxy()->getTransform("HeadRoll", 0, true); // get torsoMHead of Aldebaran
-        vpHomogeneousMatrix torsoMHead;
-        unsigned int k=0;
-        for(unsigned int i=0; i< 4; i++)
-          for(unsigned int j=0; j< 4; j++)
-            torsoMHead[i][j] = torsoMHead_[k++];
+        vpHomogeneousMatrix torsoMHead(robot.getProxy()->getTransform("HeadRoll", 0, true));
 
         std::cout << "Torso M Head:\n" << torsoMHead << std::endl;
 
