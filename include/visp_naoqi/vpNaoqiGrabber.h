@@ -54,6 +54,7 @@
 
 // ViSP includes
 #include <visp/vpImage.h>
+#include <visp/vpCameraParameters.h>
 
 /*!
   This class allows to get images from the robot remotely.
@@ -65,9 +66,12 @@
 
   int main()
   {
-    vpNaoqiGrabber g;
     vpImage<unsigned char> I;
 
+    vpNaoqiGrabber g;
+    g.setRobotIp("131.254.13.37");
+    g.setFramerate(15);
+    g.setCamera(0);
     g.open();
     std::cout << "Image size: " << g.getWidth() << " " << g.getHeight() << std::endl;
     while(1)
@@ -92,6 +96,8 @@ public:
     Destroy the connexion to the video proxy.
    */
   void cleanup();
+
+  vpCameraParameters getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
 
   /*!
 
@@ -154,7 +160,9 @@ public:
     }
     \endcode
    */
-  void open(const AL::ALValue &Resolution = AL::kQVGA);
+  void open();
+
+  void setCamera(const int &camera_id);
 
   /*!
     Set the camera framerate.
@@ -202,6 +210,8 @@ protected:
   int m_width; //!<  Image width
   int m_height; //!< Image height
   AL::ALValue m_img; //!< Image data
+  std::string m_cameraName; //!< Camera name
+  int m_cameraId; //!< Camera identifier
 };
 
 #endif

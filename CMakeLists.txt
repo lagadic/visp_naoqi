@@ -26,10 +26,18 @@ endif()
 
 
 include_directories("include")
+include_directories("${CMAKE_BINARY_DIR}/include")
+
+set(VISP_NAOQI_INTRINSIC_CAMERA_FILE ${PROJECT_SOURCE_DIR}/include/visp_naoqi/camera.xml) # for header vpNaoqiConfig.h
+configure_file(${PROJECT_SOURCE_DIR}/include/visp_naoqi/vpNaoqiConfig.h.cmake
+  ${CMAKE_BINARY_DIR}/include/visp_naoqi/vpNaoqiConfig.h
+)
+
 qi_create_lib(visp_naoqi 
   SRC
-    include/visp_naoqi/vpNaoqiGrabber.h 
-    include/visp_naoqi/vpNaoqiRobot.h 
+    include/visp_naoqi/vpNaoqiConfig.h
+    include/visp_naoqi/vpNaoqiGrabber.h
+    include/visp_naoqi/vpNaoqiRobot.h
     src/grabber/vpNaoqiGrabber.cpp
     src/robot/vpNaoqiRobot.cpp
 )

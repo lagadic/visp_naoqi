@@ -70,12 +70,14 @@ int main(int argc, const char* argv[])
     }
 
     vpNaoqiGrabber g;
+    g.setCamera(0); // left camera
     if (! opt_ip.empty()) {
       std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
       g.setRobotIp(opt_ip);
     }
 
     g.open();
+    std::cout << "Camera parameters: " << g.getCameraParameters() << std::endl;
 
     vpImage<unsigned char> I(g.getHeight(), g.getWidth());
     vpDisplayX d(I);

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<root>
+  <!--This file stores intrinsic camera parameters used
+   in the vpCameraParameters Class of ViSP available
+   at http://www.irisa.fr/lagadic/visp/visp.html .
+   It can be read with the parse method of
+   the vpXmlParserCamera class.-->
+  <!-- Romeo cameras -->
+  <homogeneous_transformation>
+    <!--Name of the camera-->
+    <name>eMc_CameraLeft_with_distorsion</name>
+    <value>
+      <!--Projection model type-->
+      <translation>0.1 0.2 0.3</translation>
+      <!--Pixel ratio-->
+      <theta_u>0.1 0.2 0.1</theta_u>
+    </value>
+  </homogeneous_transformation>
+</root>

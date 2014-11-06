@@ -102,26 +102,6 @@ public:
   void cleanup();
 
   /*!
-    Type of Robots
-  */
-typedef enum
-  {
-     robot_type_ROMEO,
-     robot_type_NAO
-
-  }robot_type;
-
-  /*!
-    Get the type of Robot
-
-   \return type of Robot
-   */
-  vpNaoqiRobot::robot_type getTypeRobot() const
-  {
-     return m_robot_type;
-  }
-
-  /*!
     Get the Jacobian specifying an end effector chain name.
 
     \param chainName : Name of the end effector. Allowed values are "Head",
@@ -170,15 +150,20 @@ typedef enum
    \endcode
    \return The address of the video proxy.
   */
- AL::ALMotionProxy *getProxy() const
- {
-   return m_motionProxy;
- }
+  AL::ALMotionProxy *getProxy() const
+  {
+    return m_motionProxy;
+  }
 
- /*!
+  /*!
    Return the ip address used to access to the robot.
   */
- std::string getRobotIp() const { return m_robotIp; }
+  std::string getRobotIp() const { return m_robotIp; }
+  /*!
+   Return the name of the robot.
+   Values could be "romeoH37", "naoH25", "naoH21", "naoT14", "naoT2"...
+  */
+  std::string getRobotName() const { return m_robotName; }
 
   /*!
     Open the connection with the robot.
@@ -260,7 +245,7 @@ protected:
   std::string m_robotIp; //!<  Robot Ethernet address
   bool m_isOpen; //!< Proxy opened status
   bool m_collisionProtection; //!< Collition protection enabling status
-  vpNaoqiRobot::robot_type m_robot_type;
+  std::string m_robotName; //!< Name of the robot
 };
 
 #endif

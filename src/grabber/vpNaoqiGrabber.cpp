@@ -43,7 +43,9 @@
 
 // ViSP includes
 #include <visp/vpImageConvert.h>
+#include <visp/vpXmlParserCamera.h>
 
+#include <visp_naoqi/vpNaoqiConfig.h>
 #include <visp_naoqi/vpNaoqiGrabber.h>
 
 /*!
@@ -67,7 +69,21 @@ vpNaoqiGrabber::~vpNaoqiGrabber()
   cleanup();
 }
 
-void vpNaoqiGrabber::open(const AL::ALValue &Resolution)
+/*!
+  Select the camera to use.
+  \param camera_id : Camera identifier; camera left(0) or right(1).
+ */
+void vpNaoqiGrabber::setCamera(const int &camera_id)
+{
+  m_cameraId = camera_id;
+  // TODO: add specialisation Romeo/Nao
+  if (m_cameraId == 0)
+    m_cameraName = "CameraLeft";
+  else if (m_cameraId == 1)
+    m_cameraName = "CameraRight";
+}
+
+void vpNaoqiGrabber::open()
 {
   if (! m_isOpen) {
     // Create a proxy to ALVideoDevice on the robot
@@ -75,7 +91,7 @@ void vpNaoqiGrabber::open(const AL::ALValue &Resolution)
     // Subscribe a client image requiring 320*240 and BGR colorspace
     m_clientName = "subscriberID";
     m_videoProxy->unsubscribeAllInstances(m_clientName);
-    m_clientName = m_videoProxy->subscribe(m_clientName, int(Resolution), AL::kBGRColorSpace, m_fps);
+    m_clientName = m_videoProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
 
     //std::cout << m_clientName << std::endl;
 
@@ -83,7 +99,9 @@ void vpNaoqiGrabber::open(const AL::ALValue &Resolution)
     //std::cout << "Avaible index cameras: "<< index_cameras << std::endl;
 
     // Select the camera left(0) or right(1)
-    m_videoProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, 0);
+
+
+    m_videoProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, m_cameraId);
 
     // update image size
     /* Retrieve an image from the camera.
@@ -229,3 +247,39 @@ void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
   m_videoProxy->releaseImage(m_clientName);
 }
 
+/*!
+  Return the camera parameters corresponding to the camera that is selected using setCamera().
+  \warning The grabber should be open prior calling this function.
+
+  \param projModel : Model that is used.
+  \return The camera parameters
+
+  \code
+#include <visp_naoqi/vpNaoqiGrabber.h>
+
+int main()
+{
+  vpNaoqiGrabber g;
+  g.setRobotIp("131.254.13.37");
+  g.setFramerate(15);
+  g.setCamera(0);
+  g.open();
+  vpCameraParameters cam = g.getCameraParameters();
+}
+
+ */
+vpCameraParameters
+vpNaoqiGrabber::getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel) const
+{
+  vpCameraParameters cam;
+  char filename[FILENAME_MAX];
+  vpXmlParserCamera p; // Create a XML parser
+
+  // Parse the xml file to find the intrinsic camera depending on the camera name and image resolution
+  sprintf(filename, "%s", VISP_NAOQI_INTRINSIC_CAMERA_FILE);
+  if (p.parse(cam, filename, m_cameraName, projModel, m_width, m_height) != vpXmlParserCamera::SEQUENCE_OK) {
+    std::cout << "Cannot found camera parameters in file: " << filename << std::endl;
+  }
+
+  return cam;
+}

@@ -83,12 +83,12 @@ int main(int argc, char* argv[])
     {
       // Test with a vector of joints
       std::vector<std::string> jointNames;
-      if (robot.getTypeRobot() == robot.robot_type_ROMEO)
+      if (robot.getRobotName().find("romeo") != std::string::npos)
       {
         jointNames.push_back("NeckYaw");
         jointNames.push_back("NeckPitch");
       }
-      else if (robot.getTypeRobot() == robot.robot_type_NAO)
+      else if (robot.getRobotName().find("nao") != std::string::npos)
       {
         jointNames.push_back("HeadYaw");
         jointNames.push_back("HeadPitch");

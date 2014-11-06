@@ -62,10 +62,8 @@ typedef romeo<LocalFloatType> RomeoModel;
   - collision protection: enabled
   */
 vpNaoqiRobot::vpNaoqiRobot()
-  : m_motionProxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true), m_robot_type(vpNaoqiRobot::robot_type_ROMEO)
+  : m_motionProxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true), m_robotName("")
 {
-
-
 }
 
 /*!
@@ -107,16 +105,20 @@ void vpNaoqiRobot::open()
 
    // Check the type of the robot
     AL::ALValue robotConfig = m_motionProxy->getRobotConfig();
-    std::string type_robot = robotConfig[1][0];
-    std::cout << "Type of Robot:" << type_robot << std::endl;
+    m_robotName = std::string(robotConfig[1][0]);
 
-    if (type_robot== "romeoH37")
-      m_robot_type == vpNaoqiRobot::robot_type_ROMEO;
-    else if (type_robot == "naoH25" ||type_robot == "naoH21"||type_robot == "naoT14" || type_robot =="naoT2")
-      m_robot_type == vpNaoqiRobot::robot_type_NAO;
-    else
-      throw vpRobotException (vpRobotException::readingParametersError,
-                              "Unable to Recognize the type of the Robot.");
+    if (m_robotName.find("romeo") != std::string::npos) {
+      std::cout << "This robot is Romeo" << std::endl;
+    }
+    else if (m_robotName.find("nao") != std::string::npos) {
+      std::cout << "This robot is Nao" << std::endl;
+    }
+    else if (m_robotName.find("pepper") != std::string::npos) {
+      std::cout << "This robot is Pepper" << std::endl;
+    }
+    else {
+      std::cout << "Unknown robot" << std::endl;
+    }
 
     // Set Trapezoidal interpolation
     AL::ALValue config;
@@ -131,12 +133,11 @@ void vpNaoqiRobot::open()
 
     //On nao, we have joint coupled limits (http://doc.aldebaran.com/2-1/family/robots/joints_robot.html) on the head and ankle.
     //Motion and DCM have clamping. We have to remove motion clamping.
-    if (m_robot_type == vpNaoqiRobot::robot_type_NAO)
+    if (m_robotName.find("nao") != std::string::npos)
     {
       AL::ALValue config_;
       AL::ALValue setting = AL::ALValue::array(std::string("ENABLE_DCM_LIKE_CLAMPING"),AL::ALValue(0));
       config_.arrayPush(setting);
-
     }
 
     std::cout << "Trapezoidal interpolation is on " << std::endl;
