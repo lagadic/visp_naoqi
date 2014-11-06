@@ -44,8 +44,9 @@
 #include <sys/time.h>
 
 // Aldebaran includes
-#include <alproxies/alvideodeviceproxy.h>
 #include <alerror/alerror.h>
+#include <alvision/alvisiondefinitions.h>
+#include <alproxies/alvideodeviceproxy.h>
 
 // Opencv includes for cv::Mat interface
 #include <opencv2/core/core.hpp>
@@ -153,7 +154,7 @@ public:
     }
     \endcode
    */
-  void open();
+  void open(const AL::ALValue &Resolution = AL::kQVGA);
 
   /*!
     Set the camera framerate.

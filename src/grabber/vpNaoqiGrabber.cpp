@@ -40,7 +40,6 @@
 
 // Aldebaran includes.
 #include <alvision/alimage.h>
-#include <alvision/alvisiondefinitions.h>
 
 // ViSP includes
 #include <visp/vpImageConvert.h>
@@ -68,7 +67,7 @@ vpNaoqiGrabber::~vpNaoqiGrabber()
   cleanup();
 }
 
-void vpNaoqiGrabber::open()
+void vpNaoqiGrabber::open(const AL::ALValue &Resolution)
 {
   if (! m_isOpen) {
     // Create a proxy to ALVideoDevice on the robot
@@ -76,9 +75,12 @@ void vpNaoqiGrabber::open()
     // Subscribe a client image requiring 320*240 and BGR colorspace
     m_clientName = "subscriberID";
     m_videoProxy->unsubscribeAllInstances(m_clientName);
-    m_clientName = m_videoProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+    m_clientName = m_videoProxy->subscribe(m_clientName, int(Resolution), AL::kBGRColorSpace, m_fps);
+
     //std::cout << m_clientName << std::endl;
 
+    //AL::ALValue index_cameras = m_videoProxy->getCameraIndexes();
+    //std::cout << "Avaible index cameras: "<< index_cameras << std::endl;
 
     // Select the camera left(0) or right(1)
     m_videoProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, 0);
