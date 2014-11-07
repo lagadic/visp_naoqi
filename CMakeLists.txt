@@ -38,11 +38,16 @@ qi_create_lib(visp_naoqi
     include/visp_naoqi/vpNaoqiConfig.h
     include/visp_naoqi/vpNaoqiGrabber.h
     include/visp_naoqi/vpNaoqiRobot.h
+    include/visp_naoqi/vpXmlParserHomogeneousMatrix.h
     src/grabber/vpNaoqiGrabber.cpp
     src/robot/vpNaoqiRobot.cpp
+    src/parser/vpXmlParserHomogeneousMatrix.cpp
 )
 
+
 qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
+
+
 if(USE_METAPOD)
   target_link_libraries(visp_naoqi metapod_${model_name})
 endif()
@@ -69,6 +74,10 @@ qi_use_lib(camera_calibration visp_naoqi)
 
 qi_create_bin(camera_calibration_ext tools/calibration/camera_calibration_ext.cpp)
 qi_use_lib(camera_calibration_ext visp_naoqi)
+
+qi_create_bin(LoadM example/parserHomogeneousMatrix/loadM.cpp)
+qi_use_lib(LoadM visp_naoqi )
+
 
 # doxygen
 find_package(Doxygen)
