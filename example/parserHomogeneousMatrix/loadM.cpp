@@ -32,16 +32,13 @@
  * This example demonstrates how to control the robot remotely in position and velocity.
  *
  * Authors:
- * Fabien Spindler
+ * Giovanni Claudio
  *
  *****************************************************************************/
 
-/*! \example motion.cpp */
+/*! \example loadM.cpp */
 #include <iostream>
 #include <string>
-
-
-
 
 #include<visp_naoqi/vpXmlParserHomogeneousMatrix.h>
 
