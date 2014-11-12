@@ -55,6 +55,7 @@
 // ViSP includes
 #include <visp/vpImage.h>
 #include <visp/vpCameraParameters.h>
+#include <visp/vpHomogeneousMatrix.h>
 
 /*!
   This class allows to get images from the robot remotely.
@@ -98,6 +99,8 @@ public:
   void cleanup();
 
   vpCameraParameters getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
+
+  vpHomogeneousMatrix getCameraExtParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion, std::string cameraName = "" ) const;
 
   /*!
 

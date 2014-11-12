@@ -45,8 +45,10 @@
 #include <visp/vpImageConvert.h>
 #include <visp/vpXmlParserCamera.h>
 
+
 #include <visp_naoqi/vpNaoqiConfig.h>
 #include <visp_naoqi/vpNaoqiGrabber.h>
+#include <visp_naoqi/vpXmlParserHomogeneousMatrix.h>
 
 /*!
   Default constructor that set the default parameters as:
@@ -282,4 +284,59 @@ vpNaoqiGrabber::getCameraParameters(vpCameraParameters::vpCameraParametersProjTy
   }
 
   return cam;
+}
+
+/*!
+  Return the extrinsic camera parameters corresponding to the camera that is selected using setCamera().
+  \warning The grabber should be open prior calling this function.
+
+  \param cameraName : Name of the Camera (Null string = camera corresponding to the camera that is selected using setCamera() )
+  \param projModel : Model that is used.(default = Projection with distorsion )
+
+  \return The extrinsic camera parameters (Homogeneous matrix)
+
+  \code
+#include <visp_naoqi/vpNaoqiGrabber.h>
+
+int main()
+{
+  vpNaoqiGrabber g;
+  g.setRobotIp("131.254.13.37");
+  g.setFramerate(15);
+  g.setCamera(0);
+  g.open();
+  vpCameraParameters cam = g.getCameraParameters();
+  vpHomogeneousMatrix eMc = g.getCameraExtParameters()
+}
+
+ */
+vpHomogeneousMatrix
+vpNaoqiGrabber::getCameraExtParameters(vpCameraParameters::vpCameraParametersProjType projModel,std::string cameraName ) const
+{
+
+  vpHomogeneousMatrix eMc;
+  std::string name;
+  vpXmlParserHomogeneousMatrix p; // Create a XML parser
+
+  if (cameraName == "")
+    cameraName = m_cameraName;
+
+  if (projModel = vpCameraParameters::perspectiveProjWithDistortion)
+    name =  "eMc_" + cameraName + "_with_distorsion";
+  else
+    name =  "eMc_" + cameraName + "_without_distorsion";
+
+  char filename[FILENAME_MAX];
+  sprintf(filename, "%s", VISP_NAOQI_EXTRINSIC_CAMERA_FILE);
+
+  if (p.parse(eMc,filename, name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
+    std::cout << "Cannot found the Homogeneous matrix named " << name << " in the file " <<  filename << std::endl;
+
+  }
+
+  else
+    std::cout << "Read correctly the Homogeneous matrix named " << name << std::endl;
+
+
+  return eMc;
 }
