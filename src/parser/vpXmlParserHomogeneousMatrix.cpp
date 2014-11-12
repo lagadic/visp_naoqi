@@ -514,8 +514,6 @@ vpXmlParserHomogeneousMatrix::read_camera (xmlDocPtr doc, xmlNodePtr node,
   //    test_subsampling_height = (abs((int)subsampl_height - (int)subsampling_height_tmp) < (allowedPixelDiffOnImageSize * (int)(subsampling_height_tmp / subsampling_height)));
   //  }
 
-  std::cout << "M_name_" << M_name_ << std::endl;
-  std::cout << "M_name_tmp" << M_name_tmp << std::endl;
   if( !(M_name_ == M_name_tmp)){
     back = SEQUENCE_ERROR;
   }
@@ -524,7 +522,8 @@ vpXmlParserHomogeneousMatrix::read_camera (xmlDocPtr doc, xmlNodePtr node,
     //    this->camera_name = camera_name_tmp;
     this-> M = M_tmp;
 
-    std::cout << "Matrix in read_camera" << M_tmp << std::endl;
+    std::cout << "Converstion in Homogeneous Matrix:"<< std::endl;
+    std::cout << this-> M << std::endl;
     this-> M_name = M_name_tmp;
     //    this->image_width = image_width_tmp;
     //    this->image_height = image_height_tmp;
@@ -696,46 +695,6 @@ vpXmlParserHomogeneousMatrix::read_camera_model (xmlDocPtr doc, xmlNodePtr node,
 
     switch (prop)
     {
-    //    case CODE_XML_MODEL_TYPE:{ // VALUE
-    //      if(model_type != NULL){
-    //        xmlFree(model_type);
-    //      }
-    //      model_type = xmlReadCharChild(doc, node);
-    //      nb++;
-    //      validation = validation | 0x01;
-    //    }break;
-
-    //    case CODE_XML_U0:
-    //      u0 = xmlReadDoubleChild(doc, node);
-    //      nb++;
-    //      validation = validation | 0x02;
-    //      break;
-    //    case CODE_XML_V0:
-    //      v0 = xmlReadDoubleChild(doc, node);
-    //      nb++;
-    //      validation = validation | 0x04;
-    //      break;
-    //    case CODE_XML_PX:
-    //      px = xmlReadDoubleChild(doc, node);
-    //      nb++;
-    //      validation = validation | 0x08;
-    //      break;
-    //    case CODE_XML_PY:
-    //      py = xmlReadDoubleChild(doc, node);
-    //      nb++;
-    //      validation = validation | 0x10;
-    //      break;
-    //    case CODE_XML_KUD:
-    //      kud = xmlReadDoubleChild(doc, node);
-    //      nb++;
-    //      validation = validation | 0x20;
-    //      break;
-    //    case CODE_XML_KDU:
-    //      kdu = xmlReadDoubleChild(doc, node);
-    //      nb++;
-    //      validation = validation | 0x40;
-    //      break;
-
 
     case CODE_XML_TX:
       tx_ = xmlReadDoubleChild(doc, node);
@@ -768,27 +727,12 @@ vpXmlParserHomogeneousMatrix::read_camera_model (xmlDocPtr doc, xmlNodePtr node,
     case CODE_XML_M_NAME:
     case CODE_XML_VALUE:
 
-
-
-      //    case CODE_XML_HEIGHT:
-      //    case CODE_XML_WIDTH:
-      //    case CODE_XML_SUBSAMPLING_WIDTH:
-      //    case CODE_XML_SUBSAMPLING_HEIGHT:
-      //    case CODE_XML_FULL_HEIGHT:
-      //    case CODE_XML_FULL_WIDTH:
-      //    case CODE_XML_MODEL:
     default:
       back = SEQUENCE_ERROR;
       break;
     }
   }
 
-  //  if(model_type == NULL) {
-  //    vpERROR_TRACE("projection model type doesn't match with any known model !");
-  //    return SEQUENCE_ERROR;
-  //  }
-
-  //  if( !strcmp(model_type,LABEL_XML_MODEL_WITHOUT_DISTORTION)){
   if (nb != 6)
   {
     vpCERROR <<"ERROR in 'model' field:\n";
@@ -796,12 +740,18 @@ vpXmlParserHomogeneousMatrix::read_camera_model (xmlDocPtr doc, xmlNodePtr node,
 
     return SEQUENCE_ERROR;
   }
-  // cam_tmp.initPersProjWithoutDistortion(px,py,u0,v0) ;
 
   // Create the Homogeneous matrix
   M_tmp.buildFrom(tx_,ty_,tz_,tux_,tuy_,tuz_);
 
-  std::cout << M_tmp << std::endl;
+    std::cout << "Read values from file:" << std::endl;
+    std::cout << "tx:" << tx_<< std::endl;
+    std::cout << "ty:" << ty_<< std::endl;
+    std::cout << "tz:" << tz_<< std::endl;
+    std::cout << "tux:" << tux_<< std::endl;
+    std::cout << "tuy:" << tuy_<< std::endl;
+    std::cout << "tuz:" << tuz_<< std::endl;
+
 
   //  }
   //  else if( !strcmp(model_type,LABEL_XML_MODEL_WITH_DISTORTION)){
@@ -1043,7 +993,7 @@ vpXmlParserHomogeneousMatrix::str2xmlcode (char * str, vpXmlCodeType & res)
   {
     val_int = CODE_XML_TY;
   }
-  else if (! strcmp (str,  LABEL_XML_TY))
+  else if (! strcmp (str,  LABEL_XML_TZ))
   {
     val_int = CODE_XML_TZ;
   }

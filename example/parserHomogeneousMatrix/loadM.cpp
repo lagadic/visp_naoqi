@@ -55,12 +55,12 @@ int main(int argc, char* argv[])
    #ifdef VISP_HAVE_XML2
   vpXmlParserHomogeneousMatrix p; // Create a XML parser
 
-  std::string name =  "eMc_CameraLeft_with_distorsion";
+  std::string name =  "eMc_CameraLeft_without_distorsion";
 
    if (p.parse(M,"eMc1.xml", name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
    std::cout << "Cannot found the Homogeneous matrix named " << name<< "." << std::endl;
    }
-    std::cout << M << std::endl;
+   // std::cout << M << std::endl;
    #endif
 
   }
