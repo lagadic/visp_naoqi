@@ -29,6 +29,8 @@ include_directories("include")
 include_directories("${CMAKE_BINARY_DIR}/include")
 
 set(VISP_NAOQI_INTRINSIC_CAMERA_FILE ${PROJECT_SOURCE_DIR}/include/visp_naoqi/camera.xml) # for header vpNaoqiConfig.h
+set(VISP_NAOQI_EXTRINSIC_CAMERA_FILE ${PROJECT_SOURCE_DIR}/include/visp_naoqi/eMc.xml)
+
 configure_file(${PROJECT_SOURCE_DIR}/include/visp_naoqi/vpNaoqiConfig.h.cmake
   ${CMAKE_BINARY_DIR}/include/visp_naoqi/vpNaoqiConfig.h
 )

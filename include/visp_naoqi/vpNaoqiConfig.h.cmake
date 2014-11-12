@@ -28,7 +28,7 @@
  * not clear to you.
  *
  * Description:
- * Afma6 configuration.
+ * Romeo configuration.
  *
  * Authors:
  * Fabien Spindler
@@ -40,6 +40,9 @@
 
 // Where is the XML file containing the camera intrinsic parameters
 #define VISP_NAOQI_INTRINSIC_CAMERA_FILE "${VISP_NAOQI_INTRINSIC_CAMERA_FILE}"
+
+// Where is the XML file containing the camera extrinsic parameters
+#define VISP_NAOQI_EXTRINSIC_CAMERA_FILE "${VISP_NAOQI_EXTRINSIC_CAMERA_FILE}"
 
 #endif
 

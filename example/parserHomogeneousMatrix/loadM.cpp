@@ -40,6 +40,7 @@
 #include <iostream>
 #include <string>
 
+#include<visp_naoqi/vpNaoqiConfig.h>
 #include<visp_naoqi/vpXmlParserHomogeneousMatrix.h>
 
 
@@ -52,9 +53,12 @@ int main(int argc, char* argv[])
 #ifdef VISP_HAVE_XML2
     vpXmlParserHomogeneousMatrix p; // Create a XML parser
 
-    std::string name =  "eMc_CameraLeft_without_distorsion";
+    std::string name =  "eMc_CameraRigth_without_distorsion";
 
-    if (p.parse(M,"eMc1.xml", name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
+    char filename[FILENAME_MAX];
+    sprintf(filename, "%s", VISP_NAOQI_EXTRINSIC_CAMERA_FILE);
+
+    if (p.parse(M,filename, name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
       std::cout << "Cannot found the Homogeneous matrix named " << name<< "." << std::endl;
       return 0;
     }
