@@ -83,6 +83,10 @@ qi_use_lib(LoadM visp_naoqi )
 qi_create_bin(writeM example/parserHomogeneousMatrix/writeM.cpp)
 qi_use_lib(writeM visp_naoqi )
 
+qi_create_bin(dat_to_xml example/parserHomogeneousMatrix/dat_to_xml.cpp)
+qi_use_lib(dat_to_xml visp_naoqi )
+
+
 # doxygen
 find_package(Doxygen)
 if (DOXYGEN_FOUND)

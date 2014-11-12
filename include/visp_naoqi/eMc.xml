@@ -1,33 +1,23 @@
 <?xml version="1.0"?>
 <root>
+  <!--This file stores homogeneous matrix used
+   in the vpHomogeneousMatrix Class of ViSP available
+   at http://www.irisa.fr/lagadic/visp/visp.html .
+   It can be read with the parse method of
+   the vpXmlParserHomogeneousMatrix class.-->
   <!-- Homogeneous Matrix-->
   <homogeneous_transformation>
     <!--Name of the homogeneous matrix-->
-    <name>eMc_CameraRigth_without_distorsion</name>
+    <name>eMc_CameraLeft_with_distorsion</name>
     <values>
       <!--Translation vector-->
-      <tx>1.000000</tx>
-      <ty>1.300000</ty>
-      <tz>3.500000</tz>
+      <tx>0.110115</tx>
+      <ty>0.060882</ty>
+      <tz>0.065043</tz>
       <!--Rotational vector expressed in angle axis representation-->
-      <theta_ux>0.200000</theta_ux>
-      <theta_uy>0.300000</theta_uy>
-      <theta_uz>0.500000</theta_uz>
-    </values>
-  </homogeneous_transformation>
-  <!-- Homogeneous Matrix-->
-  <homogeneous_transformation>
-    <!--Name of the homogeneous matrix-->
-    <name>eMc_CameraRigth_with_distorsion</name>
-    <values>
-      <!--Translation vector-->
-      <tx>1.000000</tx>
-      <ty>1.300000</ty>
-      <tz>3.500000</tz>
-      <!--Rotational vector expressed in angle axis representation-->
-      <theta_ux>0.200000</theta_ux>
-      <theta_uy>0.300000</theta_uy>
-      <theta_uz>0.500000</theta_uz>
+      <theta_ux>-1.254445</theta_ux>
+      <theta_uy>1.223193</theta_uy>
+      <theta_uz>-1.237538</theta_uz>
     </values>
   </homogeneous_transformation>
 </root>
