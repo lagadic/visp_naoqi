@@ -422,15 +422,8 @@ vpXmlParserHomogeneousMatrix::read_camera (xmlDocPtr doc, xmlNodePtr node,
   vpXmlCodeType prop;
   /* read value in the XML file. */
   std::string M_name_tmp = "";
-  //  unsigned int image_height_tmp = 0 ;
-  //  unsigned int image_width_tmp = 0 ;
-  //  unsigned int subsampling_width_tmp = 0;
-  //  unsigned int subsampling_height_tmp = 0;
-  //vpCameraParameters cam_tmp;
   vpHomogeneousMatrix M_tmp;
-  //vpCameraParameters cam_tmp_model;
 
-  //bool projModelFound = false;
   vpXmlCodeSequenceType back = SEQUENCE_OK;
 
   for (node = node->xmlChildrenNode; node != NULL;  node = node->next)
@@ -449,30 +442,16 @@ vpXmlParserHomogeneousMatrix::read_camera (xmlDocPtr doc, xmlNodePtr node,
     case CODE_XML_M_NAME: {
       char * val_char = xmlReadCharChild(doc, node);
       M_name_tmp = val_char;
-      std::cout << "Found camera with name: \"" << M_name_tmp << "\"" << std::endl;
       xmlFree(val_char);
       break;
     }
-      //    case CODE_XML_WIDTH:
-      //      image_width_tmp = xmlReadUnsignedIntChild(doc, node);
-      //      break;
-
-      //    case CODE_XML_HEIGHT:
-      //      image_height_tmp = xmlReadUnsignedIntChild(doc, node);
-      //      break;
-      //    case CODE_XML_SUBSAMPLING_WIDTH:
-      //      subsampling_width_tmp = xmlReadUnsignedIntChild(doc, node);
-      //      break;
-      //    case CODE_XML_SUBSAMPLING_HEIGHT:
-      //      subsampling_height_tmp = xmlReadUnsignedIntChild(doc, node);
-      //      break;
 
     case CODE_XML_VALUE: //VALUE
-      back = read_camera_model(doc, node, M_tmp);
-      //      if(cam_tmp_model.get_projModel() == projModel){
-      //        cam_tmp = cam_tmp_model;
-      //        projModelFound = true;
-      //      }
+      if (M_name_ == M_name_tmp)
+      {
+        std::cout << "Found camera with name: \"" << M_name_tmp << "\"" << std::endl;
+        back = read_camera_model(doc, node, M_tmp);
+      }
       break;
 
     case CODE_XML_BAD:
@@ -485,52 +464,22 @@ vpXmlParserHomogeneousMatrix::read_camera (xmlDocPtr doc, xmlNodePtr node,
     case CODE_XML_TUY:
     case CODE_XML_TUZ:
 
-      //    case CODE_XML_BAD:
-      //    case CODE_XML_OTHER:
-      //    case CODE_XML_M:
-      //    case CODE_XML_FULL_HEIGHT:
-      //    case CODE_XML_FULL_WIDTH:
-      //    case CODE_XML_MODEL_TYPE:
-      //    case CODE_XML_U0:
-      //    case CODE_XML_V0:
-      //    case CODE_XML_PX:
-      //    case CODE_XML_PY:
-      //    case CODE_XML_KUD:
-      //    case CODE_XML_KDU:
     default:
       back = SEQUENCE_ERROR;
       break;
     }
 
   }
-  // Create a specific test for subsampling_width and subsampling_height to ensure that division by zero is not possible in the next test
-  //  bool test_subsampling_width = true;
-  //  bool test_subsampling_height = true;
-
-  //  if (subsampling_width) {
-  //    test_subsampling_width = (abs((int)subsampl_width - (int)subsampling_width_tmp) < (allowedPixelDiffOnImageSize * (int)(subsampling_width_tmp / subsampling_width)));
-  //  }
-  //  if (subsampling_height) {
-  //    test_subsampling_height = (abs((int)subsampl_height - (int)subsampling_height_tmp) < (allowedPixelDiffOnImageSize * (int)(subsampling_height_tmp / subsampling_height)));
-  //  }
 
   if( !(M_name_ == M_name_tmp)){
     back = SEQUENCE_ERROR;
   }
   else{
-    //    this->camera = cam_tmp;
-    //    this->camera_name = camera_name_tmp;
     this-> M = M_tmp;
-
     std::cout << "Converstion in Homogeneous Matrix:"<< std::endl;
     std::cout << this-> M << std::endl;
     this-> M_name = M_name_tmp;
-    //    this->image_width = image_width_tmp;
-    //    this->image_height = image_height_tmp;
-    //    this->subsampling_width = subsampling_width_tmp;
-    //    this->subsampling_height = subsampling_height_tmp;
-    //    this->full_width = subsampling_width_tmp * image_width_tmp;
-    //    this->full_height = subsampling_height_tmp * image_height_tmp;
+
   }
   return back;
 }
@@ -664,14 +613,6 @@ vpXmlParserHomogeneousMatrix::read_camera_model (xmlDocPtr doc, xmlNodePtr node,
   vpXmlCodeType prop;
   /* read value in the XML file. */
 
-  //  char* model_type = NULL;
-  //  double u0 = cam_tmp.get_u0();
-  //  double v0 = cam_tmp.get_v0();
-  //  double px = cam_tmp.get_px();
-  //  double py = cam_tmp.get_py();
-  //  double kud = cam_tmp.get_kud();
-  //  double kdu = cam_tmp.get_kdu();
-
   double tx_;
   double ty_;
   double tz_;
@@ -744,13 +685,13 @@ vpXmlParserHomogeneousMatrix::read_camera_model (xmlDocPtr doc, xmlNodePtr node,
   // Create the Homogeneous matrix
   M_tmp.buildFrom(tx_,ty_,tz_,tux_,tuy_,tuz_);
 
-    std::cout << "Read values from file:" << std::endl;
-    std::cout << "tx:" << tx_<< std::endl;
-    std::cout << "ty:" << ty_<< std::endl;
-    std::cout << "tz:" << tz_<< std::endl;
-    std::cout << "tux:" << tux_<< std::endl;
-    std::cout << "tuy:" << tuy_<< std::endl;
-    std::cout << "tuz:" << tuz_<< std::endl;
+  std::cout << "Read values from file:" << std::endl;
+  std::cout << "tx:" << tx_<< std::endl;
+  std::cout << "ty:" << ty_<< std::endl;
+  std::cout << "tz:" << tz_<< std::endl;
+  std::cout << "tux:" << tux_<< std::endl;
+  std::cout << "tuy:" << tuy_<< std::endl;
+  std::cout << "tuz:" << tuz_<< std::endl;
 
 
   //  }
