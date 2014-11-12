@@ -260,9 +260,8 @@ public:
   int parse(vpHomogeneousMatrix &M_, const char * filename,
       const std::string &M_name_);
 
-// int save(const vpCameraParameters &cam, const char * filename,
-//	   const std::string &camera_name,
-//	   const unsigned int image_width = 0, const unsigned int image_height = 0);
+ int save(const vpHomogeneousMatrix &M, const char * filename,
+     const std::string &camera_name);
 
   // get/set functions
   std::string getHomogeneousMatrixName(){return this->M_name;}
@@ -277,13 +276,8 @@ private:
   int read (xmlDocPtr doc, xmlNodePtr node,
       const std::string& M_name_);
 
-//  int count (xmlDocPtr doc, xmlNodePtr node,
-//       const std::string& camera_name,
-//       const vpCameraParameters::vpCameraParametersProjType &projModel,
-//       const unsigned int image_width  = 0,
-//	     const unsigned int image_height = 0,
-//	     const unsigned int subsampling_width = 0,
-//	     const unsigned int subsampling_height = 0);
+  int count (xmlDocPtr doc, xmlNodePtr node,
+       const std::string& camera_name);
 
   int read_camera (xmlDocPtr doc, xmlNodePtr node,
        const std::string& M_name_);

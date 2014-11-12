@@ -78,6 +78,8 @@ qi_use_lib(camera_calibration_ext visp_naoqi)
 qi_create_bin(LoadM example/parserHomogeneousMatrix/loadM.cpp)
 qi_use_lib(LoadM visp_naoqi )
 
+qi_create_bin(writeM example/parserHomogeneousMatrix/writeM.cpp)
+qi_use_lib(writeM visp_naoqi )
 
 # doxygen
 find_package(Doxygen)

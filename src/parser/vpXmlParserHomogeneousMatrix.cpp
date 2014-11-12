@@ -159,54 +159,48 @@ vpXmlParserHomogeneousMatrix::parse(vpHomogeneousMatrix &M_, const char * filena
 }
 
 /*!
-  Save camera parameters in an xml file.
-  \param cam : camera parameters to save.
+  Save an homogenous matrix in an xml file.
+  \param M : homogenous matrix to save.
   \param filename : name of the xml file to fill.
-  \param cam_name : name of the camera : useful if the xml file has multiple
-    camera parameters. Set as "" if the camera name is not ambiguous.
-  \param im_width : width of image  on which camera calibration was performed.
-    Set as 0 if not ambiguous.
-  \param im_height : height of the image  on which camera calibration was performed.
-    Set as 0 if not ambiguous.
+  \param cam_name : name of the homogenous matrix .
 
   \return error code.
 */
-//int
-//vpXmlParserHomogeneousMatrix::save(const vpCameraParameters &cam, const char * filename,
-//                                   const std::string& cam_name,
-//                                   const unsigned int im_width,
-//                                   const unsigned int im_height)
-//{
-//  xmlDocPtr doc;
-//  xmlNodePtr node;
-//  xmlNodePtr nodeCamera = NULL;
+int
+vpXmlParserHomogeneousMatrix::save(const vpHomogeneousMatrix &M, const char * filename,
+                                   const std::string& cam_name)
+{
+  xmlDocPtr doc;
+  xmlNodePtr node;
+  xmlNodePtr nodeCamera = NULL;
 
-//  doc = xmlReadFile(filename,NULL,XML_PARSE_NOWARNING + XML_PARSE_NOERROR
-//                    + XML_PARSE_NOBLANKS);
-//  if (doc == NULL){
-//    doc = xmlNewDoc ((xmlChar*)"1.0");
-//    node = xmlNewNode(NULL,(xmlChar*)LABEL_XML_ROOT);
-//    xmlDocSetRootElement(doc,node);
-//    xmlNodePtr node_tmp = xmlNewComment((xmlChar*)
-//                                        "This file stores intrinsic camera parameters used\n"
-//                                        "   in the vpCameraParameters Class of ViSP available\n"
-//                                        "   at http://www.irisa.fr/lagadic/visp/visp.html .\n"
-//                                        "   It can be read with the parse method of\n"
-//                                        "   the vpXmlParserHomogeneousMatrix class.");
-//    xmlAddChild(node,node_tmp);
-//  }
+  doc = xmlReadFile(filename,NULL,XML_PARSE_NOWARNING + XML_PARSE_NOERROR
+                    + XML_PARSE_NOBLANKS);
+  if (doc == NULL){
+    doc = xmlNewDoc ((xmlChar*)"1.0");
+    node = xmlNewNode(NULL,(xmlChar*)LABEL_XML_ROOT);
+    xmlDocSetRootElement(doc,node);
+    xmlNodePtr node_tmp = xmlNewComment((xmlChar*)
+                                        "This file stores homogeneous matrix used\n"
+                                        "   in the vpHomogeneousMatrix Class of ViSP available\n"
+                                        "   at http://www.irisa.fr/lagadic/visp/visp.html .\n"
+                                        "   It can be read with the parse method of\n"
+                                        "   the vpXmlParserHomogeneousMatrix class.");
+    xmlAddChild(node,node_tmp);
+  }
 
-//  node = xmlDocGetRootElement(doc);
-//  if (node == NULL)
-//  {
-//    xmlFreeDoc(doc);
-//    return SEQUENCE_ERROR;
-//  }
+  node = xmlDocGetRootElement(doc);
+  if (node == NULL)
+  {
+    xmlFreeDoc(doc);
+    return SEQUENCE_ERROR;
+  }
 
-//  this->camera = cam;
+  this->M = M;
 
-//  int nbCamera = count(doc, node, cam_name,cam.get_projModel(),
-//                       im_width, im_height);
+  int nbCamera = count(doc, node, cam_name);
+
+  std::cout <<"Result find camera with input name: " << nbCamera << std::endl;
 //  if( nbCamera > 0){
 //    //    vpCERROR << nbCamera
 //    //             << " set(s) of camera parameters is(are) already "<< std::endl
@@ -228,8 +222,8 @@ vpXmlParserHomogeneousMatrix::parse(vpHomogeneousMatrix &M_, const char * filena
 //  xmlSaveFormatFile(filename,doc,1);
 //  xmlFreeDoc(doc);
 
-//  return SEQUENCE_OK;
-//}
+  return SEQUENCE_OK;
+}
 
 
 
@@ -282,68 +276,52 @@ vpXmlParserHomogeneousMatrix::read (xmlDocPtr doc, xmlNodePtr node,
   return back;
 }
 /*!
-  Read camera parameters from a XML file and count the number of available
-  sets of camera parameters corresponding with inputs.
+  Read camera parameters from a XML file and read if there is already a homogeneous matrix
+  with the same name.
 
   \param doc : XML file.
   \param node : XML tree, pointing on a marker equipement.
-  \param cam_name : name of the camera : useful if the xml file has multiple
-  camera parameters. Set as "" if the camera name is not ambiguous.
-  \param im_width : width of image  on which camera calibration was performed.
-    Set as 0 if not ambiguous.
-  \param im_height : height of the image  on which camera calibration
-    was performed. Set as 0 if not ambiguous.
-  \param subsampl_width : subsampling of the image width sent by the camera.
-    Set as 0 if not ambiguous.
-  \param subsampl_height : subsampling of the image height sent by the camera.
-    Set as 0 if not ambiguous.
+  \param M_name : name of the homogeneous matrix.
 
-  \return number of available camera parameters corresponding with inputs.
+  \return 1 if there is an homogeneous matrix corresponding with the input name, 0 otherwise.
  */
-//int
-//vpXmlParserHomogeneousMatrix::count (xmlDocPtr doc, xmlNodePtr node,
-//                                     const std::string& cam_name,
-//                                     const vpCameraParameters::vpCameraParametersProjType &projModel,
-//                                     const unsigned int im_width,
-//                                     const unsigned int im_height,
-//                                     const unsigned int subsampl_width,
-//                                     const unsigned int subsampl_height)
-//{
-//  //    char * val_char;
-//  vpXmlCodeType prop;
-//  int nbCamera = 0;
+int
+vpXmlParserHomogeneousMatrix::count (xmlDocPtr doc, xmlNodePtr node,
+                                     const std::string& M_name)
+{
+  //    char * val_char;
+  vpXmlCodeType prop;
+  int nbCamera = 0;
 
-//  for (node = node->xmlChildrenNode; node != NULL;  node = node->next)
-//  {
-//    if (node->type != XML_ELEMENT_NODE) continue;
-//    if (SEQUENCE_OK != str2xmlcode ((char*)(node ->name), prop))
-//    {
-//      prop = CODE_XML_OTHER;
-//    }
-//    /*
-//    switch (prop)
-//    {
-//    case CODE_XML_M:
-//      if (SEQUENCE_OK == this->read_camera (doc, node, camera_name, projModel,
-//          image_width, image_height,
-//          subsampling_width, subsampling_height)){
-//        nbCamera++;
-//      }
-//      break;
-//    default:
-//      break;
-//    }
-//    */
-//    if (prop== CODE_XML_M) {
-//      if (SEQUENCE_OK == this->read_camera (doc, node, cam_name, projModel,
-//                                            im_width, im_height,
-//                                            subsampl_width, subsampl_height))
-//        nbCamera++;
-//    }
-//  }
+  for (node = node->xmlChildrenNode; node != NULL;  node = node->next)
+  {
+    if (node->type != XML_ELEMENT_NODE) continue;
+    if (SEQUENCE_OK != str2xmlcode ((char*)(node ->name), prop))
+    {
+      prop = CODE_XML_OTHER;
+    }
+    /*
+    switch (prop)
+    {
+    case CODE_XML_M:
+      if (SEQUENCE_OK == this->read_camera (doc, node, camera_name, projModel,
+          image_width, image_height,
+          subsampling_width, subsampling_height)){
+        nbCamera++;
+      }
+      break;
+    default:
+      break;
+    }
+    */
+    if (prop== CODE_XML_M) {
+      if (SEQUENCE_OK == this->read_camera (doc, node, M_name))
+        nbCamera++;
+    }
+  }
 
-//  return nbCamera;
-//}
+  return nbCamera;
+}
 /*!
   Read camera headers from a XML file and return the last available
   node pointeur in the xml tree corresponding with inputs.
