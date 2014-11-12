@@ -53,6 +53,7 @@
 #include <string.h>
 
 #include <visp/vpDebug.h>
+#include <visp/vpThetaUVector.h>
 /* -------------------------------------------------------------------------- */
 /* --- LABEL XML ------------------------------------------------------------ */
 /* -------------------------------------------------------------------------- */
@@ -139,7 +140,11 @@ vpXmlParserHomogeneousMatrix::parse(vpHomogeneousMatrix &M_, const char * filena
   doc = xmlParseFile(filename);
   if (doc == NULL)
   {
-    return SEQUENCE_ERROR;
+   std::cerr << std::endl
+   << "ERROR:" << std::endl;
+   std::cerr << " I cannot open the file "<< filename << std::endl;
+
+   return SEQUENCE_ERROR;
   }
 
   node = xmlDocGetRootElement(doc);
@@ -168,7 +173,7 @@ vpXmlParserHomogeneousMatrix::parse(vpHomogeneousMatrix &M_, const char * filena
 */
 int
 vpXmlParserHomogeneousMatrix::save(const vpHomogeneousMatrix &M, const char * filename,
-                                   const std::string& cam_name)
+                                   const std::string& M_name)
 {
   xmlDocPtr doc;
   xmlNodePtr node;
@@ -198,29 +203,23 @@ vpXmlParserHomogeneousMatrix::save(const vpHomogeneousMatrix &M, const char * fi
 
   this->M = M;
 
-  int nbCamera = count(doc, node, cam_name);
+  int nbCamera = count(doc, node, M_name);
 
-  std::cout <<"Result find camera with input name: " << nbCamera << std::endl;
-//  if( nbCamera > 0){
-//    //    vpCERROR << nbCamera
-//    //             << " set(s) of camera parameters is(are) already "<< std::endl
-//    //             << "available in the file with your specifications : "<< std::endl
-//    //             << "precise the grabber parameters or delete manually"<< std::endl
-//    //             << "the previous one."<<std::endl;
-//    xmlFreeDoc(doc);
-//    return SEQUENCE_ERROR;
-//  }
+  //std::cout <<"Result find camera with input name: " << nbCamera << std::endl;
+  if( nbCamera > 0){
+    //vpCERROR
+    std::cout << "There is already an Homogeneous matrixy "<< std::endl
+              << "available in the file with the input name: "<< M_name << "."<< std::endl
+              << "Please delete it manually from the xml file."<< std::endl;
+    xmlFreeDoc(doc);
+    return SEQUENCE_ERROR;
+  }
 
-//  nodeCamera = find_camera(doc, node, cam_name, im_width, im_height);
-//  if(nodeCamera == NULL){
-//    write(node, cam_name, im_width, im_height);
-//  }
-//  else{
-//    write_camera(nodeCamera);
-//  }
+  write(node, M_name);
 
-//  xmlSaveFormatFile(filename,doc,1);
-//  xmlFreeDoc(doc);
+  xmlSaveFormatFile(filename,doc,1);
+  xmlFreeDoc(doc);
+  std::cout << "Homogeneous matrix '"<< M_name << "' saved in the file named "<< filename << " correctly." << std::endl;
 
   return SEQUENCE_OK;
 }
@@ -454,8 +453,8 @@ vpXmlParserHomogeneousMatrix::read_camera (xmlDocPtr doc, xmlNodePtr node,
   }
   else{
     this-> M = M_tmp;
-    std::cout << "Converstion in Homogeneous Matrix:"<< std::endl;
-    std::cout << this-> M << std::endl;
+    //std::cout << "Convert in Homogeneous Matrix:"<< std::endl;
+    //std::cout << this-> M << std::endl;
     this-> M_name = M_name_tmp;
 
   }
@@ -663,13 +662,13 @@ vpXmlParserHomogeneousMatrix::read_camera_model (xmlDocPtr doc, xmlNodePtr node,
   // Create the Homogeneous matrix
   M_tmp.buildFrom(tx_,ty_,tz_,tux_,tuy_,tuz_);
 
-  std::cout << "Read values from file:" << std::endl;
-  std::cout << "tx:" << tx_<< std::endl;
-  std::cout << "ty:" << ty_<< std::endl;
-  std::cout << "tz:" << tz_<< std::endl;
-  std::cout << "tux:" << tux_<< std::endl;
-  std::cout << "tuy:" << tuy_<< std::endl;
-  std::cout << "tuz:" << tuz_<< std::endl;
+//  std::cout << "Read values from file:" << std::endl;
+//  std::cout << "tx:" << tx_<< std::endl;
+//  std::cout << "ty:" << ty_<< std::endl;
+//  std::cout << "tz:" << tz_<< std::endl;
+//  std::cout << "tux:" << tux_<< std::endl;
+//  std::cout << "tuy:" << tuy_<< std::endl;
+//  std::cout << "tuz:" << tuz_<< std::endl;
 
 
   //  }
@@ -696,185 +695,85 @@ vpXmlParserHomogeneousMatrix::read_camera_model (xmlDocPtr doc, xmlNodePtr node,
 }
 
 /*!
-  Write camera parameters in an XML Tree.
+  Write Homogeneous Matrix in an XML Tree.
 
   \param node : XML tree, pointing on a marker equipement.
-  \param cam_name : name of the camera : useful if the xml file has multiple
-  camera parameters. Set as "" if the camera name is not ambiguous.
-  \param im_width : width of image  on which camera calibration was performed.
-    Set as 0 if not ambiguous.
-  \param im_height : height of the image  on which camera calibration
-    was performed. Set as 0 if not ambiguous.
-  \param subsampl_width : subsampling of the image width sent by the camera.
-    Set as 0 if not ambiguous.
-  \param subsampl_height : subsampling of the image height sent by the camera.
-    Set as 0 if not ambiguous.
+  \param M_name : name of the Homogeneous Matrix.
+
 
   \return error code.
  */
-//int vpXmlParserHomogeneousMatrix::
-//write (xmlNodePtr node, const std::string& cam_name,
-//       const unsigned int im_width, const unsigned int im_height,
-//       const unsigned int subsampl_width,
-//       const unsigned int subsampl_height)
-//{
-//  int back = SEQUENCE_OK;
+int vpXmlParserHomogeneousMatrix::
+write (xmlNodePtr node, const std::string& M_name)
+{
+  int back = SEQUENCE_OK;
 
-//  xmlNodePtr node_tmp;
-//  xmlNodePtr node_camera;
+  xmlNodePtr node_tmp;
+  xmlNodePtr node_camera;
+  xmlNodePtr node_values;
+  char str[11];
 
-//  // <camera>
-//  node_camera = xmlNewNode(NULL,(xmlChar*)LABEL_XML_M);
-//  xmlAddChild(node,node_camera);
-//  {
-//    //<name>
+  // Convert from Rotational matrix to Theta-U vector
+  vpRotationMatrix R;
+  M.extract(R);
 
-//    if(!cam_name.empty()){
-//      node_tmp = xmlNewComment((xmlChar*)"Name of the camera");
-//      xmlAddChild(node_camera,node_tmp);
-//      xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_M_NAME,
-//                      (xmlChar*)cam_name.c_str());
-//    }
+  vpThetaUVector tu(R);
 
-//    if(im_width != 0 || im_height != 0){
-//      char str[11];
-//      //<image_width>
-//      node_tmp = xmlNewComment((xmlChar*)"Size of the image on which camera calibration was performed");
-//      xmlAddChild(node_camera,node_tmp);
 
-//      sprintf(str,"%u",im_width);
-//      xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_WIDTH,(xmlChar*)str);
-//      //<image_height>
+  // <homogenous_transformation>
+  node_tmp = xmlNewComment((xmlChar*)" Homogeneous Matrix");
+  xmlAddChild(node,node_tmp);
+  node_camera = xmlNewNode(NULL,(xmlChar*)LABEL_XML_M);
+  xmlAddChild(node,node_camera);
+  {
+    //<name>
 
-//      sprintf(str,"%u",im_height);
-//      xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_HEIGHT,(xmlChar*)str);
-//      if(subsampling_width != 0 || subsampling_height != 0){
-//        node_tmp = xmlNewComment((xmlChar*)"Subsampling used to obtain the current size of the image.");
-//        xmlAddChild(node_camera,node_tmp);
+    if(!M_name.empty()){
+      node_tmp = xmlNewComment((xmlChar*)"Name of the homogeneous matrix");
+      xmlAddChild(node_camera,node_tmp);
+      xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_M_NAME, (xmlChar*)M_name.c_str());
+    }
 
-//        //<subsampling_width>
-//        sprintf(str,"%u",subsampl_width);
-//        xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_SUBSAMPLING_WIDTH,
-//                        (xmlChar*)str);
-//        //<subsampling_height>
-//        sprintf(str,"%u",subsampl_height);
-//        xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_SUBSAMPLING_HEIGHT,
-//                        (xmlChar*)str);
-//        node_tmp = xmlNewComment((xmlChar*)"The full size is the sensor size actually used to grab the image. full_width = subsampling_width * image_width");
-//        xmlAddChild(node_camera,node_tmp);
+    //<values>
 
-//        //<full_width>
-//        sprintf(str,"%u",im_width*subsampl_width);
-//        xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_FULL_WIDTH,
-//                        (xmlChar*)str);
-//        //<full_height>
-//        sprintf(str,"%u",im_height*subsampl_height);
-//        xmlNewTextChild(node_camera,NULL,(xmlChar*)LABEL_XML_FULL_HEIGHT,
-//                        (xmlChar*)str);
-//      }
-//    }
+    node_values = xmlNewNode(NULL,(xmlChar*)LABEL_XML_VALUE);
+    xmlAddChild(node_camera,node_values);
+    {
+      node_tmp = xmlNewComment((xmlChar*)"Translation vector");
+      xmlAddChild(node_values,node_tmp);
 
-//    node_tmp = xmlNewComment((xmlChar*)"Intrinsic camera parameters computed for each projection model");
+      //<tx>
+      sprintf(str,"%f",M[0][3]);
+      xmlNewTextChild(node_values,NULL,(xmlChar*)LABEL_XML_TX,(xmlChar*)str);
 
-//    xmlAddChild(node_camera,node_tmp);
+      //<ty>
+      sprintf(str,"%f",M[1][3]);
+      xmlNewTextChild(node_values,NULL,(xmlChar*)LABEL_XML_TY,(xmlChar*)str);
 
-//    back = write_camera(node_camera);
-//  }
-//  return back;
-//}
-/*!
-  Write camera parameters in an XML Tree.
+      //<tz>
+      sprintf(str,"%f",M[2][3]);
+      xmlNewTextChild(node_values,NULL,(xmlChar*)LABEL_XML_TZ,(xmlChar*)str);
 
-  \param node_camera : XML pointer node, pointing on a camera node.
+      node_tmp = xmlNewComment((xmlChar*)"Rotational vector expressed in angle axis representation");
+      xmlAddChild(node_values,node_tmp);
 
-  \return error code.
-  */
-//int vpXmlParserHomogeneousMatrix::
-//write_camera(xmlNodePtr node_camera){
-//  xmlNodePtr node_model;
-//  xmlNodePtr node_tmp;
+      //<tux>
+      sprintf(str,"%f",tu[0]);
+      xmlNewTextChild(node_values,NULL,(xmlChar*)LABEL_XML_TUX,(xmlChar*)str);
 
-//  int back = SEQUENCE_OK;
-//  switch(camera.get_projModel()){
-//  case vpCameraParameters::perspectiveProjWithoutDistortion :
-//    //<model>
-//    node_model = xmlNewNode(NULL,(xmlChar*)LABEL_XML_MODEL);
-//    xmlAddChild(node_camera,node_model);
-//  {
-//    char str[21];
-//    node_tmp = xmlNewComment((xmlChar*)"Projection model type");
-//    xmlAddChild(node_model,node_tmp);
+      //<tuy>
+      sprintf(str,"%f",tu[1]);
+      xmlNewTextChild(node_values,NULL,(xmlChar*)LABEL_XML_TUY,(xmlChar*)str);
 
-//    //<type>without_distortion</type>
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_MODEL_TYPE,
-//                    (xmlChar*)LABEL_XML_MODEL_WITHOUT_DISTORTION);
+      //<tuz>
+      sprintf(str,"%f",tu[2]);
+      xmlNewTextChild(node_values,NULL,(xmlChar*)LABEL_XML_TUZ,(xmlChar*)str);
 
-//    node_tmp = xmlNewComment((xmlChar*)"Pixel ratio");
-//    xmlAddChild(node_model,node_tmp);
-//    //<px>
-//    sprintf(str,"%.10f",camera.get_px());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_PX,(xmlChar*)str);
-//    //<py>
-//    sprintf(str,"%.10f",camera.get_py());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_PY,(xmlChar*)str);
+    }
 
-//    node_tmp = xmlNewComment((xmlChar*)"Principal point");
-//    xmlAddChild(node_model,node_tmp);
-
-//    //<u0>
-//    sprintf(str,"%.10f",camera.get_u0());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_U0,(xmlChar*)str);
-//    //<v0>
-//    sprintf(str,"%.10f",camera.get_v0());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_V0,(xmlChar*)str);
-//  }
-//    break;
-//  case vpCameraParameters::perspectiveProjWithDistortion :
-//    //<model>
-//    node_model = xmlNewNode(NULL,(xmlChar*)LABEL_XML_MODEL);
-//    xmlAddChild(node_camera,node_model);
-//  {
-//    char str[21];
-//    node_tmp = xmlNewComment((xmlChar*)"Projection model type");
-//    xmlAddChild(node_model,node_tmp);
-//    //<type>with_distortion</type>
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_MODEL_TYPE,
-//                    (xmlChar*)LABEL_XML_MODEL_WITH_DISTORTION);
-
-//    node_tmp = xmlNewComment((xmlChar*)"Pixel ratio");
-//    xmlAddChild(node_model,node_tmp);
-//    //<px>
-//    sprintf(str,"%.10f",camera.get_px());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_PX,(xmlChar*)str);
-//    //<py>
-//    sprintf(str,"%.10f",camera.get_py());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_PY,(xmlChar*)str);
-
-//    node_tmp = xmlNewComment((xmlChar*)"Principal point");
-//    xmlAddChild(node_model,node_tmp);
-//    //<u0>
-//    sprintf(str,"%.10f",camera.get_u0());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_U0,(xmlChar*)str);
-//    //<v0>
-//    sprintf(str,"%.10f",camera.get_v0());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_V0,(xmlChar*)str);
-
-//    //<kud>
-//    node_tmp = xmlNewComment((xmlChar*)"Undistorted to distorted distortion parameter");
-//    xmlAddChild(node_model,node_tmp);
-//    sprintf(str,"%.10f",camera.get_kud());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_KUD,(xmlChar*)str);
-
-//    //<kud>
-//    node_tmp = xmlNewComment((xmlChar*)"Distorted to undistorted distortion parameter");
-//    xmlAddChild(node_model,node_tmp);
-//    sprintf(str,"%.10f",camera.get_kdu());
-//    xmlNewTextChild(node_model,NULL,(xmlChar*)LABEL_XML_KDU,(xmlChar*)str);
-//  }
-//    break;
-//  }
-//  return back;
-//}
+  }
+  return back;
+}
 
 /*!
   Translate a string (label) to a xml code.

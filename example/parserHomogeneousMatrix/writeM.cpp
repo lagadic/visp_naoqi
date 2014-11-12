@@ -50,18 +50,20 @@ int main(int argc, char* argv[])
 {
   try
   {
+    //Create Pose Vector and convert to Homogeneous Matrix
+    vpPoseVector r(1.0,1.3,3.5,0.2,0.3,0.5);
+    vpHomogeneousMatrix M(r);
 
-    vpHomogeneousMatrix M;
 #ifdef VISP_HAVE_XML2
     vpXmlParserHomogeneousMatrix p; // Create a XML parser
+    std::string name_M =  "eMc_CameraRigth_with_distorsion";
+    char filename[FILENAME_MAX];
+    sprintf(filename, "%s", "eMc_test.xml");
 
-    std::string name =  "eMc_CameraLeft_without_distorsionf";
-
-
-    if (p.save(M, "eMc1.xml", name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
-      std::cout << "Cannot save camera parameters" << std::endl;
+    if (p.save(M, filename, name_M) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK)
+    {
+      std::cout << "Cannot save the Homogeneous matrix" << std::endl;
     }
-    // std::cout << M << std::endl;
 
 
   }

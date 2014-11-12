@@ -35,7 +35,7 @@
  * XML parser to load and save camera intrinsic parameters.
  *
  * Authors:
- * Anthony Saunier
+ * Giovanni Claudio
  *
  *****************************************************************************/
 
@@ -261,7 +261,7 @@ public:
       const std::string &M_name_);
 
  int save(const vpHomogeneousMatrix &M, const char * filename,
-     const std::string &camera_name);
+     const std::string &M_name);
 
   // get/set functions
   std::string getHomogeneousMatrixName(){return this->M_name;}
@@ -313,14 +313,9 @@ private:
   void myXmlReadCharChild (xmlDocPtr doc,
 			   xmlNodePtr node,
 			   char **res);
-//  int write (xmlNodePtr node, const std::string& camera_name,
-//	     const unsigned int image_width  = 0,
-//	     const unsigned int image_height = 0,
-//	     const unsigned int subsampling_width = 0,
-//	     const unsigned int subsampling_height = 0);
+  int write (xmlNodePtr node, const std::string& M_name);
 
 
-//  int write_camera(xmlNodePtr node_camera);
   
 private:
 
