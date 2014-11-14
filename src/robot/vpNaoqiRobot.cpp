@@ -42,6 +42,8 @@
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
+#include <alcommon/albroker.h>
+
 #ifdef USE_METAPOD
 #include <romeo.hh>
 # include <metapod/tools/print.hh>
@@ -62,7 +64,7 @@ typedef romeo<LocalFloatType> RomeoModel;
   - collision protection: enabled
   */
 vpNaoqiRobot::vpNaoqiRobot()
-  : m_motionProxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true), m_robotName("")
+  : m_motionProxy(NULL),m_proxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true), m_robotName("")
 {
 }
 
@@ -96,6 +98,14 @@ void vpNaoqiRobot::open()
     // Create a proxy to control the robot
     m_motionProxy = new AL::ALMotionProxy(m_robotIp);
 
+    // Create a general proxy to motion to use new functions not implemented in the specialized proxy
+
+    std::string 	myIP = "";		// IP du portable (voir /etc/hosts)
+    int 	myPort = 0 ;			// Default broker port
+
+    boost::shared_ptr<AL::ALBroker> broker = AL::ALBroker::createBroker("BrokerMotion", myIP, myPort, m_robotIp, 9559);
+    m_proxy = new AL::ALProxy(broker, "ALMotion");
+
     int success;
     if (m_collisionProtection == false)
       success = m_motionProxy->setCollisionProtectionEnabled("Arms", "False");
@@ -103,7 +113,7 @@ void vpNaoqiRobot::open()
       m_motionProxy->setCollisionProtectionEnabled("Arms", "True");
     std::cout << "Collision protection is " << m_collisionProtection << std::endl;
 
-   // Check the type of the robot
+    // Check the type of the robot
     AL::ALValue robotConfig = m_motionProxy->getRobotConfig();
     m_robotName = std::string(robotConfig[1][0]);
 
@@ -265,6 +275,133 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
   }
 }
 
+
+
+
+
+/*!
+  Apply a velocity vector to a vector of joints. Use just one call to apply the velocities.
+  NOT WORKING: In the C++ SDK is not implemented yet the function setAngles able to handle
+  vector of fraction
+
+  \todo Improve the function to be able to pass just one joint as names argument.
+
+  \param names :  Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+  \param jointVel : Joint velocity vector with values expressed in rad/s.
+  \param verbose : If true activates printings.
+ */
+void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALValue &jointVel, bool verbose)
+{
+  std::vector<std::string> jointNames;
+  if (names.isString()) // Suppose to be a chain
+    jointNames = m_motionProxy->getBodyNames(names);
+  else if (names.isArray()) // Supposed to be a vector of joints
+    jointNames = names; // it a vector of joints
+  else
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Unable to decode the joint chain.");
+
+  if (jointNames.size() != jointVel.getSize() ) {
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "The dimensions of the joint array and the velocities array do not match.");
+  }
+
+  AL::ALValue jointListStop;
+  AL::ALValue jointListMove;
+  AL::ALValue angles;
+  std::vector<float> fractions;
+
+
+
+  for (unsigned i = 0 ; i < jointVel.getSize() ; ++i)
+  {
+    std::string jointName = jointNames[i];
+    if (verbose)
+      std::cout << "Joint name: " << jointName << std::endl;
+
+    float vel = jointVel[i];
+
+    if (verbose)
+      std::cout << "Desired velocity =  " << vel << "rad/s to the joint " << jointName << "." << std::endl;
+
+    //Get the limits of the joint
+    AL::ALValue limits = m_motionProxy->getLimits(jointName);
+
+
+    if (vel == 0.0f)
+    {
+      if (verbose)
+        std::cout << "Stop the joint" << std::endl ;
+
+      jointListStop.arrayPush(jointName);
+    }
+    else
+    {
+
+      if (vel > 0.0f)
+      {
+        //Reach qMax
+        angles.arrayPush(limits[0][1]);
+        if (verbose)
+          std::cout << "Reach qMax (" << limits[0][1] << ") ";
+      }
+
+      else if (vel < 0.0f)
+      {
+        //Reach qMin
+        angles.arrayPush(limits[0][0]);
+        if (verbose)
+          std::cout << "Reach qMin (" << limits[0][0] << ") ";
+      }
+
+
+      jointListMove.arrayPush(jointName);
+      float fraction = fabs( float (vel/float(limits[0][2])));
+      if (fraction >= 1.0 )
+      {
+        if (verbose) {
+          std::cout << "Given velocity is too high: " <<  vel << "rad/s for " << jointName << "." << std::endl;
+          std::cout << "Max allowed is: " << limits[0][2] << "rad/s for "<< std::endl;
+        }
+        fraction = 1.0;
+      }
+
+      fractions.push_back(fraction);
+
+    }
+  }
+  std::cout << "Apply Velocity to joints " << jointListMove << std::endl;
+  std::cout << "Stop List joints: " << jointListStop << std::endl;
+  std::cout << "with fractions " << angles << std::endl;
+  std::cout << "to angles " << fractions << std::endl;
+
+
+  if (jointListMove.getSize()>0)
+  {
+    m_proxy->callVoid("setAngles", jointListMove, angles, fractions);
+    //m_motionProxy->setAngles(jointListMove,angles,fractions);
+  }
+
+  if (jointListStop.getSize()>0)
+  {
+    AL::ALValue zeros =AL::ALValue::array(0.0f);
+    zeros.arraySetSize(jointListStop.getSize());
+
+    m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
+    // m_motionProxy->changeAngles(jointListStop,zeros,0.1f);
+  }
+
+
+
+
+
+}
+
+
+
+
+
 /*!
   Stop the velocity applied to the joints.
   \param names :  Names the joints, chains, "Body", "JointActuators",
@@ -281,14 +418,14 @@ void vpNaoqiRobot::stop(const AL::ALValue &names)
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Unable to decode the joint chain.");
 
-   std::vector<float> angles;
+  std::vector<float> angles;
   for (unsigned i = 0 ; i < jointNames.size() ; ++i)
-  m_motionProxy->changeAngles(jointNames[i], 0.0f, 0.1f);
-//      {
-//    angles = m_motionProxy->getAngles(jointNames[i],true);
-//    m_motionProxy->setAngles(jointNames[i],angles[0],1.0);
+    m_motionProxy->changeAngles(jointNames[i], 0.0f, 0.1f);
+  //      {
+  //    angles = m_motionProxy->getAngles(jointNames[i],true);
+  //    m_motionProxy->setAngles(jointNames[i],angles[0],1.0);
 
-//  }
+  //  }
 
 }
 
