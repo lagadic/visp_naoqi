@@ -50,16 +50,16 @@ int main(int argc, char* argv[])
     //Create Pose Vector and convert to Homogeneous Matrix
     vpHomogeneousMatrix eMc;
 
-    std::ifstream f("eMc.dat") ;
+    std::ifstream f("oMe_d.dat") ;
     eMc.load(f) ;
     f.close() ;
-    std::cout << "eMc:\n" << eMc << std::endl;
+    std::cout << "oMe_d:\n" << eMc << std::endl;
 
 #ifdef VISP_HAVE_XML2
     vpXmlParserHomogeneousMatrix p; // Create a XML parser
-    std::string name_M =  "eMc_CameraLeft_with_distorsion";
+    std::string name_M =  "oMe_d_TeaBox";
     char filename[FILENAME_MAX];
-    sprintf(filename, "%s", VISP_NAOQI_EXTRINSIC_CAMERA_FILE);
+    sprintf(filename, "%s", VISP_NAOQI_GENERAL_M_FILE);
 
     if (p.save(eMc, filename, name_M) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK)
     {

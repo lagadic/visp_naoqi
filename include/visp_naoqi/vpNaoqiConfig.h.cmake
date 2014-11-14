@@ -44,6 +44,10 @@
 // Where is the XML file containing the camera extrinsic parameters
 #define VISP_NAOQI_EXTRINSIC_CAMERA_FILE "${VISP_NAOQI_EXTRINSIC_CAMERA_FILE}"
 
+// Where is the XML file containing general homogeneous matrix useful for the demos
+#define VISP_NAOQI_GENERAL_M_FILE "${VISP_NAOQI_GENERAL_M_FILE}"
+
+
 #endif
 
 

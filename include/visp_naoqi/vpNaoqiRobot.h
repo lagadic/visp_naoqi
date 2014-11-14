@@ -44,6 +44,7 @@
 
 // Aldebaran includes
 #include <alproxies/almotionproxy.h>
+#include <alcommon/alproxy.h>
 #include <alerror/alerror.h>
 
 // ViSP includes
@@ -237,11 +238,14 @@ public:
 
   void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
   void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
+  void setVelocity_one_call(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
+
 
   void stop(const AL::ALValue& names);
 
 protected:
   AL::ALMotionProxy *m_motionProxy; //!< Motion proxy
+  AL::ALProxy *m_proxy; //!< General Proxy
   std::string m_robotIp; //!<  Robot Ethernet address
   bool m_isOpen; //!< Proxy opened status
   bool m_collisionProtection; //!< Collition protection enabling status
