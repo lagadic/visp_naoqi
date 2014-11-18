@@ -44,13 +44,12 @@
 
 #include <alcommon/albroker.h>
 
-#ifdef USE_METAPOD
-#include <romeo.hh>
-# include <metapod/tools/print.hh>
-# include <metapod/tools/initconf.hh>
-//# include <metapod/algos/jac.hh>
-#include <metapod/algos/jac_point_chain.hh>
-# include <metapod/tools/jcalc.hh>
+#ifdef VISP_NAOQI_HAVE_MATAPOD
+#  include <romeo.hh>
+#  include <metapod/tools/print.hh>
+#  include <metapod/tools/initconf.hh>
+#  include <metapod/algos/jac_point_chain.hh>
+#  include <metapod/tools/jcalc.hh>
 
 using namespace metapod;
 
@@ -275,10 +274,6 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
   }
 }
 
-
-
-
-
 /*!
   Apply a velocity vector to a vector of joints. Use just one call to apply the velocities.
   NOT WORKING: In the C++ SDK is not implemented yet the function setAngles able to handle
@@ -311,8 +306,6 @@ void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALVa
   AL::ALValue jointListMove;
   AL::ALValue angles;
   std::vector<float> fractions;
-
-
 
   for (unsigned i = 0 ; i < jointVel.getSize() ; ++i)
   {
@@ -376,7 +369,6 @@ void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALVa
   std::cout << "with fractions " << angles << std::endl;
   std::cout << "to angles " << fractions << std::endl;
 
-
   if (jointListMove.getSize()>0)
   {
     m_proxy->callVoid("setAngles", jointListMove, angles, fractions);
@@ -391,16 +383,7 @@ void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALVa
     m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
     // m_motionProxy->changeAngles(jointListStop,zeros,0.1f);
   }
-
-
-
-
-
 }
-
-
-
-
 
 /*!
   Stop the velocity applied to the joints.
@@ -569,7 +552,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
   if (chainName == "Head")
   {
-#ifdef USE_METAPOD
+#ifdef VISP_NAOQI_HAVE_MATAPOD
     //Jacobian matrix w.r.t the torso
     vpMatrix tJe;
 
@@ -686,7 +669,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
   else if (chainName == "LArm")
   {
-#ifdef USE_METAPOD
+#ifdef VISP_NAOQI_HAVE_MATAPOD
     //Jacobian matrix w.r.t the torso
     vpMatrix tJe;
 
@@ -754,13 +737,13 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Metapod is not installed");
 
-#endif // #ifdef USE_METAPOD
+#endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
   }
 
 
   else if (chainName == "RArm")
   {
-#ifdef USE_METAPOD
+#ifdef VISP_NAOQI_HAVE_MATAPOD
     //Jacobian matrix w.r.t the torso
     vpMatrix tJe;
 
@@ -828,13 +811,8 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Metapod is not installed");
 
-#endif // #ifdef USE_METAPOD
-
-
+#endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
   }
-
-
-
 
   else if (chainName == "LArm_old")
   {
@@ -912,19 +890,13 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     eJe[5][4]=-sin(q14);
     eJe[5][5]=0;
     eJe[5][6]=1;
-
-
-
   }
   else
   {
-
     throw vpRobotException (vpRobotException::readingParametersError,
                             "End-effector name not recognized. Please choose one above 'Head', 'LArm' or 'RArm' ");
-
   }
   return eJe;
-
 }
 
 /*!
@@ -977,7 +949,6 @@ vpHomogeneousMatrix vpNaoqiRobot::get_cMe(const std::string &endEffectorName)
     cMe = (eMc_ald * cam_alMe_camvisp).inverse();
 
   }
-
 
   else
   {

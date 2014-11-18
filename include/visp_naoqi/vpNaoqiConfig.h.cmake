@@ -38,6 +38,9 @@
 #ifndef vpNaoqiConfig_h
 #define vpNaoqiConfig_h
 
+// Defined if Metapod is available
+#cmakedefine VISP_NAOQI_HAVE_MATAPOD
+
 // Where is the XML file containing the camera intrinsic parameters
 #define VISP_NAOQI_INTRINSIC_CAMERA_FILE "${VISP_NAOQI_INTRINSIC_CAMERA_FILE}"
 

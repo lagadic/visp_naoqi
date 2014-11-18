@@ -2,26 +2,37 @@ cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 
 project(visp_naoqi)
 
-set(CMAKE_VERBOSE_MAKEFILE TRUE)
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # this lets you find the qibuild cmake frameworl
 find_package(qibuild)
 
 find_package(VISP REQUIRED)
 
-option(USE_METAPOD "Enable Metapod usage" ON)
+find_package(Metapod)
+
+if(METAPOD_FOUND)
+  option(USE_METAPOD "Enable Metapod usage" ON)
+else()
+  set(USE_METAPOD OFF)
+endif()
 
 # include metapod library
 if(USE_METAPOD)
-  include(metapod.cmake)
-  #define and search for metapod library
+  find_package(Eigen3)
+  if(EIGEN3_FOUND)
+    include_directories(${EIGEN3_INCLUDE_DIR})
+  endif()
+
   #set(WITH_METAPODFROMURDF TRUE)
   set(model_name "romeo")
+  include(cmake/metapod.cmake)
 
   ADD_SAMPLEURDFMODEL(${model_name})
 
   include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
-  add_definitions("-DUSE_METAPOD")
+
+  set(VISP_NAOQI_HAVE_MATAPOD "yes")  # for header vpNaoqiConfig.h
 endif()
 
 
