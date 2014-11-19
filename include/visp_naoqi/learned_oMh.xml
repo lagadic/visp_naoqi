@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<root>
+  <!--This file stores homogeneous matrix used
+   in the vpHomogeneousMatrix Class of ViSP available
+   at http://www.irisa.fr/lagadic/visp/visp.html .
+   It can be read with the parse method of
+   the vpXmlParserHomogeneousMatrix class.-->
+  <!-- Homogeneous Matrix-->
+  <homogeneous_transformation>
+    <!--Name of the homogeneous matrix-->
+    <name>oMh_Small_Tea_Box</name>
+    <values>
+      <!--Translation vector-->
+      <tx>-0.236851</tx>
+      <ty>0.066193</ty>
+      <tz>0.252320</tz>
+      <!--Rotational vector expressed in angle axis representation-->
+      <theta_ux>1.509022</theta_ux>
+      <theta_uy>-0.387369</theta_uy>
+      <theta_uz>-0.782500</theta_uz>
+    </values>
+  </homogeneous_transformation>
+  <!-- Homogeneous Matrix-->
+  <homogeneous_transformation>
+    <!--Name of the homogeneous matrix-->
+    <name>oMh_Small_Tea_Box_target_head</name>
+    <values>
+      <!--Translation vector-->
+      <tx>0.008045</tx>
+      <ty>0.100331</ty>
+      <tz>-0.005686</tz>
+      <!--Rotational vector expressed in angle axis representation-->
+      <theta_ux>-0.014080</theta_ux>
+      <theta_uy>0.735441</theta_uy>
+      <theta_uz>-0.218573</theta_uz>
+    </values>
+  </homogeneous_transformation>
+  <!-- Homogeneous Matrix-->
+  <homogeneous_transformation>
+    <!--Name of the homogeneous matrix-->
+    <name>oMh_Small_Tea_Box1</name>
+    <values>
+      <!--Translation vector-->
+      <tx>-0.108348</tx>
+      <ty>0.067308</ty>
+      <tz>-0.049099</tz>
+      <!--Rotational vector expressed in angle axis representation-->
+      <theta_ux>0.093490</theta_ux>
+      <theta_uy>-0.422094</theta_uy>
+      <theta_uz>0.006191</theta_uz>
+    </values>
+  </homogeneous_transformation>
+</root>
