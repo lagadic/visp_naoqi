@@ -39,15 +39,12 @@
  *
  *****************************************************************************/
 
-
-
 /*!
   \file vpXmlParserHomogeneousMatrix.h
   \brief Declaration of the vpXmlParserHomogeneousMatrix class.
   Class vpXmlParserHomogeneousMatrix allowed to load and save Homogeneous Matrixes in a file XML
 
 */
-
 
 #ifndef vpXMLPARSERHOMOGENEOUSMATRIX_H
 #define vpXMLPARSERHOMOGENEOUSMATRIX_H
@@ -64,9 +61,9 @@
 /*!
   \class vpXmlParserHomogeneousMatrix
 
-  \ingroup CameraModelTransformation CameraModel
+  \ingroup CameraModelTransformation CameraModel ??
 
-  \brief XML parser to load and save an Homogenous Matrix
+  \brief XML parser to load and save an Homogenous Matrix in a file
 
   To have a complete description of the Homogeneous matrix implemented in ViSP, see
   vpHomogeneousMatrix.
