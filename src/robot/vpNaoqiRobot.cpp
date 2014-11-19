@@ -42,6 +42,8 @@
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
+#include<visp_naoqi/vpNaoqiConfig.h>
+
 #include <alcommon/albroker.h>
 
 #ifdef VISP_NAOQI_HAVE_MATAPOD
