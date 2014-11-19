@@ -42,6 +42,8 @@
 #include <iostream>
 #include <string>
 
+#define BOOST_SIGNALS_NO_DEPRECATION_WARNING
+
 // Aldebaran includes
 #include <alproxies/almotionproxy.h>
 #include <alcommon/alproxy.h>
