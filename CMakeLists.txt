@@ -52,10 +52,8 @@ qi_create_lib(visp_naoqi
     include/visp_naoqi/vpNaoqiConfig.h
     include/visp_naoqi/vpNaoqiGrabber.h
     include/visp_naoqi/vpNaoqiRobot.h
-    include/visp_naoqi/vpXmlParserHomogeneousMatrix.h
     src/grabber/vpNaoqiGrabber.cpp
     src/robot/vpNaoqiRobot.cpp
-    src/parser/vpXmlParserHomogeneousMatrix.cpp
 )
 
 
