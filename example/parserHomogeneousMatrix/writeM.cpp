@@ -40,7 +40,7 @@
 #include <iostream>
 #include <string>
 
-#include<visp_naoqi/vpXmlParserHomogeneousMatrix.h>
+#include<visp/vpXmlParserHomogeneousMatrix.h>
 
 
 int main(int argc, char* argv[])

@@ -48,7 +48,7 @@
 
 #include <visp_naoqi/vpNaoqiConfig.h>
 #include <visp_naoqi/vpNaoqiGrabber.h>
-#include <visp_naoqi/vpXmlParserHomogeneousMatrix.h>
+#include <visp/vpXmlParserHomogeneousMatrix.h>
 
 /*!
   Default constructor that set the default parameters as:
