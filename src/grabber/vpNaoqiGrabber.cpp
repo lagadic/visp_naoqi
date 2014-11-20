@@ -306,12 +306,12 @@ int main()
   g.setCamera(0);
   g.open();
   vpCameraParameters cam = g.getCameraParameters();
-  vpHomogeneousMatrix eMc = g.getCameraExtParameters()
+  vpHomogeneousMatrix eMc = g.get_eMc()
 }
 
  */
 vpHomogeneousMatrix
-vpNaoqiGrabber::getCameraExtParameters(vpCameraParameters::vpCameraParametersProjType projModel,std::string cameraName ) const
+vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel,std::string cameraName ) const
 {
 
   vpHomogeneousMatrix eMc;

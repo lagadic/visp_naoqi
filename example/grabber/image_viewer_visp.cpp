@@ -83,7 +83,7 @@ int main(int argc, const char* argv[])
     vpDisplayX d(I);
     vpDisplay::setTitle(I, "ViSP viewer");
 
-    std::cout << "Extrinsic Camera parameters: " << g.getCameraExtParameters()<< std::endl;
+    std::cout << "Extrinsic Camera parameters: " << g.get_eMc()<< std::endl;
 
     while(1)
     {

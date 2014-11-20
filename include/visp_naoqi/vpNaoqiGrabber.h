@@ -100,7 +100,7 @@ public:
 
   vpCameraParameters getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
 
-  vpHomogeneousMatrix getCameraExtParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion, std::string cameraName = "" ) const;
+  vpHomogeneousMatrix get_eMc(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion, std::string cameraName = "" ) const;
 
   /*!
 
