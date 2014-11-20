@@ -80,6 +80,42 @@ int main(int argc, char* argv[])
 
     robot.open();
 
+
+
+
+    // Test Velocity controller one call
+    {
+      // Test with a chain of joints
+      std::string chain = "Head";
+
+      std::cout << "Test " << chain << " velocity control" << std::endl;
+
+      std::vector<std::string> jointNames = robot.getBodyNames(chain);
+
+      robot.setStiffness(chain, 1.f);
+
+      std::vector<float> vel;
+      vel.resize(jointNames.size());
+
+      vel[0] = 0.01f;
+      vel[1] = 0.01f;
+      vel[2] = 0.01f;
+      vel[3] = 0.01f;
+
+
+      double t_initial = vpTime::measureTimeSecond();
+      while (vpTime::measureTimeSecond() < t_initial+3)
+      {
+        robot.setVelocity_one_call (jointNames, vel);
+      }
+
+      robot.stop(chain);
+
+      return 0;
+    }
+
+
+
     {
       // Test with a vector of joints
       std::vector<std::string> jointNames;
@@ -116,6 +152,10 @@ int main(int argc, char* argv[])
       robot.setStiffness(jointNames, 0.f);
     }
 
+
+
+
+
     {
       // Test with a chain of joints
       std::string chain = "Head";
@@ -139,6 +179,10 @@ int main(int argc, char* argv[])
       robot.stop(chain);
       robot.setStiffness(chain, 0.f);
     }
+
+
+
+
   }
   catch (const vpException &e)
   {

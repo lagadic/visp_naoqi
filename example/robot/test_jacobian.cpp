@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
 
         std::cout << "q_dot: " << q_dot.t() << std::endl;
 
-        //robot.setVelocity(jointNames, q_dot);
+        robot.setVelocity(jointNames, q_dot);
       }
 
       robot.stop(chainName);
