@@ -240,6 +240,7 @@ public:
 
   void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
   void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
+  void setVelocity_one_call(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
   void setVelocity_one_call(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
 
 

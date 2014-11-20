@@ -276,12 +276,27 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
   }
 }
 
+
+/*!
+  Apply a velocity vector to a vector of joints.Use just one call to apply the velocities.
+  \param names :  Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+  \param jointVel : Joint velocity vector with values expressed in rad/s.
+  \param verbose : If true activates printings.
+ */
+
+void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue& names, const vpColVector &jointVel, bool verbose)
+{
+  std::vector<float> jointVel_(jointVel.size());
+  for (unsigned int i=0; i< jointVel.size(); i++)
+    jointVel_[i] = jointVel[i];
+  setVelocity_one_call(names, jointVel_);
+}
+
+
+
 /*!
   Apply a velocity vector to a vector of joints. Use just one call to apply the velocities.
-  NOT WORKING: In the C++ SDK is not implemented yet the function setAngles able to handle
-  vector of fraction
-
-  \todo Improve the function to be able to pass just one joint as names argument.
 
   \param names :  Names the joints, chains, "Body", "JointActuators",
   "Joints" or "Actuators".
@@ -379,8 +394,8 @@ void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALVa
 
   if (jointListStop.getSize()>0)
   {
-    AL::ALValue zeros =AL::ALValue::array(0.0f);
-    zeros.arraySetSize(jointListStop.getSize());
+    std::vector<float> zeros( jointListStop.getSize() );
+    std::cout << "Stop array: " << zeros << std::endl;
 
     m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
     // m_motionProxy->changeAngles(jointListStop,zeros,0.1f);
