@@ -389,7 +389,6 @@ void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALVa
   if (jointListMove.getSize()>0)
   {
     m_proxy->callVoid("setAngles", jointListMove, angles, fractions);
-    //m_motionProxy->setAngles(jointListMove,angles,fractions);
   }
 
   if (jointListStop.getSize()>0)
@@ -398,7 +397,7 @@ void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALVa
     std::cout << "Stop array: " << zeros << std::endl;
 
     m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
-    // m_motionProxy->changeAngles(jointListStop,zeros,0.1f);
+
   }
 }
 
