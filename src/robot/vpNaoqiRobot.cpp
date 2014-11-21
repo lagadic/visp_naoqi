@@ -186,12 +186,12 @@ void vpNaoqiRobot::setStiffness(const AL::ALValue& names, float stiffness)
   \param verbose : If true activates printings.
  */
 
-void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose)
+void vpNaoqiRobot::setVelocity_eachJoint(const AL::ALValue& names, const vpColVector &jointVel, bool verbose)
 {
   std::vector<float> jointVel_(jointVel.size());
   for (unsigned int i=0; i< jointVel.size(); i++)
     jointVel_[i] = jointVel[i];
-  setVelocity(names, jointVel_);
+  setVelocity_eachJoint(names, jointVel_);
 }
 
 /*!
@@ -204,7 +204,7 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const vpColVector &join
   \param jointVel : Joint velocity vector with values expressed in rad/s.
   \param verbose : If true activates printings.
  */
-void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &jointVel, bool verbose)
+void vpNaoqiRobot::setVelocity_eachJoint(const AL::ALValue &names, const AL::ALValue &jointVel, bool verbose)
 {
   std::vector<std::string> jointNames;
   if (names.isString()) // Suppose to be a chain
@@ -285,12 +285,12 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
   \param verbose : If true activates printings.
  */
 
-void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue& names, const vpColVector &jointVel, bool verbose)
+void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose)
 {
   std::vector<float> jointVel_(jointVel.size());
   for (unsigned int i=0; i< jointVel.size(); i++)
     jointVel_[i] = jointVel[i];
-  setVelocity_one_call(names, jointVel_);
+  setVelocity(names, jointVel_);
 }
 
 
@@ -303,7 +303,7 @@ void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue& names, const vpColVec
   \param jointVel : Joint velocity vector with values expressed in rad/s.
   \param verbose : If true activates printings.
  */
-void vpNaoqiRobot::setVelocity_one_call(const AL::ALValue &names, const AL::ALValue &jointVel, bool verbose)
+void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &jointVel, bool verbose)
 {
   std::vector<std::string> jointNames;
   if (names.isString()) // Suppose to be a chain
