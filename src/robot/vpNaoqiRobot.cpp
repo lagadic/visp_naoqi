@@ -65,7 +65,7 @@ typedef romeo<LocalFloatType> RomeoModel;
   - collision protection: enabled
   */
 vpNaoqiRobot::vpNaoqiRobot()
-  : m_motionProxy(NULL),m_proxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true), m_robotName("")
+  : m_motionProxy(NULL),m_proxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true), m_robotName(""), m_robotType(Unknown)
 {
 }
 
@@ -119,12 +119,15 @@ void vpNaoqiRobot::open()
     m_robotName = std::string(robotConfig[1][0]);
 
     if (m_robotName.find("romeo") != std::string::npos) {
+      m_robotType = Romeo;
       std::cout << "This robot is Romeo" << std::endl;
     }
     else if (m_robotName.find("nao") != std::string::npos) {
+      m_robotType = Nao;
       std::cout << "This robot is Nao" << std::endl;
     }
     else if (m_robotName.find("pepper") != std::string::npos) {
+      m_robotType = Pepper;
       std::cout << "This robot is Pepper" << std::endl;
     }
     else {
