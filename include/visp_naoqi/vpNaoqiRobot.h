@@ -95,6 +95,12 @@
 class vpNaoqiRobot
 {
 public:
+  typedef enum {
+    Romeo,
+    Nao,
+    Pepper,
+    Unknown
+  } RobotType;
 
   vpNaoqiRobot();
   virtual ~vpNaoqiRobot();
@@ -225,6 +231,11 @@ public:
   vpHomogeneousMatrix get_cMe(const std::string &endEffectorName);
 
   /*!
+
+     Return the type of the robot (Romeo, Nao, Pepper).
+   */
+  RobotType getRobotType() const { return m_robotType; }
+  /*!
     Set the robot ip address.
     In the constructor, the default ip is set to "198.18.0.1".
     \param robotIp : New robot ip address.
@@ -243,7 +254,6 @@ public:
   void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
   void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
 
-
   void stop(const AL::ALValue& names);
 
 protected:
@@ -253,6 +263,7 @@ protected:
   bool m_isOpen; //!< Proxy opened status
   bool m_collisionProtection; //!< Collition protection enabling status
   std::string m_robotName; //!< Name of the robot
+  RobotType m_robotType; //!< Indicate if the robot is Romeo, Nao or Pepper
 };
 
 #endif

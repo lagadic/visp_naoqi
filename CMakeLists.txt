@@ -72,15 +72,6 @@ qi_use_lib(image_viewer_visp visp_naoqi)
 qi_create_bin(image_viewer_opencv example/grabber/image_viewer_opencv.cpp)
 qi_use_lib(image_viewer_opencv visp_naoqi)
 
-qi_create_bin(motion example/robot/motion.cpp)
-qi_use_lib(motion visp_naoqi)
-
-qi_create_bin(head_control example/robot/head_control.cpp)
-qi_use_lib(head_control visp_naoqi)
-
-qi_create_bin(test_jacobian example/robot/test_jacobian.cpp)
-qi_use_lib(test_jacobian visp_naoqi)
-
 qi_create_bin(camera_calibration tools/calibration/camera_calibration.cpp)
 qi_use_lib(camera_calibration visp_naoqi)
 
@@ -96,6 +87,8 @@ qi_use_lib(writeM visp_naoqi )
 qi_create_bin(dat_to_xml example/parserHomogeneousMatrix/dat_to_xml.cpp)
 qi_use_lib(dat_to_xml visp_naoqi )
 
+# Propagate in subdirs
+subdirs(example/robot)
 
 # doxygen
 find_package(Doxygen)
