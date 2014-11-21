@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
       double t_initial = vpTime::measureTimeSecond();
       while (vpTime::measureTimeSecond() < t_initial+3)
       {
-        robot.setVelocity_one_call (jointNames, vel);
+        robot.setVelocity (jointNames, vel);
       }
 
       robot.stop(chain);

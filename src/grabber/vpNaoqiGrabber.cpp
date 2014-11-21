@@ -306,7 +306,7 @@ int main()
   g.setCamera(0);
   g.open();
   vpCameraParameters cam = g.getCameraParameters();
-  vpHomogeneousMatrix eMc = g.get_eMc()
+  vpHomogeneousMatrix eMc = g.get_eMc();
 }
 
  */
