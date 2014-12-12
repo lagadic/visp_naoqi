@@ -37,12 +37,11 @@
  *
  *****************************************************************************/
 
-
 #include <visp/vpVelocityTwistMatrix.h>
 
 #include <visp_naoqi/vpNaoqiRobot.h>
 
-#include<visp_naoqi/vpNaoqiConfig.h>
+#include <visp_naoqi/vpNaoqiConfig.h>
 
 #include <alcommon/albroker.h>
 
@@ -384,10 +383,12 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
 
     }
   }
-  std::cout << "Apply Velocity to joints " << jointListMove << std::endl;
-  std::cout << "Stop List joints: " << jointListStop << std::endl;
-  std::cout << "with fractions " << angles << std::endl;
-  std::cout << "to angles " << fractions << std::endl;
+  if (verbose) {
+    std::cout << "Apply Velocity to joints " << jointListMove << std::endl;
+    std::cout << "Stop List joints: " << jointListStop << std::endl;
+    std::cout << "with fractions " << angles << std::endl;
+    std::cout << "to angles " << fractions << std::endl;
+  }
 
   if (jointListMove.getSize()>0)
   {
@@ -397,7 +398,7 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
   if (jointListStop.getSize()>0)
   {
     std::vector<float> zeros( jointListStop.getSize() );
-    std::cout << "Stop array: " << zeros << std::endl;
+    //std::cout << "Stop array: " << zeros << std::endl;
 
     m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
 
@@ -409,7 +410,7 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
   \param names :  Names the joints, chains, "Body", "JointActuators",
   "Joints" or "Actuators" to stop.
  */
-void vpNaoqiRobot::stop(const AL::ALValue &names)
+void vpNaoqiRobot::stop(const AL::ALValue &names) const
 {
   std::vector<std::string> jointNames;
   if (names.isString()) // Suppose to be a chain

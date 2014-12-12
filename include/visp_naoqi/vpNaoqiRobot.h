@@ -111,6 +111,15 @@ public:
   void cleanup();
 
   /*!
+    Get the Transformation matrix to the end-effectors
+
+    \param endEffectorName : Name of the end effector. Allowed values are "CameraLeft",
+    "CameraRight" for the fixed camera on the head, "RHand" and "LHand" for end-effector on the arms.
+
+    \return The transformation matrix to the end-effectors (computed from the last joint of the chain ending with the end-effector. )
+   */
+  vpHomogeneousMatrix get_cMe(const std::string &endEffectorName);
+  /*!
     Get the Jacobian specifying an end effector chain name.
 
     \param chainName : Name of the end effector. Allowed values are "Head",
@@ -175,6 +184,12 @@ public:
   std::string getRobotName() const { return m_robotName; }
 
   /*!
+
+     Return the type of the robot (Romeo, Nao, Pepper).
+   */
+  RobotType getRobotType() const { return m_robotType; }
+
+  /*!
     Open the connection with the robot.
     All the parameters should be set before calling this function.
     \code
@@ -219,22 +234,6 @@ public:
    */
   void setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed);
 
-
-  /*!
-    Get the Transformation matrix to the end-effectors
-
-    \param endEffectorName : Name of the end effector. Allowed values are "CameraLeft",
-    "CameraRight" for the fixed camera on the head, "RHand" and "LHand" for end-effector on the arms.
-
-    \return The transformation matrix to the end-effectors (computed from the last joint of the chain ending with the end-effector. )
-   */
-  vpHomogeneousMatrix get_cMe(const std::string &endEffectorName);
-
-  /*!
-
-     Return the type of the robot (Romeo, Nao, Pepper).
-   */
-  RobotType getRobotType() const { return m_robotType; }
   /*!
     Set the robot ip address.
     In the constructor, the default ip is set to "198.18.0.1".
@@ -254,7 +253,7 @@ public:
   void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
   void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
 
-  void stop(const AL::ALValue& names);
+  void stop(const AL::ALValue& names) const;
 
 protected:
   AL::ALMotionProxy *m_motionProxy; //!< Motion proxy
