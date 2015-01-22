@@ -41,10 +41,12 @@
 #include <iostream>
 #include <string>
 
+#include <visp_naoqi/vpNaoqiGrabber.h>
+
 #include <visp/vpDisplayX.h>
 #include <visp/vpImage.h>
 
-#include <visp_naoqi/vpNaoqiGrabber.h>
+
 
 /*!
 

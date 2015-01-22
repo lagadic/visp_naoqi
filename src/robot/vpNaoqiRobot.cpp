@@ -599,7 +599,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
 
     // Copy the angle values of the joint in the confVector in the right position
-    // In this case is +6 because in the first 6 positions there is the FreeFlyer
+    // In the first 6 positions there is the FreeFlyer. We used the index_confVec to copy the rigth values.
     for(unsigned int i=0;i<nJoints;i++)
       q[i+index_confVec] = qmp[i];
 
@@ -724,7 +724,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     // Compute the Jacobian tJe
     jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
 
-    static const bool includeFreeFlyer = false;
+    static const bool includeFreeFlyer = false; // I don't consider the first six FreeFlyer
     static const int offset = 0;
     typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::l_wrist, offset, includeFreeFlyer> jac;
     jac::Jacobian J = jac::Jacobian::Zero();
@@ -733,8 +733,8 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     for(unsigned int i=0;i<3;i++)
       for(unsigned int j=0;j<nJoints;j++)
       {
-        tJe[i][j]=J(i+3,RomeoModel::torso+j);
-        tJe[i+3][j]=J(i,RomeoModel::torso+j);
+        tJe[i][j]=J(i+3,RomeoModel::torso+j); // Since the FreeFlyer are not activated the columns of the Jacobian relative to the LArm
+        tJe[i+3][j]=J(i,RomeoModel::torso+j); // are from 0->6
 
       }
 

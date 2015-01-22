@@ -49,6 +49,8 @@
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <visp_naoqi/vpNaoqiGrabber.h>
+
 #include <visp/vpCalibration.h>
 
 #include <visp/vpDisplayX.h>
@@ -61,7 +63,7 @@
 #include <visp/vpVideoReader.h>
 #include <visp/vpXmlParserCamera.h>
 
-#include <visp_naoqi/vpNaoqiGrabber.h>
+
 
 enum {
   NEW_IMAGE,
