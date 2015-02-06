@@ -73,16 +73,33 @@ vpNaoqiGrabber::~vpNaoqiGrabber()
 
 /*!
   Select the camera to use.
-  \param camera_id : Camera identifier; camera left(0) or right(1).
+  \param camera_id : Camera identifier; CameraLeft(0), CameraRight(1),CameraLeftEye(2), CameraRightEye(3)
  */
 void vpNaoqiGrabber::setCamera(const int &camera_id)
 {
-  m_cameraId = camera_id;
+
   // TODO: add specialisation Romeo/Nao
-  if (m_cameraId == 0)
+  if (camera_id == 0)
+  {
     m_cameraName = "CameraLeft";
-  else if (m_cameraId == 1)
+    m_cameraId = camera_id;
+  }
+  else if (camera_id == 1)
+  {
     m_cameraName = "CameraRight";
+    m_cameraId = camera_id;
+  }
+  else if (camera_id == 2)
+  {
+    m_cameraName = "CameraLeftEye";
+    m_cameraId = 0;
+  }
+  else if (camera_id == 3)
+  {
+    m_cameraName = "CameraRightEye";
+    m_cameraId = 1;
+  }
+
 }
 
 void vpNaoqiGrabber::open()
@@ -182,7 +199,7 @@ void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestam
 
   // Tells to ALVideoDevice that it can give back the image buffer to the
   // driver. Optional after a getImageRemote but MANDATORY after a getImageLocal.
-  m_videoProxy->releaseImage(m_clientName);
+  //m_videoProxy->releaseImage(m_clientName);
 
   I.resize(m_height, m_width);
   vpImageConvert::BGRToGrey(img_buffer, (unsigned char *)I.bitmap, m_width, m_height);
@@ -311,7 +328,7 @@ int main()
 
  */
 vpHomogeneousMatrix
-vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel,std::string cameraName ) const
+vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel, std::string cameraName ) const
 {
 
   vpHomogeneousMatrix eMc;
@@ -321,22 +338,41 @@ vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel
   if (cameraName == "")
     cameraName = m_cameraName;
 
-  if (projModel = vpCameraParameters::perspectiveProjWithDistortion)
-    name =  "eMc_" + cameraName + "_with_distorsion";
-  else
-    name =  "eMc_" + cameraName + "_without_distorsion";
 
-  char filename[FILENAME_MAX];
-  sprintf(filename, "%s", VISP_NAOQI_EXTRINSIC_CAMERA_FILE);
-
-  if (p.parse(eMc,filename, name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
-    std::cout << "Cannot found the Homogeneous matrix named " << name << " in the file " <<  filename << std::endl;
+  if (cameraName == "CameraLeftEye" || cameraName == "CameraRightEye" )
+  {
+    for(unsigned int i=0; i<3; i++)
+      eMc[i][i] = 0; // remove identity
+    //Set Rotation
+    eMc[0][2] = 1.;
+    eMc[1][0] = -1.;
+    eMc[2][1] = -1.;
+    //Set Translation:
+    eMc[0][3] = 0.01299;
+    eMc[1][3] = 0.;
+    eMc[2][3] = 0.;
 
   }
-
   else
-    std::cout << "Read correctly the Homogeneous matrix named " << name << std::endl;
+  {
 
+
+    if (projModel == vpCameraParameters::perspectiveProjWithDistortion)
+      name =  "eMc_" + cameraName + "_with_distorsion";
+    else
+      name =  "eMc_" + cameraName + "_without_distorsion";
+
+    char filename[FILENAME_MAX];
+    sprintf(filename, "%s", VISP_NAOQI_EXTRINSIC_CAMERA_FILE);
+
+    if (p.parse(eMc,filename, name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
+      std::cout << "Cannot found the Homogeneous matrix named " << name << " in the file " <<  filename << std::endl;
+
+    }
+
+    else
+      std::cout << "Read correctly the Homogeneous matrix named " << name << std::endl;
+  }
 
   return eMc;
 }

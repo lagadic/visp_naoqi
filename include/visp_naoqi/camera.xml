@@ -38,4 +38,37 @@
       <kdu>-0.0204559125</kdu>
     </model>
   </camera>
+
+  <camera>
+    <!--Name of the camera-->
+    <name>CameraLeftEye</name>
+    <!--Size of the image on which camera calibration was performed-->
+    <image_width>320</image_width>
+    <image_height>240</image_height>
+    <!--Intrinsic camera parameters computed for each projection model-->
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithoutDistortion</type>
+      <!--Pixel ratio-->
+      <px>350.4155042297</px>
+      <py>351.4554624473</py>
+      <!--Principal point-->
+      <u0>150.9185817050</u0>
+      <v0>113.5902123070</v0>
+    </model>
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithDistortion</type>
+      <!--Pixel ratio-->
+      <px>345.3022932550</px>
+      <py>345.6431086165</py>
+      <!--Principal point-->
+      <u0>155.0429689992</u0>
+      <v0>113.0249110349</v0>
+      <!--Undistorted to distorted distortion parameter-->
+      <kud>0.0196850978</kud>
+      <!--Distorted to undistorted distortion parameter-->
+      <kdu>-0.0197312546</kdu>
+    </model>
+  </camera>
 </root>
