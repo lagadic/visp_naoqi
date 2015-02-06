@@ -724,7 +724,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     // Compute the Jacobian tJe
     jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
 
-    static const bool includeFreeFlyer = false; // I don't consider the first six FreeFlyer
+    static const bool includeFreeFlyer = true; // I don't consider the first six FreeFlyer
     static const int offset = 0;
     typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::l_wrist, offset, includeFreeFlyer> jac;
     jac::Jacobian J = jac::Jacobian::Zero();
@@ -733,8 +733,8 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
     for(unsigned int i=0;i<3;i++)
       for(unsigned int j=0;j<nJoints;j++)
       {
-        tJe[i][j]=J(i+3,RomeoModel::torso+j); // Since the FreeFlyer are not activated the columns of the Jacobian relative to the LArm
-        tJe[i+3][j]=J(i,RomeoModel::torso+j); // are from 0->6
+        tJe[i][j]=J(i+3,index_confVec+j); // Since the FreeFlyer are not activated the columns of the Jacobian relative to the LArm
+        tJe[i+3][j]=J(i,index_confVec+j); // are from 0->6
 
       }
 
@@ -814,9 +814,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
 
     // Now we want to transform tJe to eJe
-
     vpHomogeneousMatrix torsoMRWristP(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));
-
 
     vpVelocityTwistMatrix torsoVRWristP(torsoMRWristP.inverse());
 
@@ -833,6 +831,91 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
 
 #endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
   }
+
+ else if (chainName == "LEye")
+  {
+#ifdef VISP_NAOQI_HAVE_MATAPOD
+    //Jacobian matrix w.r.t the torso
+    vpMatrix tJe;
+
+    //confVector q for Romeo has size 28 (6 + 22dof of the robot, we don't consider the Legs and the fingers)
+    RomeoModel::confVector q;
+
+    // Get the names of the joints in the chain we want to control (Head + Eye)
+    std::vector<std::string> jointNames = m_motionProxy->getBodyNames("Head");
+    std::vector<std::string> jointNamesEye = m_motionProxy->getBodyNames(chainName);
+
+    jointNames.insert(jointNames.end(), jointNamesEye.begin(), jointNamesEye.end());
+
+
+    // Get the angles of the joints in the chain we want to control
+    std::vector<float> qmp = m_motionProxy->getAngles(jointNames,true);
+
+    const unsigned int nJoints= qmp.size();
+
+    //Resize the Jacobians
+    eJe.resize(6,nJoints);
+    tJe.resize(6,nJoints);
+
+    // Create a robot instance of Metapod
+    RomeoModel robot;
+
+    //Get the index of the position of the q of the first joint of the chain in the confVector
+    int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYawLink>(robot.nodes).q_idx);
+
+
+    // Copy the angle values of the joint in the confVector in the right position
+    // In the first 6 positions there is the FreeFlyer. We used the index_confVec to copy the rigth values.
+    for(unsigned int i=0;i<nJoints;i++)
+      q[i+index_confVec] = qmp[i];
+
+    // Compute the Jacobian tJe
+    jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
+
+    static const bool includeFreeFlyer = true;
+    static const int offset = 0;
+    typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::LEye, offset, includeFreeFlyer> jac;
+    jac::Jacobian J = jac::Jacobian::Zero();
+    jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+    for(unsigned int i=0;i<3;i++)
+      for(unsigned int j=0;j<nJoints;j++)
+      {
+        tJe[i][j]=J(i+3, index_confVec +j);
+        tJe[i+3][j]=J(i, index_confVec +j);
+
+      }
+
+    //std::cout << "metapod_Jac:" <<std::endl << J;
+
+    // Now we want to transform tJe to eJe
+
+
+    vpHomogeneousMatrix torsoMLEye(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));// get transformation  matrix between torso and LEye
+
+
+    vpVelocityTwistMatrix LEyeVLtorso(torsoMLEye.inverse());
+
+    for(unsigned int i=0; i< 3; i++)
+      for(unsigned int j=0; j< 3; j++)
+        LEyeVLtorso[i][j+3] = 0;
+
+
+    // Transform the matrix
+    eJe = LEyeVLtorso * tJe;
+
+#else
+    throw vpRobotException (vpRobotException::readingParametersError,
+                            "Metapod is not installed");
+#endif
+
+
+  }
+
+
+
+
+
 
   else if (chainName == "LArm_old")
   {
