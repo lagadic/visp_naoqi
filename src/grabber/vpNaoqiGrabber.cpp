@@ -202,8 +202,65 @@ void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestam
   //m_videoProxy->releaseImage(m_clientName);
 
   I.resize(m_height, m_width);
+
   vpImageConvert::BGRToGrey(img_buffer, (unsigned char *)I.bitmap, m_width, m_height);
 }
+
+/*!
+
+  The image is copied.
+
+ */
+void vpNaoqiGrabber::acquire(vpImage<vpRGBa> &I)
+{
+  struct timeval timestamp;
+  acquire(I, timestamp);
+}
+
+/*!
+
+  The image is copied.
+
+ */
+void vpNaoqiGrabber::acquire(vpImage<vpRGBa> &I, struct timeval &timestamp)
+{
+  if (! m_isOpen)
+    open();
+
+  /* Retrieve an image from the camera.
+   * The image is returned in the form of a container object, with the
+   * following fields:
+   * 0 = width
+   * 1 = height
+   * 2 = number of layers
+   * 3 = colors space index (see alvisiondefinitions.h)
+   * 4 = time stamp (seconds)
+   * 5 = time stamp (micro seconds)
+   * 6 = image buffer (size of width * height * number of layers)
+   */
+  m_img = m_videoProxy->getImageRemote(m_clientName);
+
+  m_width  = (int) m_img[0];
+  m_height = (int) m_img[1];
+  double tv_sec  = (double)m_img[4];
+  double tv_usec = (double)m_img[5];
+  timestamp.tv_sec  = (unsigned long) tv_sec;
+  timestamp.tv_usec = (unsigned long) tv_usec;
+
+
+  //  // Access the image buffer (6th field) and assign it to the ViSP image container
+  //  unsigned char *img_buffer = (unsigned char *) m_img[6].GetBinary();
+  //  I.resize(m_height, m_width);
+  //  memcpy(I.bitmap, img_buffer,4*m_height*m_width);
+
+  cv::Mat Img = cv::Mat(cv::Size(m_width, m_height), CV_8UC3);
+  Img.data = (unsigned char*) m_img[6].GetBinary();
+  vpImageConvert::convert(Img, I);
+
+
+}
+
+
 
 /*!
 
@@ -376,3 +433,11 @@ vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel
 
   return eMc;
 }
+
+
+bool vpNaoqiGrabber::setCameraParameter(const int& parameterId, const int& value)
+{
+  bool result = m_videoProxy->setCameraParameter(m_clientName, parameterId, value);
+  return result;
+}
+

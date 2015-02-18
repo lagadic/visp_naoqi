@@ -90,6 +90,8 @@ public:
 
   void acquire(vpImage<unsigned char> &I);
   void acquire(vpImage<unsigned char> &I, struct timeval &timestamp);
+  void acquire(vpImage<vpRGBa> &I);
+  void acquire(vpImage<vpRGBa> &I, struct timeval &timestamp);
   void acquire(cv::Mat &I);
   void acquire(cv::Mat &I, struct timeval &timestamp);
 
@@ -202,6 +204,17 @@ public:
   {
     m_robotPort = robotPort;
   }
+
+  /*!
+    Set the robot port.
+    \param parameterId : Camera parameter requested.
+    \param value : Value requested.
+
+    \return True if succesfull.
+  */
+
+  bool setCameraParameter( const int& parameterId, const int& value);
+
 
 protected:
   AL::ALVideoDeviceProxy *m_videoProxy; //!< Video proxy
