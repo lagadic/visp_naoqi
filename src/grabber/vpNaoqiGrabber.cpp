@@ -40,11 +40,11 @@
 
 // Aldebaran includes.
 #include <alvision/alimage.h>
+#include <alcommon/albroker.h>
 
 // ViSP includes
 #include <visp/vpImageConvert.h>
 #include <visp/vpXmlParserCamera.h>
-
 
 #include <visp_naoqi/vpNaoqiConfig.h>
 #include <visp_naoqi/vpNaoqiGrabber.h>
@@ -92,12 +92,12 @@ void vpNaoqiGrabber::setCamera(const int &camera_id)
   else if (camera_id == 2)
   {
     m_cameraName = "CameraLeftEye";
-    m_cameraId = 0;
+    m_cameraId = camera_id;
   }
   else if (camera_id == 3)
   {
     m_cameraName = "CameraRightEye";
-    m_cameraId = 1;
+    m_cameraId = camera_id;
   }
 
 }
@@ -113,14 +113,26 @@ void vpNaoqiGrabber::open()
     m_clientName = m_videoProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
 
     //std::cout << m_clientName << std::endl;
-
     //AL::ALValue index_cameras = m_videoProxy->getCameraIndexes();
     //std::cout << "Avaible index cameras: "<< index_cameras << std::endl;
 
+
     // Select the camera left(0) or right(1)
+    if (m_cameraName.find("Left") != std::string::npos)
+      m_videoProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, 0);
+    else
+      m_videoProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, 1);
+
+    // Select Camera Front(0) or Eyes(1)
+    boost::shared_ptr<AL::ALBroker> broker = AL::ALBroker::createBroker("Broker", "", 0, m_robotIp, 9559);
+    AL::ALProxy *proxy = new AL::ALProxy(broker, "ALVideoDevice");
+
+    if (m_cameraName.find("Eye") != std::string::npos)
+      proxy->callVoid("setCameraGroup", 1, true);
+    else
+      proxy->callVoid("setCameraGroup", 0, true);
 
 
-    m_videoProxy->setCameraParameter(m_clientName, AL::kCameraSelectID, m_cameraId);
 
     // update image size
     /* Retrieve an image from the camera.
