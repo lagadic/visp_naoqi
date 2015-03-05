@@ -451,7 +451,7 @@ vpNaoqiRobot::getBodyNames(const std::string &names) const
 }
 
 /*!
-  Get minimal joint values for a joint chain.
+  Get min joint values for a joint chain.
 
   \return A vector that contains the minimal joint values
   of the chain. All the values are expressed in radians.
@@ -477,7 +477,7 @@ vpNaoqiRobot::getJointMin(const AL::ALValue& names) const
 }
 
 /*!
-  Get minimal joint values for a joint chain.
+  Get max joint values for a joint chain.
 
   \return A vector that contains the minimal joint values
   of the chain. All the values are expressed in radians.
@@ -997,7 +997,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName) const
   else
   {
     throw vpRobotException (vpRobotException::readingParametersError,
-                            "End-effector name not recognized. Please choose one above 'Head', 'LArm' or 'RArm' ");
+                            "End-effector name not recognized. Please choose one above 'Head', 'LEye', 'LArm' or 'RArm' ");
   }
   return eJe;
 }
