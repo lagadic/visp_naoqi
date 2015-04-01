@@ -102,8 +102,12 @@ public:
 
   vpCameraParameters getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
 
+  vpCameraParameters getCameraParameters( const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
+
+
   vpHomogeneousMatrix get_eMc(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion, std::string cameraName = "" ) const;
 
+  std::string getCameraName(){return m_cameraName;}
   /*!
 
      \return Image width.
@@ -206,7 +210,7 @@ public:
   }
 
   /*!
-    Set the robot port.
+    Set a camera parameter.
     \param parameterId : Camera parameter requested.
     \param value : Value requested.
 
@@ -214,6 +218,7 @@ public:
   */
 
   bool setCameraParameter( const int& parameterId, const int& value);
+
 
 
 protected:

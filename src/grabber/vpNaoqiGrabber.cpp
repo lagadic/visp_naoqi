@@ -110,7 +110,9 @@ void vpNaoqiGrabber::open()
     // Subscribe a client image requiring 320*240 and BGR colorspace
     m_clientName = "subscriberID";
     m_videoProxy->unsubscribeAllInstances(m_clientName);
-    m_clientName = m_videoProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+
+     m_clientName = m_videoProxy->subscribe(m_clientName, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+   // m_clientName = m_videoProxy->subscribe(m_clientName, 2, AL::kBGRColorSpace, m_fps);
 
     //std::cout << m_clientName << std::endl;
     //AL::ALValue index_cameras = m_videoProxy->getCameraIndexes();
@@ -371,6 +373,81 @@ vpNaoqiGrabber::getCameraParameters(vpCameraParameters::vpCameraParametersProjTy
 
   return cam;
 }
+
+/*!
+  Return the camera parameters corresponding to the camera with the desired resolution.
+  \param projModel : Model that is used.
+  \param projModel : Model that is used.
+  \return The camera parameters
+
+  \code
+#include <visp_naoqi/vpNaoqiGrabber.h>
+
+int main()
+{
+  vpNaoqiGrabber g;
+  g.setRobotIp("131.254.13.37");
+  g.setFramerate(15);
+  g.setCamera(0);
+  g.open();
+  vpCameraParameters cam = g.getCameraParameters();
+}
+
+ */
+vpCameraParameters
+vpNaoqiGrabber::getCameraParameters( const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel) const
+{
+  vpCameraParameters cam;
+  char filename[FILENAME_MAX];
+  vpXmlParserCamera p; // Create a XML parser
+
+  int width,height;
+
+  switch(resolution)
+  {
+  // Image of 160*120px
+  case (AL::kQQVGA):
+    width = 160;
+    height = 120;
+    break;
+
+    // Image of 320*240px
+  case (AL::kQVGA):
+    width = 320;
+    height = 240;
+    break;
+
+    // Image of 640*480px
+  case (AL::kVGA):
+    width = 640;
+    height = 480;
+    break;
+
+    // Image of 1280*960px
+  case (AL::k4VGA):
+    width = 1280;
+    height = 960;
+    break;
+
+  default:
+    std::cout << "ERROR: Resolution not supported. Check the parameters resolution." <<std::endl;
+    exit(0);
+  }
+
+  std::cout << "Look for camera with "<< width << " x " << height << std::endl;
+
+  // Parse the xml file to find the intrinsic camera depending on the camera name and image resolution
+  sprintf(filename, "%s", VISP_NAOQI_INTRINSIC_CAMERA_FILE);
+  if (p.parse(cam, filename, cameraName, projModel, width, height) != vpXmlParserCamera::SEQUENCE_OK) {
+    std::cout << "Cannot found camera parameters in file: " << filename << std::endl;
+  }
+
+  return cam;
+}
+
+
+
+
 
 /*!
   Return the extrinsic camera parameters corresponding to the camera that is selected using setCamera().
