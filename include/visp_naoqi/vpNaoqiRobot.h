@@ -46,6 +46,7 @@
 
 // Aldebaran includes
 #include <alproxies/almotionproxy.h>
+#include <alproxies/almemoryproxy.h>
 #include <alcommon/alproxy.h>
 #include <alerror/alerror.h>
 
@@ -119,15 +120,41 @@ public:
     \return The transformation matrix to the end-effectors (computed from the last joint of the chain ending with the end-effector. )
    */
   vpHomogeneousMatrix get_cMe(const std::string &endEffectorName);
+
+
+
   /*!
     Get the Jacobian specifying an end effector chain name.
 
     \param chainName : Name of the end effector. Allowed values are "Head",
     "LArm" for left arm and "RArm" for right arm.
 
-    \return The actual jacobian.
+    \return The actual jacobian with respect to the end effector.
    */
   vpMatrix get_eJe(const std::string &chainName) const;
+
+
+
+  /*!
+    Get the Jacobian specifying an end effector chain name.
+
+    \param chainName : Name of the end effector. Allowed values are "Head",
+    "LArm" for left arm and "RArm" for right arm.
+
+    \param tJe : Jacobian with respect to the torso
+
+    \return The actual jacobian with respect to the end effector.
+   */
+  vpMatrix get_eJe(const std::string &chainName, vpMatrix & tJe) const;
+  /*!
+    Get the derivative of the kinematic jacobian specifying an end effector chain name.
+
+    \param chainName : Name of the end effector. Allowed values are "Head",
+    "LArm" for left arm and "RArm" for right arm.
+
+    \return The actual derivative of the kinematic jacobian.
+   */
+  std::vector <vpMatrix> get_d_eJe(const std::string &chainName) const;
   /*!
     Get the name of all the joints of the chain.
 
@@ -188,6 +215,20 @@ public:
      Return the type of the robot (Romeo, Nao, Pepper).
    */
   RobotType getRobotType() const { return m_robotType; }
+
+  /*!
+    Get the joints velocities.
+
+    \param names :  Names of the joints, chains, "Body", "JointActuators",
+    "Joints" or "Actuators".
+    \param useSensors :  If true, sensor velocities will be returned. If
+    false, it will be the command.
+
+    \return Joint velocities in radians/s.
+   */
+  vpColVector getJointVelocity(const std::vector<std::string> &names) const;
+
+
 
   /*!
     Open the connection with the robot.
@@ -263,6 +304,7 @@ protected:
   bool m_collisionProtection; //!< Collition protection enabling status
   std::string m_robotName; //!< Name of the robot
   RobotType m_robotType; //!< Indicate if the robot is Romeo, Nao or Pepper
+  AL::ALMemoryProxy * m_memProxy; //!< Memory Proxy
 };
 
 #endif
