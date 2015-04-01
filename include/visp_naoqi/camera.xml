@@ -71,4 +71,70 @@
       <kdu>-0.0197312546</kdu>
     </model>
   </camera>
+
+  <camera>
+    <!--Name of the camera-->
+    <name>CameraLeftEye</name>
+    <!--Size of the image on which camera calibration was performed-->
+    <image_width>640</image_width>
+    <image_height>480</image_height>
+    <!--Intrinsic camera parameters computed for each projection model-->
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithoutDistortion</type>
+      <!--Pixel ratio-->
+      <px>693.0475214191</px>
+      <py>693.0695459643</py>
+      <!--Principal point-->
+      <u0>307.8583729089</u0>
+      <v0>241.4307268179</v0>
+    </model>
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithDistortion</type>
+      <!--Pixel ratio-->
+      <px>692.4430251700</px>
+      <py>692.4740746125</py>
+      <!--Principal point-->
+      <u0>308.9900367881</u0>
+      <v0>241.6818991885</v0>
+      <!--Undistorted to distorted distortion parameter-->
+      <kud>0.0365568954</kud>
+      <!--Distorted to undistorted distortion parameter-->
+      <kdu>-0.0361860031</kdu>
+    </model>
+  </camera>
+
+  <camera>
+    <!--Name of the camera-->
+    <name>CameraRightEye</name>
+    <!--Size of the image on which camera calibration was performed-->
+    <image_width>320</image_width>
+    <image_height>240</image_height>
+    <!--Intrinsic camera parameters computed for each projection model-->
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithoutDistortion</type>
+      <!--Pixel ratio-->
+      <px>344.3028341341</px>
+      <py>344.4063865000</py>
+      <!--Principal point-->
+      <u0>150.1631984340</u0>
+      <v0>116.4065773653</v0>
+    </model>
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithDistortion</type>
+      <!--Pixel ratio-->
+      <px>345.1601869558</px>
+      <py>345.4361249554</py>
+      <!--Principal point-->
+      <u0>150.4205405767</u0>
+      <v0>116.3899514426</v0>
+      <!--Undistorted to distorted distortion parameter-->
+      <kud>0.0163068289</kud>
+      <!--Distorted to undistorted distortion parameter-->
+      <kdu>-0.0163388048</kdu>
+    </model>
+  </camera>
 </root>
