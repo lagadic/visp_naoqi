@@ -50,4 +50,34 @@
       <theta_uz>0.006191</theta_uz>
     </values>
   </homogeneous_transformation>
+  <!--Homogeneous Matrix-->
+  <homogeneous_transformation>
+    <!--Name of the homogeneous matrix-->
+    <name>oMh_Small_Tea_Box_sensors_old</name>
+    <values>
+      <!--Translation vector with values in meters-->
+      <tx>-0.216089</tx>
+      <ty>0.001391</ty>
+      <tz>0.008680</tz>
+      <!--Rotational vector expressed in angle axis representation with values in radians-->
+      <theta_ux>-1.544638</theta_ux>
+      <theta_uy>0.036827</theta_uy>
+      <theta_uz>0.222536</theta_uz>
+    </values>
+  </homogeneous_transformation>
+  <!--Homogeneous Matrix-->
+  <homogeneous_transformation>
+    <!--Name of the homogeneous matrix-->
+    <name>oMh_Small_Tea_Box_sensors</name>
+    <values>
+      <!--Translation vector with values in meters-->
+      <tx>-0.169413</tx>
+      <ty>0.021270</ty>
+      <tz>-0.018946</tz>
+      <!--Rotational vector expressed in angle axis representation with values in radians-->
+      <theta_ux>-1.541695</theta_ux>
+      <theta_uy>0.050622</theta_uy>
+      <theta_uz>0.163659</theta_uz>
+    </values>
+  </homogeneous_transformation>
 </root>
