@@ -3,6 +3,8 @@ set(source
   motion_romeo.cpp
   motion_nao.cpp
   test_jacobian.cpp
+  eye_control.cpp
+  test_manipulability.cpp
   ) 
 
 foreach(src ${source})

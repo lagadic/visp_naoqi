@@ -46,6 +46,7 @@
 #include <visp/vpVelocityTwistMatrix.h>
 
 #include <visp_naoqi/vpNaoqiRobot.h>
+#include <visp/vpXmlParserHomogeneousMatrix.h>
 
 
 
@@ -59,12 +60,16 @@ int main(int argc, char* argv[])
     robot.open();
 
 
+
+
+
+
     // Test Jacobian RArm
     {
       // Velocity end effector
       vpColVector v_o(6);
       v_o = 0.0;
-      v_o[2] = -0.01; // vpMath::rad(5);
+      v_o[0] = -0.01; // vpMath::rad(5);
 
       const std::string chainName = "RArm";
 
@@ -75,9 +80,27 @@ int main(int argc, char* argv[])
       std::cout << "Test to apply a cartesian velocity to the object: " << v_o.t() << std::endl;
       vpColVector q_dot;
 
+      // Constant transformation Target Frame to RArm end-effector (RWristPitch)
+      vpHomogeneousMatrix oMe_RArm;
+
+      std::string filename_transform = "transformation.xml";
+      std::string name_transform = "qrcode_M_e_RArm";
+      vpXmlParserHomogeneousMatrix pm; // Create a XML parser
+
+      if (pm.parse(oMe_RArm, filename_transform, name_transform) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
+        std::cout << "Cannot found the homogeneous matrix named " << name_transform << "." << std::endl;
+        return 0;
+      }
+      else
+        std::cout << "Homogeneous matrix " << name_transform <<": " << std::endl << oMe_RArm << std::endl;
+
+      vpVelocityTwistMatrix oVe_RArm(oMe_RArm);
+      vpMatrix oJo; // Jacobian in the target (=object) frame
+
+
 
       double t_initial = vpTime::measureTimeSecond();
-      while (vpTime::measureTimeSecond() < t_initial+3)
+      while (vpTime::measureTimeSecond() < t_initial+4)
       {
         //** Set task eJe matrix
         // Get the actual Jacobian of the Larm
@@ -85,7 +108,9 @@ int main(int argc, char* argv[])
 
         std::cout << "Jacobian of the RArm: "<< std::endl << eJe_RArm << std::endl;
 
-        q_dot = eJe_RArm.pseudoInverse() * v_o;
+        oJo = oVe_RArm * eJe_RArm;
+
+        q_dot = oJo.pseudoInverse() * v_o;
 
         std::cout << "q_dot: " << q_dot.t() << std::endl;
 
