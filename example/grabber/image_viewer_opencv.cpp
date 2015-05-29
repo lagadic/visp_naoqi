@@ -74,6 +74,9 @@ int main(int argc, const char* argv[])
     }
 
     g.open();
+    g.setCamera(0);
+    g.setFramerate(3);
+
 
     std::cout << "Image size: " << g.getWidth() << " " << g.getHeight() << std::endl;
     // Create an OpenCV image container
@@ -85,13 +88,47 @@ int main(int argc, const char* argv[])
 
 
     // Main loop. Exit when pressing ESC
-    while ((char) cv::waitKey(30) != 27) {
-
+    while (1) {
       double t = vpTime::measureTimeMs();
+
+      char key = (char) cv::waitKey(30);
       g.acquire(I);
 
       // Display the image on screen
       cv::imshow("images", I);
+
+      if (key == 32)
+      {
+        std::vector<int> compression_params; //vector that stores the compression parameters of the image
+
+        compression_params.push_back(CV_IMWRITE_JPEG_QUALITY); //specify the compression technique
+
+        compression_params.push_back(100); //specify the compression quality
+
+
+
+        bool bSuccess = cv::imwrite("./TestImage.jpg", I, compression_params); //write the image to file
+
+
+
+        if ( !bSuccess )
+
+        {
+
+          std::cout << "ERROR : Failed to save the image" << std::endl;
+
+          //system("pause"); //wait for a key press
+
+        }
+
+      }
+
+
+
+      if (key == 27)
+      break;
+
+
 
       std::cout << "Loop time: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
     }

@@ -42,11 +42,8 @@
 #include <string>
 
 #include <visp_naoqi/vpNaoqiGrabber.h>
-
 #include <visp/vpDisplayX.h>
 #include <visp/vpImage.h>
-
-
 
 /*!
 
@@ -65,21 +62,25 @@ int main(int argc, const char* argv[])
   try
   {
     std::string opt_ip;
+    int opt_cam = 0;
 
-    if (argc == 3) {
-      if (std::string(argv[1]) == "-ip")
-        opt_ip = argv[2];
+    if (argc >= 3) {
+//      if (std::string(argv[1]) == "-ip")
+//        opt_ip = argv[2];
+      if (std::string(argv[1]) == "-cam")
+        opt_cam = atoi(argv[2]);
     }
 
     vpNaoqiGrabber g;
-    g.setCamera(0); // left camera
+    g.setCamera(opt_cam); // left camera
     if (! opt_ip.empty()) {
       std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
       g.setRobotIp(opt_ip);
     }
 
     g.open();
-    std::cout << "Camera parameters: " << g.getCameraParameters() << std::endl;
+    std::cout << "Open camera parameters: " << g.getCameraParameters() << std::endl;
+
 
     vpImage<unsigned char> I(g.getHeight(), g.getWidth());
     vpDisplayX d(I);
