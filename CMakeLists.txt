@@ -69,8 +69,15 @@ qi_stage_lib(visp_naoqi)
 qi_create_bin(image_viewer_visp example/grabber/image_viewer_visp.cpp)
 qi_use_lib(image_viewer_visp visp_naoqi)
 
+qi_create_bin(image_viewer_visp_2cameras example/grabber/image_viewer_visp_2cameras.cpp)
+qi_use_lib(image_viewer_visp_2cameras visp_naoqi)
+
 qi_create_bin(image_viewer_opencv example/grabber/image_viewer_opencv.cpp)
 qi_use_lib(image_viewer_opencv visp_naoqi)
+
+qi_create_bin(image_viewer_opencv_2cameras example/grabber/image_viewer_opencv_2cameras.cpp)
+qi_use_lib(image_viewer_opencv_2cameras visp_naoqi)
+
 
 qi_create_bin(camera_calibration tools/calibration/camera_calibration.cpp)
 qi_use_lib(camera_calibration visp_naoqi)

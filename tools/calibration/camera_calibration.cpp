@@ -166,8 +166,11 @@ int main(int argc, const char ** argv)
     vpImage<unsigned char> I;
 
     vpNaoqiGrabber g;
+    g.setCamera(2);
     g.open();
     g.acquire(I);
+
+    std::string camera_name = g.getCameraName();
 
 #ifdef VISP_HAVE_X11
     vpDisplayX d(I);
@@ -331,7 +334,7 @@ int main(int argc, const char ** argv)
 #ifdef VISP_HAVE_XML2
       vpXmlParserCamera xml;
 
-      if(xml.save(cam, outputFileName.c_str(), "Camera", I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
+      if(xml.save(cam, outputFileName.c_str(), camera_name, I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
         std::cout << "Camera parameters without distortion successfully saved in \"" << outputFileName << "\"" << std::endl;
       else {
         std::cout << "Failed to save the camera parameters without distortion in \"" << outputFileName << "\"" << std::endl;
@@ -350,7 +353,7 @@ int main(int argc, const char ** argv)
 #ifdef VISP_HAVE_XML2
       vpXmlParserCamera xml;
 
-      if(xml.save(cam, outputFileName.c_str(), "Camera", I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
+      if(xml.save(cam, outputFileName.c_str(), camera_name, I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
         std::cout << "Camera parameters without distortion successfully saved in \"" << outputFileName << "\"" << std::endl;
       else {
         std::cout << "Failed to save the camera parameters without distortion in \"" << outputFileName << "\"" << std::endl;
