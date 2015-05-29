@@ -90,10 +90,16 @@ public:
 
   void acquire(vpImage<unsigned char> &I);
   void acquire(vpImage<unsigned char> &I, struct timeval &timestamp);
-  void acquire(vpImage<vpRGBa> &I);
-  void acquire(vpImage<vpRGBa> &I, struct timeval &timestamp);
+  //void acquire(vpImage<vpRGBa> &I);
+  //void acquire(vpImage<vpRGBa> &I, struct timeval &timestamp);
   void acquire(cv::Mat &I);
   void acquire(cv::Mat &I, struct timeval &timestamp);
+
+  void acquireMulti(vpImage<unsigned char> &Ia,vpImage<unsigned char> &Ib);
+  void acquireMulti(vpImage<unsigned char> &Ia, vpImage<unsigned char> &Ib, struct timeval &timestamp_a, timeval &timestamp_b);
+
+  void acquireMulti(cv::Mat &Ia, cv::Mat &Ib);
+  void acquireMulti(cv::Mat &Ia, cv::Mat &Ib, struct timeval &timestamp_a, timeval &timestamp_b);
 
   /*!
     Destroy the connexion to the video proxy.
@@ -108,6 +114,8 @@ public:
   vpHomogeneousMatrix get_eMc(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion, std::string cameraName = "" ) const;
 
   std::string getCameraName(){return m_cameraName;}
+
+  std::string getClientName(){return m_clientName;}
   /*!
 
      \return Image width.
@@ -171,7 +179,26 @@ public:
    */
   void open();
 
+  /*!
+    Open the connection with the robot for stereo vision.
+    All the parameters should be set before calling this function.
+    \code
+    #include <visp_naoqi/vpNaoqiGrabber.h>
+
+    int main()
+    {
+      vpNaoqiGrabber g;
+      g.setRobotIp("131.254.13.37");
+      g.setFramerate(15);
+      g.setCamerasMulti(0); // 0 to activate the front-head cameras, 1 for the eyes cameras
+      g.openMulti();
+    }
+    \endcode
+   */
+  void openMulti();
+
   void setCamera(const int &camera_id);
+  void setCamerasMulti(const int &cameras_id);
 
   /*!
     Set the camera framerate.
@@ -233,6 +260,11 @@ protected:
   AL::ALValue m_img; //!< Image data
   std::string m_cameraName; //!< Camera name
   int m_cameraId; //!< Camera identifier
+
+  // Multi stream
+  bool m_cameraMulti;
+
+
 };
 
 #endif
