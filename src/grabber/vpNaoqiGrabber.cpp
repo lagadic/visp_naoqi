@@ -59,7 +59,8 @@
 vpNaoqiGrabber::vpNaoqiGrabber()
   : m_videoProxy(NULL), m_robotIp("198.18.0.1"),
     m_robotPort(9559), m_fps(30), m_isOpen(false), m_width(0), m_height(0),
-    m_img(), m_cameraName("CameraLeft"), m_cameraId (0), m_cameraMulti(false)
+    m_img(), m_cameraName("CameraLeft"), m_cameraId (0), m_cameraMulti(false),
+    m_resolution(AL::kQVGA)
 {
 
 }
@@ -133,9 +134,9 @@ void vpNaoqiGrabber::open()
     m_videoProxy->unsubscribeAllInstances(m_clientName);
 
     if (m_cameraName.find("Left") != std::string::npos)
-      m_clientName = m_videoProxy->subscribeCamera(m_clientName, 0, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+      m_clientName = m_videoProxy->subscribeCamera(m_clientName, 0, m_resolution, AL::kBGRColorSpace, m_fps);
     else if (m_cameraName.find("Right") != std::string::npos)
-      m_clientName = m_videoProxy->subscribeCamera(m_clientName, 1, AL::kQVGA, AL::kBGRColorSpace, m_fps);
+      m_clientName = m_videoProxy->subscribeCamera(m_clientName, 1, m_resolution, AL::kBGRColorSpace, m_fps);
     else if (m_cameraName.find("3D") != std::string::npos)
       m_clientName = m_videoProxy->subscribeCamera(m_clientName, 2, AL::kQVGA, AL::kBGRColorSpace, m_fps);
     //m_clientName = m_videoProxy->subscribe(m_clientName, AL::k4VGA, AL::kBGRColorSpace, m_fps);
@@ -224,7 +225,7 @@ void vpNaoqiGrabber::openMulti()
     m_videoProxy->unsubscribeAllInstances(m_clientName);
 
     AL::ALValue camerasId =   AL::ALValue::array(0, 1);
-    AL::ALValue camerasResolution = AL::ALValue::array(AL::kQVGA, AL::kQVGA);
+    AL::ALValue camerasResolution = AL::ALValue::array(m_resolution, m_resolution);
     AL::ALValue camerasColorSpace = AL::ALValue::array(AL::kBGRColorSpace, AL::kBGRColorSpace);
 
     m_clientName = m_videoProxy->subscribeCameras(m_clientName, camerasId , camerasResolution, camerasColorSpace, m_fps);

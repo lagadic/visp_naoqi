@@ -212,6 +212,20 @@ public:
     m_fps = fps;
   }
 
+
+  /*!
+    Set the camera resolution.
+    \param resolution : Index camera resolution.
+
+    \sa open()
+  */
+  void setCameraResolution(const int &resolution)
+  {
+    m_resolution = resolution;
+  }
+
+
+
   /*!
     Set the robot ip address.
     In the constructor, the default ip is set to "198.18.0.1".
@@ -260,6 +274,7 @@ protected:
   AL::ALValue m_img; //!< Image data
   std::string m_cameraName; //!< Camera name
   int m_cameraId; //!< Camera identifier
+  int m_resolution;  //!< Resolution camera
 
   // Multi stream
   bool m_cameraMulti;
