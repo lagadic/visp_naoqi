@@ -114,12 +114,9 @@ void vpNaoqiRobot::open()
 
         m_memProxy = new AL::ALMemoryProxy(m_robotIp, 9559);
 
-        int success;
-        if (m_collisionProtection == false)
-            success = m_motionProxy->setCollisionProtectionEnabled("Arms", "False");
-        else
-            m_motionProxy->setCollisionProtectionEnabled("Arms", "True");
-        std::cout << "Collision protection is " << m_collisionProtection << std::endl;
+        int   success = m_motionProxy->setCollisionProtectionEnabled("Arms", false);
+        if (success)
+        std::cout << "Collision protection is disabled" << std::endl;
 
         // Check the type of the robot
         AL::ALValue robotConfig = m_motionProxy->getRobotConfig();
@@ -613,7 +610,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         RomeoModel robot;
 
         //Get the index of the position of the q of the first joint of the chain in the confVector
-        int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYawLink>(robot.nodes).q_idx);
+        int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYaw_link>(robot.nodes).q_idx);
 
 
         // Copy the angle values of the joint in the confVector in the right position
@@ -626,7 +623,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
         static const bool includeFreeFlyer = true;
         static const int offset = 0;
-        typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::HeadRollLink, offset, includeFreeFlyer> jac;
+        typedef jac_point_chain<RomeoModel, RomeoModel::Torso_link, RomeoModel::HeadRoll_link, offset, includeFreeFlyer> jac;
         jac::Jacobian J = jac::Jacobian::Zero();
         jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
 
@@ -729,7 +726,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         RomeoModel robot;
 
         //Get the index of the position of the q of the first joint of the chain in the confVector
-        int index_confVec = (boost::fusion::at_c<RomeoModel::LShoulderPitchLink>(robot.nodes).q_idx);
+        int index_confVec = (boost::fusion::at_c<RomeoModel::LShoulderPitch_link>(robot.nodes).q_idx);
 
         // Copy the angle values of the joint in the confVector in the right position
         // In this case is +6 because in the first 6 positions there is the FreeFlyer
@@ -741,7 +738,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
         static const bool includeFreeFlyer = true; // I don't consider the first six FreeFlyer
         static const int offset = 0;
-        typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::l_wrist, offset, includeFreeFlyer> jac;
+        typedef jac_point_chain<RomeoModel, RomeoModel::Torso_link, RomeoModel::LWristPitch_link, offset, includeFreeFlyer> jac;
         jac::Jacobian J = jac::Jacobian::Zero();
         jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
 
@@ -803,7 +800,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         RomeoModel robot;
 
         //Get the index of the position of the q of the first joint of the chain in the confVector
-        int index_confVec = (boost::fusion::at_c<RomeoModel::RShoulderPitchLink>(robot.nodes).q_idx);
+        int index_confVec = (boost::fusion::at_c<RomeoModel::RShoulderPitch_link>(robot.nodes).q_idx);
 
         // Copy the angle values of the joint in the confVector in the right position
         // In this case is +6 because in the first 6 positions there is the FreeFlyer
@@ -815,7 +812,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
         static const bool includeFreeFlyer = true;
         static const int offset = 0;
-        typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::r_wrist, offset, includeFreeFlyer> jac;
+        typedef jac_point_chain<RomeoModel, RomeoModel::Torso_link, RomeoModel::RWristPitch_link, offset, includeFreeFlyer> jac;
         jac::Jacobian J = jac::Jacobian::Zero();
         jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
 
@@ -882,7 +879,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         RomeoModel robot;
 
         //Get the index of the position of the q of the first joint of the chain in the confVector
-        int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYawLink>(robot.nodes).q_idx);
+        int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYaw_link>(robot.nodes).q_idx);
 
 
         // Copy the angle values of the joint in the confVector in the right position
@@ -895,7 +892,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
         static const bool includeFreeFlyer = true;
         static const int offset = 0;
-        typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::LEye, offset, includeFreeFlyer> jac;
+        typedef jac_point_chain<RomeoModel, RomeoModel::Torso_link, RomeoModel::LEyePitch_link, offset, includeFreeFlyer> jac;
         jac::Jacobian J = jac::Jacobian::Zero();
         jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
 
@@ -960,8 +957,8 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         RomeoModel robot;
 
         //Get the index of the position of the q of the first joint of the chain in the confVector
-        int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYawLink>(robot.nodes).q_idx);
-        int index_confVec_leye = (boost::fusion::at_c<RomeoModel::REyeYawLink>(robot.nodes).q_idx);
+        int index_confVec = (boost::fusion::at_c<RomeoModel::NeckYaw_link>(robot.nodes).q_idx);
+        int index_confVec_leye = (boost::fusion::at_c<RomeoModel::REyeYaw_link>(robot.nodes).q_idx);
 
         // Copy the angle values of the joint in the confVector in the right position
         // In the first 6 positions there is the FreeFlyer. We used the index_confVec to copy the rigth values.
@@ -979,7 +976,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
         static const bool includeFreeFlyer = true;
         static const int offset = 0;
-        typedef jac_point_chain<RomeoModel, RomeoModel::torso, RomeoModel::REye, offset, includeFreeFlyer> jac;
+        typedef jac_point_chain<RomeoModel, RomeoModel::Torso_link, RomeoModel::REyePitch_link, offset, includeFreeFlyer> jac;
         jac::Jacobian J = jac::Jacobian::Zero();
         jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
         // std::cout << "metapod_Jac:" <<std::endl << J <<std::endl;
@@ -1146,7 +1143,7 @@ std::vector <vpMatrix> vpNaoqiRobot::get_d_eJe(const std::string &chainName) con
         RomeoModel robot;
 
         // Get the index of the position of the q of the first joint of the chain in the confVector
-        int index_confVec = (boost::fusion::at_c<RomeoModel::LShoulderPitchLink>(robot.nodes).q_idx);
+        int index_confVec = (boost::fusion::at_c<RomeoModel::LShoulderPitch_link>(robot.nodes).q_idx);
 
         // Copy the angle values of the joint in the confVector in the right position
         // In this case is +6 because in the first 6 positions there is the FreeFlyer
