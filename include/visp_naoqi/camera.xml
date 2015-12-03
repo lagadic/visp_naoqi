@@ -17,25 +17,25 @@
       <!--Projection model type-->
       <type>perspectiveProjWithoutDistortion</type>
       <!--Pixel ratio-->
-      <px>344.1985759090</px>
-      <py>344.3924941688</py>
+      <px>346.9067833274</px>
+      <py>347.5994685346</py>
       <!--Principal point-->
-      <u0>163.7789721906</u0>
-      <v0>107.2083139097</v0>
+      <u0>171.9287422437</u0>
+      <v0>127.4399226402</v0>
     </model>
     <model>
       <!--Projection model type-->
       <type>perspectiveProjWithDistortion</type>
       <!--Pixel ratio-->
-      <px>345.0963487799</px>
-      <py>345.5617386581</py>
+      <px>346.9770542089</px>
+      <py>347.6513077060</py>
       <!--Principal point-->
-      <u0>163.2226226265</u0>
-      <v0>107.9308747417</v0>
+      <u0>171.9161145215</u0>
+      <v0>127.4130390938</v0>
       <!--Undistorted to distorted distortion parameter-->
-      <kud>0.0205441108</kud>
+      <kud>0.0027578479</kud>
       <!--Distorted to undistorted distortion parameter-->
-      <kdu>-0.0204559125</kdu>
+      <kdu>-0.0030879802</kdu>
     </model>
   </camera>
 
@@ -50,25 +50,25 @@
       <!--Projection model type-->
       <type>perspectiveProjWithoutDistortion</type>
       <!--Pixel ratio-->
-      <px>343.2379441481</px>
-      <py>342.7503676690</py>
+      <px>342.7037672708</px>
+      <py>342.8515343807</py>
       <!--Principal point-->
-      <u0>168.6440275804</u0>
-      <v0>122.1242294110</v0>
+      <u0>167.4790795033</u0>
+      <v0>123.5605458637</v0>
     </model>
     <model>
       <!--Projection model type-->
       <type>perspectiveProjWithDistortion</type>
       <!--Pixel ratio-->
-      <px>344.3768897536</px>
-      <py>343.9865186411</py>
+      <px>343.6323548873</px>
+      <py>343.8059266110</py>
       <!--Principal point-->
-      <u0>168.0223272192</u0>
-      <v0>121.9953380036</v0>
+      <u0>167.1568444484</u0>
+      <v0>123.4449120510</v0>
       <!--Undistorted to distorted distortion parameter-->
-      <kud>0.0170593464</kud>
+      <kud>0.0316145146</kud>
       <!--Distorted to undistorted distortion parameter-->
-      <kdu>-0.0170693682</kdu>
+      <kdu>-0.0314672532</kdu>
     </model>
   </camera>
 
