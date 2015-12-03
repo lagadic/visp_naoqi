@@ -44,6 +44,7 @@
 #include <visp_naoqi/vpNaoqiGrabber.h>
 #include <visp/vpDisplayX.h>
 #include <visp/vpImage.h>
+#include <visp/vpImageIo.h>
 
 /*!
 
@@ -71,6 +72,7 @@ int main(int argc, const char* argv[])
 
     vpNaoqiGrabber g;
     g.setCamerasMulti(0); // eyes cameras
+    g.setCameraResolution(AL::kVGA);
     if (! opt_ip.empty()) {
       std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
       g.setRobotIp(opt_ip);
@@ -95,13 +97,14 @@ int main(int argc, const char* argv[])
     vpImage<unsigned char> Il(g.getHeight(), g.getWidth());
 
     vpDisplayX dr(Ir);
-    vpDisplay::setTitle(Ir, "ViSP viewer");
+    vpDisplay::setTitle(Ir, "Right image");
 
-    vpDisplayX dl(Il);
-    vpDisplay::setTitle(Il, "ViSP viewer");
+    vpDisplayX dl(Il, Ir.getWidth()+40, 0);
+    vpDisplay::setTitle(Il, "Left image");
 
    // std::cout << "Extrinsic Camera parameters: " << g.get_eMc()<< std::endl;
-
+    vpMouseButton::vpMouseButtonType button;
+    int iter = 1;
     while(1)
     {
       double t = vpTime::measureTimeMs();
@@ -109,12 +112,41 @@ int main(int argc, const char* argv[])
       vpDisplay::display(Ir);
       vpDisplay::display(Il);
 
+      vpDisplay::displayText(Il, 10, 10, "Left click to acquire, right to quit", vpColor::red);
+      vpDisplay::displayText(Ir, 10, 10, "Left click to acquire, right to quit", vpColor::red);
+
 
       vpDisplay::flush(Ir);
       vpDisplay::flush(Il);
 
-      if (vpDisplay::getClick(Ir, false) || vpDisplay::getClick(Il, false) )
-        break;
+      if (vpDisplay::getClick(Ir, button, false)) {
+        if (button == vpMouseButton::button1) {
+          char name[100];
+          sprintf(name, "left%02d.pgm", iter);
+          vpImageIo::write(Il, name);
+          sprintf(name, "right%02d.pgm", iter);
+          vpImageIo::write(Ir, name);
+          iter ++;
+        }
+        else if (button == vpMouseButton::button3) {
+          break;
+        }
+
+      }
+      if (vpDisplay::getClick(Il, button, false) ) {
+        if (button == vpMouseButton::button1) {
+          char name[100];
+          sprintf(name, "left%02d.pgm", iter);
+          vpImageIo::write(Il, name);
+          sprintf(name, "right%02d.pgm", iter);
+          vpImageIo::write(Ir, name);
+          iter ++;
+        }
+        else if (button == vpMouseButton::button3) {
+          break;
+        }
+      }
+
       std::cout << "Loop time: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
     }

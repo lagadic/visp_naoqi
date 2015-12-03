@@ -41,9 +41,26 @@
 #include <iostream>
 #include <string>
 
-#include <visp_naoqi/vpNaoqiGrabber.h>
 #include <visp/vpDisplayX.h>
 #include <visp/vpImage.h>
+#include <visp/vpIoTools.h>
+#include <visp/vpImageIo.h>
+
+#include <visp_naoqi/vpNaoqiGrabber.h>
+
+const std::string currentDateTime() {
+  time_t     now = time(0);
+  struct tm  tstruct;
+  char       buf[80];
+  tstruct = *localtime(&now);
+  // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+  // for more information about date/time format
+  strftime(buf, sizeof(buf), "%Y-%m-%d_%H.%M.%S", &tstruct);
+
+  return buf;
+}
+
+
 
 /*!
 
@@ -63,12 +80,19 @@ int main(int argc, const char* argv[])
   {
     std::string opt_ip;
     int opt_cam = 0;
+    bool opt_record = false;
 
-    if (argc >= 3) {
-//      if (std::string(argv[1]) == "-ip")
-//        opt_ip = argv[2];
-      if (std::string(argv[1]) == "-cam")
-        opt_cam = atoi(argv[2]);
+    for (unsigned int i=0; i<argc; i++) {
+      if (std::string(argv[i]) == "-ip")
+        opt_ip = argv[2];
+      if (std::string(argv[i]) == "--cam")
+        opt_cam = atoi(argv[i+1]);
+      if (std::string(argv[i]) == "--record")
+        opt_record = true;
+      else if (std::string(argv[i]) == "--help") {
+        std::cout << "Usage: " << argv[0] << "[--ip <robot address>] [--record] [--cam num_camera] [--help]" << std::endl;
+        return 0;
+      }
     }
 
     vpNaoqiGrabber g;
@@ -78,9 +102,11 @@ int main(int argc, const char* argv[])
       g.setRobotIp(opt_ip);
     }
 
+    g.setCameraResolution(AL::kQVGA);
+
     g.open();
     std::cout << "Open camera parameters: " << g.getCameraParameters() << std::endl;
-
+    std::cout << "Dimension image: " << g.getHeight() <<"x" << g.getWidth() << std::endl;
 
     vpImage<unsigned char> I(g.getHeight(), g.getWidth());
     vpDisplayX d(I);
@@ -88,11 +114,37 @@ int main(int argc, const char* argv[])
 
     std::cout << "Extrinsic Camera parameters: " << g.get_eMc()<< std::endl;
 
+
+    //Create directory
+    std::string str_currentDate = currentDateTime();
+    std::string output_img_dir = "images/" + str_currentDate + "/";
+    if (opt_record)
+    {
+      std::cout << "Creating directory to store images" << std::endl;
+      vpIoTools::makeDirectory("images");
+      vpIoTools::makeDirectory("images/" + str_currentDate);
+      vpIoTools::makeDirectory(output_img_dir);
+
+    }
+
+    unsigned int num_frame = 0;
     while(1)
     {
       double t = vpTime::measureTimeMs();
       g.acquire(I);
       vpDisplay::display(I);
+
+      if (opt_record)
+      {
+        //Save frame
+        char buffer[50];
+        std::string format_name = "/image_%04d.png";
+        sprintf (buffer, format_name.c_str(), num_frame);
+        std::string filename = buffer;
+        filename = output_img_dir + filename;
+        vpImageIo::write(I, filename);
+        num_frame++;
+      }
 
       vpDisplay::flush(I);
       if (vpDisplay::getClick(I, false))
