@@ -3,9 +3,11 @@
 <link name="base_link"/>
   <joint name="base_joint" type="floating">
     <parent link="base_link"/>
-    <child link="Torso_link"/>
+    <child link="TrunkYaw_link"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint> 
+
+    <link name="TrunkYaw_link"/>
 
     <link name="Torso_link">
         <inertial>
@@ -320,7 +322,13 @@
         </visual>
     </link>
    
-   
+    <joint name="TrunkYaw_joint" type="revolute">
+        <origin xyz="-0.0499 0 1.0146 " rpy="0.0 0.0 0.0" />
+        <axis xyz="0 0 -1" />
+        <parent link="TrunkYaw_link" />
+        <child link="Torso_link" />
+        <limit effort="28.021" velocity="1.5" lower="-0.7575" upper="0.7575" />
+    </joint>
     <joint name="NeckYaw_joint" type="revolute">
         <origin xyz="0.0548 0 0.1675" rpy="0 -2.98023e-08 0" />
         <axis xyz="0.173651 0 0.984807" />

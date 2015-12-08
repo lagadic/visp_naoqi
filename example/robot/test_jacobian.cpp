@@ -60,6 +60,22 @@ int main(int argc, char* argv[])
     robot.open();
 
 
+    // Test jacobian LEye with Trunk
+
+    {
+
+
+
+            vpMatrix eJe_Head = robot.get_eJe("LEye_t");
+            std::cout << "Jacobian of the LEye_t: "<< std::endl << eJe_Head << std::endl;
+
+            vpMatrix eJe_Head_t = robot.get_eJe("LEye");
+            std::cout << "Jacobian of the LEye: "<< std::endl << eJe_Head_t << std::endl;
+
+      return 0;
+    }
+
+
 
 
 
