@@ -274,7 +274,15 @@ public:
 
    */
   void setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed);
+  /*!
+    Set the position of all the joints of the chain.
 
+    \param names :  Names the joints, chains, "Body", "JointActuators", "Joints" or "Actuators".
+    \param jointPosition :  One or more joint positions in radians.
+    \param fractionMaxSpeed : The fraction of maximum speed to use. Value should be comprised between 0 and 1.
+
+   */
+  void setPosition(const AL::ALValue& names, const std::vector<float> &jointPosition, const float& fractionMaxSpeed);
   /*!
     Set the robot ip address.
     In the constructor, the default ip is set to "198.18.0.1".
@@ -291,6 +299,8 @@ public:
 
   void setVelocity_eachJoint(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
   void setVelocity_eachJoint(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
+  void setVelocity_eachJoint(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
+  void setVelocity(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
   void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
   void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
 
