@@ -506,6 +506,37 @@ vpNaoqiRobot::getJointMin(const AL::ALValue& names) const
 }
 
 /*!
+  Get min joint values for vector of joints.
+
+  \return A vector that contains the minimal joint values
+  of the chain. All the values are expressed in radians.
+
+  \param names : Vector of joint names.
+  \param min : Vector of the lower limits of the joints
+  \param max : Vector of the upper limits of the joints
+
+*/
+void
+vpNaoqiRobot::getJointMinAndMax(const std::vector<std::string> &names, vpColVector &min, vpColVector &max ) const
+{
+    if (! m_isOpen)
+        throw vpRobotException (vpRobotException::readingParametersError,
+                                "The connexion with the robot was not open");
+
+    for (unsigned int i=0; i<names.size(); i++)
+    {
+      AL::ALValue limits = m_motionProxy->getLimits(names[i]);
+      std::cout << limits << std::endl;
+      min[i] = limits[0][0];
+      max[i] = limits[0][1];
+
+    }
+    return;
+}
+
+
+
+/*!
   Get max joint values for a joint chain.
 
   \return A vector that contains the minimal joint values
@@ -1049,7 +1080,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
                 tJe[i+3][j]=J(i, index_confVec_trunk +j);
             }
 
-
         // Copy jacobian Head
         for(unsigned int i=0;i<3;i++)
             for(unsigned int j=0;j<jointNamesHead.size();j++)
@@ -1067,7 +1097,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
             }
 
         //std::cout << "tJe: " <<std::endl << tJe <<std::endl;
-
         // Now we want to transform tJe to eJe
         vpHomogeneousMatrix tMREye(m_motionProxy->getTransform(jointNamesEye[jointNamesEye.size()-1],2, true));// get transformation  matrix base torso and LEye
        // vpHomogeneousMatrix tMTrunk(m_motionProxy->getTransform("TrunkYaw", 0, true));// get transformation  matrix base torso and TrunkYaw

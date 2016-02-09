@@ -683,9 +683,6 @@ vpNaoqiGrabber::getCameraParameters( const int & resolution, const std::string &
 }
 
 
-
-
-
 /*!
   Return the extrinsic camera parameters corresponding to the camera that is selected using setCamera().
   \warning The grabber should be open prior calling this function.

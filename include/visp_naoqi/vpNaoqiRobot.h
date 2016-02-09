@@ -166,6 +166,7 @@ public:
   std::vector<std::string> getBodyNames(const std::string &names) const;
   vpColVector getJointMin(const AL::ALValue& names) const;
   vpColVector getJointMax(const AL::ALValue& names) const;
+  void getJointMinAndMax(const std::vector<std::string>& names, vpColVector &min, vpColVector &max) const;
 
   /*!
     Get the position of all the joints of the chain.
