@@ -63,6 +63,7 @@ qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
 if(USE_METAPOD)
   target_link_libraries(visp_naoqi metapod_${model_name})
 endif()
+
 qi_stage_lib(visp_naoqi)
 
 # examples
@@ -75,9 +76,11 @@ qi_use_lib(image_viewer_visp_2cameras visp_naoqi)
 qi_create_bin(image_viewer_opencv example/grabber/image_viewer_opencv.cpp)
 qi_use_lib(image_viewer_opencv visp_naoqi)
 
+qi_create_bin(image_viewer_visp_color example/grabber/image_viewer_visp_color.cpp)
+qi_use_lib(image_viewer_visp_color visp_naoqi)
+
 qi_create_bin(image_viewer_opencv_2cameras example/grabber/image_viewer_opencv_2cameras.cpp)
 qi_use_lib(image_viewer_opencv_2cameras visp_naoqi)
-
 
 qi_create_bin(camera_calibration tools/calibration/camera_calibration.cpp)
 qi_use_lib(camera_calibration visp_naoqi)
