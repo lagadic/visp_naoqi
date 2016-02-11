@@ -5,6 +5,7 @@ set(source
   test_jacobian.cpp
   eye_control.cpp
   test_manipulability.cpp
+  hand_tracking.cpp
   ) 
 
 foreach(src ${source})
