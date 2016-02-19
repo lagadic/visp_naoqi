@@ -5,8 +5,14 @@ set(source
   test_jacobian.cpp
   eye_control.cpp
   test_manipulability.cpp
-  hand_tracking.cpp
   ) 
+
+foreach(component ${VISP_LIB_COMPONENTS})
+  if(component STREQUAL "visp_sinatrack")
+    list(APPEND source hand_tracking.cpp)
+  endif()
+endforeach()
+
 
 foreach(src ${source})
   get_filename_component(binary ${src} NAME_WE)
