@@ -4,7 +4,7 @@ project(visp_naoqi)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-# this lets you find the qibuild cmake frameworl
+# this lets you find the qibuild cmake framework
 find_package(qibuild)
 
 find_package(VISP REQUIRED)
@@ -59,46 +59,14 @@ qi_create_lib(visp_naoqi
 
 qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
 
-
 if(USE_METAPOD)
   target_link_libraries(visp_naoqi metapod_${model_name})
 endif()
 
 qi_stage_lib(visp_naoqi)
 
-# examples
-qi_create_bin(image_viewer_visp example/grabber/image_viewer_visp.cpp)
-qi_use_lib(image_viewer_visp visp_naoqi)
-
-qi_create_bin(image_viewer_visp_2cameras example/grabber/image_viewer_visp_2cameras.cpp)
-qi_use_lib(image_viewer_visp_2cameras visp_naoqi)
-
-qi_create_bin(image_viewer_opencv example/grabber/image_viewer_opencv.cpp)
-qi_use_lib(image_viewer_opencv visp_naoqi)
-
-qi_create_bin(image_viewer_visp_color example/grabber/image_viewer_visp_color.cpp)
-qi_use_lib(image_viewer_visp_color visp_naoqi)
-
-qi_create_bin(image_viewer_opencv_2cameras example/grabber/image_viewer_opencv_2cameras.cpp)
-qi_use_lib(image_viewer_opencv_2cameras visp_naoqi)
-
-qi_create_bin(camera_calibration tools/calibration/camera_calibration.cpp)
-qi_use_lib(camera_calibration visp_naoqi)
-
-qi_create_bin(camera_calibration_ext tools/calibration/camera_calibration_ext.cpp)
-qi_use_lib(camera_calibration_ext visp_naoqi)
-
-qi_create_bin(LoadM example/parserHomogeneousMatrix/loadM.cpp)
-qi_use_lib(LoadM visp_naoqi )
-
-qi_create_bin(writeM example/parserHomogeneousMatrix/writeM.cpp)
-qi_use_lib(writeM visp_naoqi )
-
-qi_create_bin(dat_to_xml example/parserHomogeneousMatrix/dat_to_xml.cpp)
-qi_use_lib(dat_to_xml visp_naoqi )
-
-# Propagate in subdirs
-subdirs(example/robot)
+subdirs(example)
+subdirs(tools/calibration)
 
 # doxygen
 find_package(Doxygen)
