@@ -526,7 +526,7 @@ vpNaoqiRobot::getJointMinAndMax(const std::vector<std::string> &names, vpColVect
     for (unsigned int i=0; i<names.size(); i++)
     {
       AL::ALValue limits = m_motionProxy->getLimits(names[i]);
-      std::cout << limits << std::endl;
+      //std::cout << limits << std::endl;
       min[i] = limits[0][0];
       max[i] = limits[0][1];
 
