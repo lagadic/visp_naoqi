@@ -116,7 +116,7 @@ void vpNaoqiRobot::open()
 
         int   success = m_motionProxy->setCollisionProtectionEnabled("Arms", false);
         if (success)
-        std::cout << "Collision protection is disabled" << std::endl;
+            std::cout << "Collision protection is disabled" << std::endl;
 
         // Check the type of the robot
         AL::ALValue robotConfig = m_motionProxy->getRobotConfig();
@@ -525,10 +525,10 @@ vpNaoqiRobot::getJointMinAndMax(const std::vector<std::string> &names, vpColVect
 
     for (unsigned int i=0; i<names.size(); i++)
     {
-      AL::ALValue limits = m_motionProxy->getLimits(names[i]);
-      std::cout << limits << std::endl;
-      min[i] = limits[0][0];
-      max[i] = limits[0][1];
+        AL::ALValue limits = m_motionProxy->getLimits(names[i]);
+        std::cout << limits << std::endl;
+        min[i] = limits[0][0];
+        max[i] = limits[0][1];
 
     }
     return;
@@ -630,7 +630,7 @@ Set the position of the joints using vpColVector of Visp
 */
 void vpNaoqiRobot::setPosition(const AL::ALValue& names, const std::vector<float> &jointPosition, const float& fractionMaxSpeed)
 {
-  m_motionProxy->setAngles(names, (AL::ALValue)(jointPosition), fractionMaxSpeed);
+    m_motionProxy->setAngles(names, (AL::ALValue)(jointPosition), fractionMaxSpeed);
 }
 
 
@@ -708,15 +708,15 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
         // Now we want to transform tJe to eJe
 
-            vpHomogeneousMatrix torsoMHeadRoll(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));// get transformation  matrix between torso and HeadRoll
-            vpVelocityTwistMatrix HeadRollVLtorso(torsoMHeadRoll.inverse());
+        vpHomogeneousMatrix torsoMHeadRoll(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));// get transformation  matrix between torso and HeadRoll
+        vpVelocityTwistMatrix HeadRollVLtorso(torsoMHeadRoll.inverse());
 
-            for(unsigned int i=0; i< 3; i++)
-                for(unsigned int j=0; j< 3; j++)
-                    HeadRollVLtorso[i][j+3] = 0;
+        for(unsigned int i=0; i< 3; i++)
+            for(unsigned int j=0; j< 3; j++)
+                HeadRollVLtorso[i][j+3] = 0;
 
-            // Transform the matrix
-            eJe = HeadRollVLtorso *tJe;
+        // Transform the matrix
+        eJe = HeadRollVLtorso *tJe;
 
 
 #else
@@ -727,46 +727,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
     }
 
-    //  else if (chainName == "Head")
-    //  {
-    //    std::vector<float> q = m_motionProxy->getAngles(chainName,true);
-
-    //    //std::cout << "Joint value:" << q << std::endl;
-
-    //    const unsigned int nJoints= q.size();
-
-    //    eJe.resize(6,nJoints);
-
-    //    double d3 = 0.09511;
-
-    //    eJe[0][0]= d3*cos(q[4])*sin(q[2]);
-    //    eJe[1][0]= -d3*sin(q[2])*sin(q[4]);
-    //    eJe[2][0]= 0;
-    //    eJe[3][0]= cos(q[2] + q[3])*sin(q[4]);
-    //    eJe[4][0]= cos(q[2] + q[3])*cos(q[4]);
-    //    eJe[5][0]=  -sin(q[2] + q[3]);
-
-    //    eJe[0][1]= d3*sin(q[3])*sin(q[4]);
-    //    eJe[1][1]= d3*cos(q[4])*sin(q[3]);
-    //    eJe[2][1]= d3*cos(q[3]);
-    //    eJe[3][1]=  cos(q[4]);
-    //    eJe[4][1]= -sin(q[4]);
-    //    eJe[5][1]= 0;
-
-    //    eJe[0][2]= 0;
-    //    eJe[1][2]= 0;
-    //    eJe[2][2]= 0;
-    //    eJe[3][2]= cos(q[4]);
-    //    eJe[4][2]= -sin(q[4]);
-    //    eJe[5][2]= 0;
-
-    //    eJe[0][3]= 0;
-    //    eJe[1][3]= 0;
-    //    eJe[2][3]= 0;
-    //    eJe[3][3]= 0;
-    //    eJe[4][3]= 0;
-    //    eJe[5][3]= 1;
-    //  }
 
     else if (chainName == "LArm")
     {
@@ -840,6 +800,90 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
 #endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
     }
+
+
+
+    else if (chainName == "LArm_t")
+    {
+#ifdef VISP_NAOQI_HAVE_MATAPOD
+        //Jacobian matrix w.r.t the torso
+        //vpMatrix tJe;
+
+        //confVector q for Romeo has size 24 (6 + 18dof of the robot, we don't consider the Legs and the fingers)
+        RomeoModel::confVector q;
+
+        // Get the names of the joints in the chain we want to control
+        std::vector<std::string> jointNames;
+        jointNames.push_back("TrunkYaw");
+        std::vector<std::string> jointNamesLArm = m_motionProxy->getBodyNames("LArm");
+        jointNamesLArm.pop_back(); // Delete last joints LHand, that we don't consider in the servo
+
+        jointNames.insert(jointNames.end(),jointNamesLArm.begin(),jointNamesLArm.end());
+
+        // Get the angles of the joints in the chain we want to control
+        std::vector<float> qmp = m_motionProxy->getAngles(jointNames,true);
+
+        const unsigned int nJoints = qmp.size();
+
+        std::cout << "Number joints: " << nJoints << std::endl;
+
+        //Resize the Jacobians
+        eJe.resize(6,nJoints);
+        tJe.resize(6,nJoints);
+
+        // Create a robot instance of Metapod
+        RomeoModel robot;
+
+        //Get the index of the position of the q of the first joint of the chain in the confVector
+        int index_confVec = (boost::fusion::at_c<RomeoModel::Torso_link>(robot.nodes).q_idx);
+
+        // Copy the angle values of the joint in the confVector in the right position
+        // In this case is +6 because in the first 6 positions there is the FreeFlyer
+        for(unsigned int i=0;i<nJoints;i++)
+            q[i+index_confVec] = qmp[i];
+
+        // Compute the Jacobian tJe
+        jcalc< RomeoModel>::run(robot, q, RomeoModel::confVector::Zero());
+
+        static const bool includeFreeFlyer = true; // I don't consider the first six FreeFlyer
+        static const int offset = 0;
+        typedef jac_point_chain<RomeoModel, RomeoModel::TrunkYaw_link, RomeoModel::LWristPitch_link, offset, includeFreeFlyer> jac;
+        jac::Jacobian J = jac::Jacobian::Zero();
+        jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+        for(unsigned int i=0;i<3;i++)
+            for(unsigned int j=0;j<nJoints;j++)
+            {
+                tJe[i][j]=J(i+3,index_confVec+j); // Since the FreeFlyer are not activated the columns of the Jacobian relative to the LArm
+                tJe[i+3][j]=J(i,index_confVec+j); // are from 0->6
+
+            }
+
+        //std::cout << "metapod_Jac:" <<std::endl << J << std::endl;
+
+
+        vpHomogeneousMatrix tMLWristP(m_motionProxy->getTransform(jointNames[jointNames.size()-1], 2, true));// get transformation  matrix base torso and LWrist
+
+        vpVelocityTwistMatrix LWristPVTrunk(tMLWristP.inverse());
+
+
+
+        for(unsigned int i=0; i< 3; i++)
+            for(unsigned int j=0; j< 3; j++)
+                LWristPVTrunk[i][j+3] = 0;
+        // Transform the matrix
+        eJe = LWristPVTrunk *tJe;
+
+
+
+#else
+        throw vpRobotException (vpRobotException::readingParametersError,
+                                "Metapod is not installed");
+
+#endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
+    }
+
+
 
 
     else if (chainName == "RArm")
@@ -1047,7 +1091,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         // In the first 6 positions there is the FreeFlyer. We used the index_confVec to copy the rigth values.
 
         //std::cout << "index_confVec_trunk: " <<std::endl << index_confVec_trunk <<std::endl;
-       // std::cout << "index_confVec_head: " <<std::endl << index_confVec_head <<std::endl;
+        // std::cout << "index_confVec_head: " <<std::endl << index_confVec_head <<std::endl;
         //std::cout << "index_confVec_leye: " <<std::endl << index_confVec_leye <<std::endl;
 
         for(unsigned int i=0;i<jointNamesTrunk.size();i++)
@@ -1099,7 +1143,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         //std::cout << "tJe: " <<std::endl << tJe <<std::endl;
         // Now we want to transform tJe to eJe
         vpHomogeneousMatrix tMREye(m_motionProxy->getTransform(jointNamesEye[jointNamesEye.size()-1],2, true));// get transformation  matrix base torso and LEye
-       // vpHomogeneousMatrix tMTrunk(m_motionProxy->getTransform("TrunkYaw", 0, true));// get transformation  matrix base torso and TrunkYaw
+        // vpHomogeneousMatrix tMTrunk(m_motionProxy->getTransform("TrunkYaw", 0, true));// get transformation  matrix base torso and TrunkYaw
 
         vpVelocityTwistMatrix REyeVTrunk(tMREye.inverse());
 
@@ -1216,83 +1260,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
     }
 
 
-    else if (chainName == "LArm_old")
-    {
 
-        std::vector<float> q = m_motionProxy->getAngles(chainName,true);
-
-        q.pop_back(); // we don't consider the last joint LHand
-
-        //std::cout << "Joint value:" << q << std::endl;
-
-        const unsigned int nJoints = q.size();
-
-        float q10, q11, q12, q13, q14, q15;
-
-        q10 = q[1]; //LShoulderYaw
-        q11 = q[2]; //LElbowRoll
-        q12 = q[3]; //LElbowYaw
-        q13 = q[4]; //LWristRoll
-        q14 = q[5]; //LWristYaw
-        q15 = q[6]; //LWristPitch
-
-
-        float g9 = 2.7053 ;
-        float b9 = 0.0279;
-        float alpha9 = 1.729254202933720;
-        float d9 =  0.0758;
-        float phi9 = 3.068152048225621;
-        float phi10 = 0.430457;
-        float phi11 = 0.17452;
-        float r9 = 0.1765;
-        float r11 =  0.205;
-        float r13 =  0.1823;
-
-        eJe.resize(6,nJoints);
-
-        eJe[0][0]=r13*sin(phi11 + q11)*sin(phi10)*sin(q10)*sin(q13)*sin(q15) - r13*cos(phi10)*cos(q13)*sin(q10)*sin(q12)*sin(q15) - r13*cos(q10)*cos(q13)*sin(phi10)*sin(q12)*sin(q15) + r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*sin(q15) - r11*cos(phi11 + q11)*cos(q13)*sin(phi10)*sin(q10)*sin(q15) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*sin(q13)*sin(q15) + r13*cos(phi10)*cos(q15)*sin(q10)*sin(q12)*sin(q13)*sin(q14) + r13*cos(q10)*cos(q15)*sin(phi10)*sin(q12)*sin(q13)*sin(q14) + r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*sin(q15) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q14)*cos(q15)*sin(q12) - r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q15)*sin(q13)*sin(q14) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*cos(q15)*sin(q14) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*sin(q13)*sin(q15) - r13*cos(phi11 + q11)*cos(q12)*cos(q13)*sin(phi10)*sin(q10)*sin(q15) + r11*sin(phi11 + q11)*cos(q14)*cos(q15)*sin(phi10)*sin(q10)*sin(q12) + r11*cos(phi11 + q11)*cos(q15)*sin(phi10)*sin(q10)*sin(q13)*sin(q14) + r13*sin(phi11 + q11)*cos(q13)*cos(q15)*sin(phi10)*sin(q10)*sin(q14) + r11*sin(phi11 + q11)*cos(q12)*sin(phi10)*sin(q10)*sin(q13)*sin(q15) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*cos(q15)*sin(q14) - r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q15)*sin(q13)*sin(q14) + r11*sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(phi10)*sin(q10)*sin(q14) + r13*cos(phi11 + q11)*cos(q12)*cos(q15)*sin(phi10)*sin(q10)*sin(q13)*sin(q14);
-        eJe[0][1]=r11*sin(phi11 + q11)*cos(q13)*sin(q15) + r13*cos(phi11 + q11)*sin(q13)*sin(q15) + r11*cos(phi11 + q11)*cos(q14)*cos(q15)*sin(q12) + r13*cos(phi11 + q11)*cos(q13)*cos(q15)*sin(q14) + r11*cos(phi11 + q11)*cos(q12)*sin(q13)*sin(q15) + r13*sin(phi11 + q11)*cos(q12)*cos(q13)*sin(q15) - r11*sin(phi11 + q11)*cos(q15)*sin(q13)*sin(q14) + r11*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(q14) - r13*sin(phi11 + q11)*cos(q12)*cos(q15)*sin(q13)*sin(q14);
-        eJe[0][2]=-r13*sin(q12)*(cos(q13)*sin(q15) - cos(q15)*sin(q13)*sin(q14));
-        eJe[0][3]=r13*sin(q13)*sin(q15) + r13*cos(q13)*cos(q15)*sin(q14);
-        eJe[0][4]=0;
-        eJe[0][5]=0;
-        eJe[0][6]=0;
-        eJe[1][0]=r13*sin(phi11 + q11)*cos(q15)*sin(phi10)*sin(q10)*sin(q13) - r13*cos(phi10)*cos(q13)*cos(q15)*sin(q10)*sin(q12) - r13*cos(q10)*cos(q13)*cos(q15)*sin(phi10)*sin(q12) + r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*cos(q15) - r11*cos(phi11 + q11)*cos(q13)*cos(q15)*sin(phi10)*sin(q10) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q15)*sin(q13) - r13*cos(phi10)*sin(q10)*sin(q12)*sin(q13)*sin(q14)*sin(q15) - r13*cos(q10)*sin(phi10)*sin(q12)*sin(q13)*sin(q14)*sin(q15) + r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*cos(q15) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q15)*sin(q13) - r13*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(phi10)*sin(q10) + r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q14)*sin(q12)*sin(q15) + r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*sin(q13)*sin(q14)*sin(q15) + r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*sin(q14)*sin(q15) + r11*sin(phi11 + q11)*cos(q12)*cos(q15)*sin(phi10)*sin(q10)*sin(q13) - r11*sin(phi11 + q11)*cos(q14)*sin(phi10)*sin(q10)*sin(q12)*sin(q15) - r11*cos(phi11 + q11)*sin(phi10)*sin(q10)*sin(q13)*sin(q14)*sin(q15) - r13*sin(phi11 + q11)*cos(q13)*sin(phi10)*sin(q10)*sin(q14)*sin(q15) + r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*sin(q14)*sin(q15) + r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*sin(q13)*sin(q14)*sin(q15) - r11*sin(phi11 + q11)*cos(q12)*cos(q13)*sin(phi10)*sin(q10)*sin(q14)*sin(q15) - r13*cos(phi11 + q11)*cos(q12)*sin(phi10)*sin(q10)*sin(q13)*sin(q14)*sin(q15);
-        eJe[1][1]=r11*sin(phi11 + q11)*cos(q13)*cos(q15) + r13*cos(phi11 + q11)*cos(q15)*sin(q13) + r11*cos(phi11 + q11)*cos(q12)*cos(q15)*sin(q13) + r13*sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q15) - r11*cos(phi11 + q11)*cos(q14)*sin(q12)*sin(q15) - r13*cos(phi11 + q11)*cos(q13)*sin(q14)*sin(q15) + r11*sin(phi11 + q11)*sin(q13)*sin(q14)*sin(q15) + r13*sin(phi11 + q11)*cos(q12)*sin(q13)*sin(q14)*sin(q15) - r11*cos(phi11 + q11)*cos(q12)*cos(q13)*sin(q14)*sin(q15);
-        eJe[1][2]=-r13*sin(q12)*(cos(q13)*cos(q15) + sin(q13)*sin(q14)*sin(q15));
-        eJe[1][3]=r13*cos(q15)*sin(q13) - r13*cos(q13)*sin(q14)*sin(q15);
-        eJe[1][4]=0;
-        eJe[1][5]=0;
-        eJe[1][6]=0;
-        eJe[2][0]=r13*cos(phi10)*cos(q14)*sin(q10)*sin(q12)*sin(q13) - r11*sin(phi11 + q11)*sin(phi10)*sin(q10)*sin(q12)*sin(q14) + r13*cos(q10)*cos(q14)*sin(phi10)*sin(q12)*sin(q13) - r11*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q14)*sin(q13) - r13*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q13)*cos(q14) + r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*sin(q12)*sin(q14) + r11*cos(phi11 + q11)*cos(q14)*sin(phi10)*sin(q10)*sin(q13) + r13*sin(phi11 + q11)*cos(q13)*cos(q14)*sin(phi10)*sin(q10) - r11*sin(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q13)*cos(q14) - r13*cos(phi11 + q11)*cos(phi10)*cos(q10)*cos(q12)*cos(q14)*sin(q13) + r11*sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q14)*sin(phi10)*sin(q10) + r13*cos(phi11 + q11)*cos(q12)*cos(q14)*sin(phi10)*sin(q10)*sin(q13);
-        eJe[2][1]=r13*cos(phi11 + q11)*cos(q13)*cos(q14) - r11*cos(phi11 + q11)*sin(q12)*sin(q14) - r11*sin(phi11 + q11)*cos(q14)*sin(q13) - r13*sin(phi11 + q11)*cos(q12)*cos(q14)*sin(q13) + r11*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q14);
-        eJe[2][2]=r13*cos(q14)*sin(q12)*sin(q13);
-        eJe[2][3]=r13*cos(q13)*cos(q14);
-        eJe[2][4]=0;
-        eJe[2][5]=0;
-        eJe[2][6]=0;
-        eJe[3][0]=cos(phi10 + q10)*sin(phi11 + q11)*cos(q13)*sin(q15) + sin(phi10 + q10)*cos(q12)*cos(q14)*cos(q15) - sin(phi10 + q10)*sin(q12)*sin(q13)*sin(q15) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q14)*cos(q15)*sin(q12) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*sin(q13)*sin(q15) - cos(phi10 + q10)*sin(phi11 + q11)*cos(q15)*sin(q13)*sin(q14) - sin(phi10 + q10)*cos(q13)*cos(q15)*sin(q12)*sin(q14) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(q14);
-        eJe[3][1]=sin(phi11 + q11)*cos(q14)*cos(q15)*sin(q12) - cos(phi11 + q11)*cos(q13)*sin(q15) + cos(phi11 + q11)*cos(q15)*sin(q13)*sin(q14) + sin(phi11 + q11)*cos(q12)*sin(q13)*sin(q15) + sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q15)*sin(q14);
-        eJe[3][2]=cos(q12)*cos(q14)*cos(q15) - sin(q12)*sin(q13)*sin(q15) - cos(q13)*cos(q15)*sin(q12)*sin(q14);
-        eJe[3][3]=cos(q15)*sin(q13)*sin(q14) - cos(q13)*sin(q15);
-        eJe[3][4]=cos(q14)*cos(q15);
-        eJe[3][5]=-sin(q15);
-        eJe[3][6]=0;
-        eJe[4][0]=cos(phi10 + q10)*sin(phi11 + q11)*cos(q13)*cos(q15) - sin(phi10 + q10)*cos(q12)*cos(q14)*sin(q15) - sin(phi10 + q10)*cos(q15)*sin(q12)*sin(q13) + cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q15)*sin(q13) - cos(phi10 + q10)*cos(phi11 + q11)*cos(q14)*sin(q12)*sin(q15) + cos(phi10 + q10)*sin(phi11 + q11)*sin(q13)*sin(q14)*sin(q15) + sin(phi10 + q10)*cos(q13)*sin(q12)*sin(q14)*sin(q15) - cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q13)*sin(q14)*sin(q15);
-        eJe[4][1]=sin(phi11 + q11)*cos(q12)*cos(q15)*sin(q13) - cos(phi11 + q11)*cos(q13)*cos(q15) - sin(phi11 + q11)*cos(q14)*sin(q12)*sin(q15) - cos(phi11 + q11)*sin(q13)*sin(q14)*sin(q15) - sin(phi11 + q11)*cos(q12)*cos(q13)*sin(q14)*sin(q15);
-        eJe[4][2]=cos(q13)*sin(q12)*sin(q14)*sin(q15) - cos(q15)*sin(q12)*sin(q13) - cos(q12)*cos(q14)*sin(q15);
-        eJe[4][3]=- cos(q13)*cos(q15) - sin(q13)*sin(q14)*sin(q15);
-        eJe[4][4]=-cos(q14)*sin(q15);
-        eJe[4][5]=-cos(q15);
-        eJe[4][6]=0;
-        eJe[5][0]=cos(phi10 + q10)*cos(phi11 + q11)*cos(q12)*cos(q13)*cos(q14) - cos(phi10 + q10)*cos(phi11 + q11)*sin(q12)*sin(q14) - cos(phi10 + q10)*sin(phi11 + q11)*cos(q14)*sin(q13) - sin(phi10 + q10)*cos(q13)*cos(q14)*sin(q12) - sin(phi10 + q10)*cos(q12)*sin(q14);
-        eJe[5][1]=cos(phi11 + q11)*cos(q14)*sin(q13) - sin(phi11 + q11)*sin(q12)*sin(q14) + sin(phi11 + q11)*cos(q12)*cos(q13)*cos(q14);
-        eJe[5][2]=- cos(q12)*sin(q14) - cos(q13)*cos(q14)*sin(q12);
-        eJe[5][3]=cos(q14)*sin(q13);
-        eJe[5][4]=-sin(q14);
-        eJe[5][5]=0;
-        eJe[5][6]=1;
-    }
     else
     {
         throw vpRobotException (vpRobotException::readingParametersError,
@@ -1343,8 +1311,8 @@ std::vector <vpMatrix> vpNaoqiRobot::get_d_eJe(const std::string &chainName) con
         for(unsigned int i=0;i<nJoints;i++)
             q[i+index_confVec] = qmp[i];
 
-//        for(unsigned int i=0;i<RomeoModel::NBDOF;i++)
-//            std::cout<<q[i] << std::endl;
+        //        for(unsigned int i=0;i<RomeoModel::NBDOF;i++)
+        //            std::cout<<q[i] << std::endl;
 
         std::vector <std::string > names_larm = getBodyNames(chainName);
         names_larm.pop_back(); // We don't consider the last joint of the hand (open/close)
@@ -1361,9 +1329,9 @@ std::vector <vpMatrix> vpNaoqiRobot::get_d_eJe(const std::string &chainName) con
         rnea< RomeoModel>::run(robot, q, dq, RomeoModel::confVector::Zero());
 
 
-//        std::ofstream state_log("djac_jcalc_state.log", std::ofstream::out);
-//        printState<RomeoModel>(robot, state_log);
-//        state_log.close();
+        //        std::ofstream state_log("djac_jcalc_state.log", std::ofstream::out);
+        //        printState<RomeoModel>(robot, state_log);
+        //        state_log.close();
 
         typedef Eigen::Matrix<LocalFloatType, 6 * RomeoModel::NBBODIES, RomeoModel::NBDOF> dJacobian;
         dJacobian dJ = dJacobian::Zero();
@@ -1390,14 +1358,14 @@ std::vector <vpMatrix> vpNaoqiRobot::get_d_eJe(const std::string &chainName) con
 
         }
 
-//        const char result_file[] = "djac.log";
-//        std::ofstream log(result_file, std::ofstream::out);
-//        log << "derivative_of_the_kinematic_jacobian\n" << dJ << std::endl;
-//        log.close();
+        //        const char result_file[] = "djac.log";
+        //        std::ofstream log(result_file, std::ofstream::out);
+        //        log << "derivative_of_the_kinematic_jacobian\n" << dJ << std::endl;
+        //        log.close();
 
-//        state_log.open("djac_state.log", std::ofstream::out);
-//        printState<RomeoModel>(robot, state_log);
-//        state_log.close();
+        //        state_log.open("djac_state.log", std::ofstream::out);
+        //        printState<RomeoModel>(robot, state_log);
+        //        state_log.close();
 
 
 #else
