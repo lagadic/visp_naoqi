@@ -70,7 +70,8 @@ vpNaoqiGrabber::vpNaoqiGrabber()
  */
 vpNaoqiGrabber::~vpNaoqiGrabber()
 {
-  cleanup();
+  if (m_isOpen)
+    cleanup();
 }
 
 /*!
@@ -266,6 +267,7 @@ void vpNaoqiGrabber::openMulti()
 void vpNaoqiGrabber::cleanup()
 {
   if (m_videoProxy != NULL) {
+    std::cout << "Cleanup m_videoProxy " << std::endl;
     m_videoProxy->unsubscribe(m_clientName);
     delete m_videoProxy;
     m_videoProxy = NULL;
@@ -611,28 +613,15 @@ vpNaoqiGrabber::getCameraParameters(vpCameraParameters::vpCameraParametersProjTy
   return cam;
 }
 
+
 /*!
   Return the camera parameters corresponding to the camera with the desired resolution.
   \param projModel : Model that is used.
   \param projModel : Model that is used.
   \return The camera parameters
 
-  \code
-#include <visp_naoqi/vpNaoqiGrabber.h>
-
-int main()
-{
-  vpNaoqiGrabber g;
-  g.setRobotIp("131.254.13.37");
-  g.setFramerate(15);
-  g.setCamera(0);
-  g.open();
-  vpCameraParameters cam = g.getCameraParameters();
-}
-
  */
-vpCameraParameters
-vpNaoqiGrabber::getCameraParameters( const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel) const
+vpCameraParameters vpNaoqiGrabber::getIntrinsicCameraParameters(const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel)
 {
   vpCameraParameters cam;
   char filename[FILENAME_MAX];
@@ -683,6 +672,86 @@ vpNaoqiGrabber::getCameraParameters( const int & resolution, const std::string &
 }
 
 
+
+/*!
+  Return the camera parameters corresponding to the camera with the desired resolution.
+  \param projModel : Model that is used.
+  \param projModel : Model that is used.
+  \return The camera parameters
+
+  \code
+#include <visp_naoqi/vpNaoqiGrabber.h>
+
+int main()
+{
+  vpNaoqiGrabber g;
+  g.setRobotIp("131.254.13.37");
+  g.setFramerate(15);
+  g.setCamera(0);
+  g.open();
+  vpCameraParameters cam = g.getCameraParameters();
+}
+
+ */
+vpCameraParameters
+vpNaoqiGrabber::getCameraParameters( const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel) const
+{
+  return getIntrinsicCameraParameters(resolution,cameraName,projModel);
+}
+
+
+/*!
+  Return the extrinsic camera parameters corresponding to the camera specified.
+
+  \param cameraName : Name of the Camera
+  \param projModel : Model that is used
+
+  \return The extrinsic camera parameters (Homogeneous matrix)
+
+ */
+vpHomogeneousMatrix vpNaoqiGrabber::getExtrinsicCameraParameters(const std::string cameraName, const vpCameraParameters::vpCameraParametersProjType projModel)
+{
+  vpHomogeneousMatrix eMc;
+  std::string name;
+  vpXmlParserHomogeneousMatrix p; // Create a XML parser
+
+  if (cameraName == "CameraLeftEye" || cameraName == "CameraRightEye" )
+  {
+    for(unsigned int i=0; i<3; i++)
+      eMc[i][i] = 0; // remove identity
+    //Set Rotation
+    eMc[0][2] = 1.;
+    eMc[1][0] = -1.;
+    eMc[2][1] = -1.;
+    //Set Translation:
+    eMc[0][3] = 0.01299;
+    eMc[1][3] = 0.;
+    eMc[2][3] = 0.;
+  }
+  else
+  {
+    if (projModel == vpCameraParameters::perspectiveProjWithDistortion)
+      name =  "eMc_" + cameraName + "_with_distorsion";
+    else
+      name =  "eMc_" + cameraName + "_without_distorsion";
+
+    char filename[FILENAME_MAX];
+    sprintf(filename, "%s", VISP_NAOQI_EXTRINSIC_CAMERA_FILE);
+
+    if (p.parse(eMc,filename, name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
+      std::cout << "Cannot found the Homogeneous matrix named " << name << " in the file " <<  filename << std::endl;
+
+    }
+
+    else
+      std::cout << "Read correctly the Homogeneous matrix named " << name << std::endl;
+  }
+
+  return eMc;
+
+}
+
+
 /*!
   Return the extrinsic camera parameters corresponding to the camera that is selected using setCamera().
   \warning The grabber should be open prior calling this function.
@@ -712,47 +781,13 @@ vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel
 {
 
   vpHomogeneousMatrix eMc;
-  std::string name;
+ // std::string name;
   vpXmlParserHomogeneousMatrix p; // Create a XML parser
 
   if (cameraName == "")
     cameraName = m_cameraName;
 
-
-  if (cameraName == "CameraLeftEye" || cameraName == "CameraRightEye" )
-  {
-    for(unsigned int i=0; i<3; i++)
-      eMc[i][i] = 0; // remove identity
-    //Set Rotation
-    eMc[0][2] = 1.;
-    eMc[1][0] = -1.;
-    eMc[2][1] = -1.;
-    //Set Translation:
-    eMc[0][3] = 0.01299;
-    eMc[1][3] = 0.;
-    eMc[2][3] = 0.;
-
-  }
-  else
-  {
-
-
-    if (projModel == vpCameraParameters::perspectiveProjWithDistortion)
-      name =  "eMc_" + cameraName + "_with_distorsion";
-    else
-      name =  "eMc_" + cameraName + "_without_distorsion";
-
-    char filename[FILENAME_MAX];
-    sprintf(filename, "%s", VISP_NAOQI_EXTRINSIC_CAMERA_FILE);
-
-    if (p.parse(eMc,filename, name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
-      std::cout << "Cannot found the Homogeneous matrix named " << name << " in the file " <<  filename << std::endl;
-
-    }
-
-    else
-      std::cout << "Read correctly the Homogeneous matrix named " << name << std::endl;
-  }
+ eMc = getExtrinsicCameraParameters(cameraName, projModel);
 
   return eMc;
 }
