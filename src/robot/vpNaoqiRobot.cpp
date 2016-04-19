@@ -1499,7 +1499,27 @@ vpColVector vpNaoqiRobot::getJointVelocity(const std::vector <std::string> &name
     for(unsigned int i=0; i<names.size(); i++)
         vel[i] = vel_a[i];
 
-
     return vel;
+}
+
+
+void vpNaoqiRobot::getJointVelocity(const std::vector <std::string> &names, std::vector <float> &jointVel) const
+{
+
+    AL::ALValue list;
+
+    for (unsigned int i = 0; i < names.size(); i++)
+    {
+        std::string key = "Device/SubDeviceList/" + names[i] + "/Speed/Actuator/Value";
+        list.arrayPush(key);
+    }
+
+    jointVel = m_memProxy->getListData(list);
+
+
+    return;
 
 }
+
+
+

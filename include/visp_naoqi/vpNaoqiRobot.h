@@ -222,14 +222,20 @@ public:
 
     \param names :  Names of the joints, chains, "Body", "JointActuators",
     "Joints" or "Actuators".
-    \param useSensors :  If true, sensor velocities will be returned. If
-    false, it will be the command.
 
     \return Joint velocities in radians/s.
    */
   vpColVector getJointVelocity(const std::vector<std::string> &names) const;
 
+  /*!
+    Get the joints velocities.
 
+    \param names :  Names of the joints, chains, "Body", "JointActuators",
+    "Joints" or "Actuators".
+    \param useSensors :  Joint velocities in radians/s.
+
+   */
+  void getJointVelocity(const std::vector<std::string> &names, std::vector<float> &jointVel) const;
 
   /*!
     Open the connection with the robot.
