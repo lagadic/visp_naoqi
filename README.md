@@ -6,7 +6,7 @@ visp_naoqi is a library that bridges ViSP and Naoqi.
 # Prerequisities
 
 - Install ViSP: see <http://team.inria.fr/lagadic/visp> and follow installation tutorials 
-- Install NaoQi
+- [Install NaoQi](http://jokla.me/install-sdk-c-naoqi/)
 
 # How to build in debug
 
