@@ -66,11 +66,11 @@ const std::string currentDateTime() {
    By default, this example connect to a robot with ip address: 198.18.0.1.
    If you want to connect on an other robot, run:
 
-   ./image_viewer_visp_color -ip <robot ip address>
+   ./image_viewer_visp_color --ip <robot ip address>
 
    Example:
 
-   ./image_viewer_visp_color -ip 169.254.168.230
+   ./image_viewer_visp_color --ip 169.254.168.230
  */
 int main(int argc, const char* argv[])
 {
@@ -81,7 +81,7 @@ int main(int argc, const char* argv[])
     bool opt_record = false;
 
     for (unsigned int i=0; i<argc; i++) {
-      if (std::string(argv[i]) == "-ip")
+      if (std::string(argv[i]) == "--ip")
         opt_ip = argv[2];
       if (std::string(argv[i]) == "--cam")
         opt_cam = atoi(argv[i+1]);

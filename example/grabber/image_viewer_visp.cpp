@@ -68,11 +68,11 @@ const std::string currentDateTime() {
    By default, this example connect to a robot with ip address: 198.18.0.1.
    If you want to connect on an other robot, run:
 
-   ./image_viewer_visp -ip <robot ip address>
+   ./image_viewer_visp --ip <robot ip address>
 
    Example:
 
-   ./image_viewer_visp -ip 169.254.168.230
+   ./image_viewer_visp --ip 169.254.168.230
  */
 int main(int argc, const char* argv[])
 {
@@ -81,14 +81,17 @@ int main(int argc, const char* argv[])
     std::string opt_ip;
     int opt_cam = 0;
     bool opt_record = false;
+    bool opt_VGA = false;
 
     for (unsigned int i=0; i<argc; i++) {
-      if (std::string(argv[i]) == "-ip")
+      if (std::string(argv[i]) == "--ip")
         opt_ip = argv[2];
       if (std::string(argv[i]) == "--cam")
         opt_cam = atoi(argv[i+1]);
       if (std::string(argv[i]) == "--record")
         opt_record = true;
+     if (std::string(argv[i]) == "--vga")
+       opt_VGA = true;
       else if (std::string(argv[i]) == "--help") {
         std::cout << "Usage: " << argv[0] << "[--ip <robot address>] [--record] [--cam num_camera] [--help]" << std::endl;
         return 0;
@@ -102,7 +105,12 @@ int main(int argc, const char* argv[])
       g.setRobotIp(opt_ip);
     }
 
-    g.setCameraResolution(AL::kQVGA);
+    if (opt_VGA)
+         g.setCameraResolution(AL::kVGA);
+    else
+       g.setCameraResolution(AL::kQVGA);
+
+
 
     g.open();
     std::cout << "Open camera parameters: " << g.getCameraParameters() << std::endl;

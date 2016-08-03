@@ -50,7 +50,7 @@
    By default, this example connect to a robot with ip address: 198.18.0.1.
    If you want to connect on an other robot, run:
 
-   ./image_viewer_opencv -ip <robot ip address>
+   ./image_viewer_opencv --ip <robot ip address>
 
    Example:
 
@@ -63,7 +63,7 @@ int main(int argc, const char* argv[])
     std::string opt_ip;
 
     if (argc == 3) {
-      if (std::string(argv[1]) == "-ip")
+      if (std::string(argv[1]) == "--ip")
         opt_ip = argv[2];
     }
 
