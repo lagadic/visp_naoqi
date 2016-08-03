@@ -24,13 +24,18 @@ if(USE_METAPOD)
     include_directories(${EIGEN3_INCLUDE_DIR})
   endif()
 
-  #set(WITH_METAPODFROMURDF TRUE)
-  set(model_name "romeo")
   include(cmake/metapod.cmake)
 
+# Include Romeo Robot
+  #set(WITH_METAPODFROMURDF TRUE)
+  set(model_name "romeo")
   ADD_SAMPLEURDFMODEL(${model_name})
-
   include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
+
+# Include Pepper Robot
+  set(model_name_pepper "pepper")
+  ADD_SAMPLEURDFMODEL(${model_name_pepper})
+  include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/pepper")
 
   set(VISP_NAOQI_HAVE_MATAPOD "yes")  # for header vpNaoqiConfig.h
 endif()
@@ -61,6 +66,7 @@ qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
 
 if(USE_METAPOD)
   target_link_libraries(visp_naoqi metapod_${model_name})
+  target_link_libraries(visp_naoqi metapod_${model_name_pepper})
 endif()
 
 qi_stage_lib(visp_naoqi)
