@@ -49,6 +49,7 @@
 
 #ifdef VISP_NAOQI_HAVE_MATAPOD
 #  include <romeo.hh>
+#  include <pepper.hh>
 #  include <metapod/tools/print.hh>
 #  include <metapod/tools/initconf.hh>
 #  include <metapod/algos/jac_point_chain.hh>
@@ -60,6 +61,7 @@ using namespace metapod;
 
 typedef double LocalFloatType;
 typedef romeo<LocalFloatType> RomeoModel;
+typedef pepper<LocalFloatType> PepperModel;
 #endif
 
 /*!
@@ -69,7 +71,7 @@ typedef romeo<LocalFloatType> RomeoModel;
   */
 vpNaoqiRobot::vpNaoqiRobot()
     : m_motionProxy(NULL),m_proxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true),
-      m_robotName(""), m_robotType(Unknown), m_memProxy(NULL)
+      m_robotName(""), m_robotType(Unknown), m_memProxy(NULL)//, m_qiProxy(NULL)
 {
 
 }
@@ -104,23 +106,22 @@ void vpNaoqiRobot::open()
         // Create a proxy to control the robot
         m_motionProxy = new AL::ALMotionProxy(m_robotIp);
 
-        // Create a general proxy to motion to use new functions not implemented in the specialized proxy
+        int   success = m_motionProxy->setCollisionProtectionEnabled("Arms", false);
+        if (success)
+            std::cout << "Collision protection is disabled" << std::endl;
 
+        m_memProxy = new AL::ALMemoryProxy(m_robotIp, 9559);
+
+        // Check the type of the robot
+        AL::ALValue robotConfig = m_motionProxy->getRobotConfig();
+        m_robotName = std::string(robotConfig[1][0]);
+
+        // Create a general proxy to motion to use new functions not implemented in the specialized proxy
         std::string 	myIP = "";		// IP du portable (voir /etc/hosts)
         int 	myPort = 0 ;			// Default broker port
 
         boost::shared_ptr<AL::ALBroker> broker = AL::ALBroker::createBroker("BrokerMotion", myIP, myPort, m_robotIp, 9559);
         m_proxy = new AL::ALProxy(broker, "ALMotion");
-
-        m_memProxy = new AL::ALMemoryProxy(m_robotIp, 9559);
-
-        int   success = m_motionProxy->setCollisionProtectionEnabled("Arms", false);
-        if (success)
-            std::cout << "Collision protection is disabled" << std::endl;
-
-        // Check the type of the robot
-        AL::ALValue robotConfig = m_motionProxy->getRobotConfig();
-        m_robotName = std::string(robotConfig[1][0]);
 
         if (m_robotName.find("romeo") != std::string::npos) {
             m_robotType = Romeo;
@@ -130,25 +131,47 @@ void vpNaoqiRobot::open()
             m_robotType = Nao;
             std::cout << "This robot is Nao" << std::endl;
         }
-        else if (m_robotName.find("pepper") != std::string::npos) {
+        else if (m_robotName.find("juliette") != std::string::npos) {
             m_robotType = Pepper;
+            // Create a robot instance of Metapod
             std::cout << "This robot is Pepper" << std::endl;
+
+            AL::ALValue config;
+            AL::ALValue one = AL::ALValue::array(std::string("CONTROL_JOINT_MAX_ACCELERATION"),AL::ALValue(5.0));
+            config.arrayPush(one);
+
+            m_motionProxy->setMotionConfig(config);
+
+            // qi::SessionPtr session = qi::makeSession();
+            // std::string ip_port = "tcp://" + m_robotIp + ":9559";
+            // session->connect(ip_port);
+            // m_qiProxy = new qi::AnyObject();
+            // *m_qiProxy = session->service("ALMotion");
         }
         else {
             std::cout << "Unknown robot" << std::endl;
         }
 
-        // Set Trapezoidal interpolation
-        AL::ALValue config;
+        if ( m_robotType != Pepper)
+        {
 
-        AL::ALValue one = AL::ALValue::array(std::string("CONTROL_USE_ACCELERATION_INTERPOLATOR"),AL::ALValue(1));
-        AL::ALValue two = AL::ALValue::array(std::string("CONTROL_JOINT_MAX_ACCELERATION"),AL::ALValue(5.0));
+          int   success = m_motionProxy->setCollisionProtectionEnabled("Arms", false);
+          if (success)
+              std::cout << "Collision protection is disabled" << std::endl;
 
-        config.arrayPush(one);
-        config.arrayPush(two);
+            // Set Trapezoidal interpolation
+            AL::ALValue config;
 
-        m_motionProxy->setMotionConfig(config);
+            AL::ALValue one = AL::ALValue::array(std::string("CONTROL_USE_ACCELERATION_INTERPOLATOR"),AL::ALValue(1));
+            AL::ALValue two = AL::ALValue::array(std::string("CONTROL_JOINT_MAX_ACCELERATION"),AL::ALValue(5.0));
 
+            config.arrayPush(one);
+            config.arrayPush(two);
+
+            m_motionProxy->setMotionConfig(config);
+
+            std::cout << "Trapezoidal interpolation is on " << std::endl;
+        }
         //On nao, we have joint coupled limits (http://doc.aldebaran.com/2-1/family/robots/joints_robot.html) on the head and ankle.
         //Motion and DCM have clamping. We have to remove motion clamping.
         if (m_robotName.find("nao") != std::string::npos)
@@ -157,8 +180,6 @@ void vpNaoqiRobot::open()
             AL::ALValue setting = AL::ALValue::array(std::string("ENABLE_DCM_LIKE_CLAMPING"),AL::ALValue(0));
             config_.arrayPush(setting);
         }
-
-        std::cout << "Trapezoidal interpolation is on " << std::endl;
 
         m_isOpen = true;
     }
@@ -170,6 +191,7 @@ void vpNaoqiRobot::cleanup()
         delete m_motionProxy;
         m_motionProxy = NULL;
     }
+
     m_isOpen = false;
 }
 
@@ -222,7 +244,7 @@ void vpNaoqiRobot::setVelocity_eachJoint(const AL::ALValue& names, const std::ve
 
 void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose)
 {
-    setVelocity(names, (AL::ALValue)(jointVel));
+    setVelocity(names, (AL::ALValue)(jointVel), verbose);
 }
 
 /*!
@@ -321,7 +343,7 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const vpColVector &join
     std::vector<float> jointVel_(jointVel.size());
     for (unsigned int i=0; i< jointVel.size(); i++)
         jointVel_[i] = jointVel[i];
-    setVelocity(names, jointVel_);
+    setVelocity(names, jointVel_, verbose);
 }
 
 
@@ -421,14 +443,20 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
 
     if (jointListMove.getSize()>0)
     {
+        //        if (m_robotType == Pepper)
+        //        {
+        //          m_qiProxy->async<void>("setAngles", jointListMove, angles, fractions);
+        //        }
+        //        else
         m_proxy->callVoid("setAngles", jointListMove, angles, fractions);
     }
 
     if (jointListStop.getSize()>0)
     {
         std::vector<float> zeros( jointListStop.getSize() );
-        //std::cout << "Stop array: " << zeros << std::endl;
-
+        //        if (m_robotType == Pepper)
+        //          m_qiProxy->async<void>("changeAngles", jointListStop, zeros, 0.1f);
+        //        else
         m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
 
     }
@@ -525,10 +553,10 @@ vpNaoqiRobot::getJointMinAndMax(const std::vector<std::string> &names, vpColVect
 
     for (unsigned int i=0; i<names.size(); i++)
     {
-      AL::ALValue limits = m_motionProxy->getLimits(names[i]);
-      //std::cout << limits << std::endl;
-      min[i] = limits[0][0];
-      max[i] = limits[0][1];
+        AL::ALValue limits = m_motionProxy->getLimits(names[i]);
+        //std::cout << limits << std::endl;
+        min[i] = limits[0][0];
+        max[i] = limits[0][1];
     }
     return;
 }
@@ -565,7 +593,7 @@ vpNaoqiRobot::getJointMax(const AL::ALValue& names) const
 /*!
 Gets the angles of the joints
 
- \return Joint angles in radians.
+ \return Joint angles in radians (VpColVector).
 
  \param names : Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
         useSensors – If true, sensor angles will be returned
@@ -580,6 +608,24 @@ vpColVector vpNaoqiRobot::getPosition(const AL::ALValue& names, const bool& useS
         q[i] = sensorAngles[i];
     return q;
 }
+
+
+
+/*!
+Gets the angles of the joints
+
+ \param names : Names the joints, chains, “Body”, “JointActuators”, “Joints” or “Actuators”.
+        useSensors – If true, sensor angles will be returned
+        q: Joint angles in radians (std::vector)
+
+*/
+
+void vpNaoqiRobot::getPosition(const AL::ALValue& names, std::vector<float>& q, const bool& useSensors) const
+{
+    q = m_motionProxy->getAngles(names, useSensors);
+    return;
+}
+
 
 
 /*!
@@ -653,7 +699,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 {
     vpMatrix eJe;
 
-    if (chainName == "Head")
+    if (chainName == "Head" && m_robotType == Romeo)
     {
 #ifdef VISP_NAOQI_HAVE_MATAPOD
         //Jacobian matrix w.r.t the torso
@@ -700,7 +746,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
             {
                 tJe[i][j]=J(i+3, index_confVec +j);
                 tJe[i+3][j]=J(i, index_confVec +j);
-
             }
 
         //std::cout << "metapod_Jac:" <<std::endl << J;
@@ -727,7 +772,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
     }
 
 
-    else if (chainName == "LArm")
+    else if (chainName == "LArm"  && m_robotType == Romeo)
     {
 #ifdef VISP_NAOQI_HAVE_MATAPOD
         //Jacobian matrix w.r.t the torso
@@ -802,7 +847,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
 
 
-    else if (chainName == "LArm_t")
+    else if (chainName == "LArm_t"  && m_robotType == Romeo)
     {
 #ifdef VISP_NAOQI_HAVE_MATAPOD
         //Jacobian matrix w.r.t the torso
@@ -885,7 +930,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
 
 
-    else if (chainName == "RArm")
+    else if (chainName == "RArm"  && m_robotType == Romeo)
     {
 #ifdef VISP_NAOQI_HAVE_MATAPOD
         //Jacobian matrix w.r.t the torso
@@ -962,7 +1007,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 #endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
     }
 
-    else if (chainName == "LEye")
+    else if (chainName == "LEye" && m_robotType == Romeo)
     {
 #ifdef VISP_NAOQI_HAVE_MATAPOD
         //Jacobian matrix w.r.t the torso
@@ -1039,8 +1084,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
     }
 
-
-    else if (chainName == "LEye_t") // Consider the trunk
+    else if (chainName == "LEye_t" && m_robotType == Romeo) // Consider the trunk
     {
 #ifdef VISP_NAOQI_HAVE_MATAPOD
         //Jacobian matrix w.r.t the torso
@@ -1163,7 +1207,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
     }
 
-    else if (chainName == "REye")
+    else if (chainName == "REye" && m_robotType == Romeo)
     {
 #ifdef VISP_NAOQI_HAVE_MATAPOD
         //Jacobian matrix w.r.t the torso
@@ -1254,8 +1298,154 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         throw vpRobotException (vpRobotException::readingParametersError,
                                 "Metapod is not installed");
 #endif
+    }
 
 
+    else if (chainName == "Head" && m_robotType == Pepper)
+    {
+#ifdef VISP_NAOQI_HAVE_MATAPOD
+        //Jacobian matrix w.r.t the torso
+        //vpMatrix tJe;
+
+        // Create a robot instance of Metapod
+        PepperModel robot;
+
+        //confVector q for Pepper
+        PepperModel::confVector q;
+
+        // Get the names of the joints in the chain we want to control
+        std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
+
+
+        // Get the angles of the joints in the chain we want to control
+        std::vector<float> qmp = m_motionProxy->getAngles("Head",true);
+
+        const unsigned int nJoints= qmp.size();
+
+        //Resize the Jacobians
+        eJe.resize(6,nJoints);
+        tJe.resize(6,nJoints);
+
+        //Get the index of the position of the q of the first joint of the chain in the confVector
+        int index_confVec = (boost::fusion::at_c<PepperModel::Neck>(robot.nodes).q_idx);
+
+        // Copy the angle values of the joint in the confVector in the right position
+        // In the first 6 positions there is the FreeFlyer. We used the index_confVec to copy the rigth values.
+        for(unsigned int i=0;i<nJoints;i++)
+            q[i+index_confVec] = qmp[i];
+
+        // Compute the Jacobian tJe
+        jcalc< PepperModel>::run(robot, q, PepperModel::confVector::Zero());
+
+        static const bool includeFreeFlyer = true;
+        static const int offset = 0;
+        typedef jac_point_chain<PepperModel, PepperModel::torso, PepperModel::Head, offset, includeFreeFlyer> jac;
+        jac::Jacobian J = jac::Jacobian::Zero();
+        jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+        for(unsigned int i=0;i<3;i++)
+            for(unsigned int j=0;j<nJoints;j++)
+            {
+                tJe[i][j]=J(i+3, index_confVec +j);
+                tJe[i+3][j]=J(i, index_confVec +j);
+
+            }
+
+       // std::cout << "metapod_Jac:" <<std::endl << J;
+
+        // Now we want to transform tJe to eJe
+
+        vpHomogeneousMatrix torsoMHead(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));// get transformation  matrix between torso and Head
+        vpVelocityTwistMatrix HeadVLtorso(torsoMHead.inverse());
+
+        for(unsigned int i=0; i< 3; i++)
+            for(unsigned int j=0; j< 3; j++)
+                HeadVLtorso[i][j+3] = 0;
+
+        // Transform the matrix
+        eJe = HeadVLtorso *tJe;
+
+
+#else
+        throw vpRobotException (vpRobotException::readingParametersError,
+                                "Metapod is not installed");
+#endif
+
+    }
+
+
+
+    else if (chainName == "RArm"  && m_robotType == Pepper)
+    {
+#ifdef VISP_NAOQI_HAVE_MATAPOD
+
+        //confVector q for Pepper
+        PepperModel::confVector q;
+
+        // Get the names of the joints in the chain we want to control
+        std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
+        jointNames.pop_back(); // Delete last joints LHand, that we don't consider in the servo
+
+        std::cout << "jointNames: " <<std::endl << jointNames;
+
+        // Get the angles of the joints in the chain we want to control
+        std::vector<float> qmp = m_motionProxy->getAngles(chainName,true);
+        qmp.pop_back(); // we don't consider the last joint LHand
+
+        const unsigned int nJoints = qmp.size();
+
+        //Resize the Jacobians
+        eJe.resize(6,nJoints);
+        tJe.resize(6,nJoints);
+
+        // Create a robot instance of Metapod
+        PepperModel robot;
+
+        //Get the index of the position of the q of the first joint of the chain in the confVector
+        int index_confVec = (boost::fusion::at_c<PepperModel::RShoulder>(robot.nodes).q_idx);
+
+        // Copy the angle values of the joint in the confVector in the right position
+        // In this case is +6 because in the first 6 positions there is the FreeFlyer
+        for(unsigned int i=0;i<nJoints;i++)
+            q[i+index_confVec] = qmp[i];
+
+        // Compute the Jacobian tJe
+        jcalc< PepperModel>::run(robot, q, PepperModel::confVector::Zero());
+
+        static const bool includeFreeFlyer = true;
+        static const int offset = 0;
+        typedef jac_point_chain<PepperModel, PepperModel::torso, PepperModel::r_wrist, offset, includeFreeFlyer> jac;
+        jac::Jacobian J = jac::Jacobian::Zero();
+        jac::run(robot, q, Vector3dTpl<LocalFloatType>::Type(0,0,0), J);
+
+        for(unsigned int i=0;i<3;i++)
+            for(unsigned int j=0;j<nJoints;j++)
+            {
+                tJe[i][j]=J(i+3,index_confVec+j);
+                tJe[i+3][j]=J(i,index_confVec+j);
+
+            }
+        //std::cout << "metapod_Jac:" <<std::endl << J;
+
+
+        // Now we want to transform tJe to eJe
+        vpHomogeneousMatrix torsoMRWristP(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));
+
+        vpVelocityTwistMatrix torsoVRWristP(torsoMRWristP.inverse());
+
+        for(unsigned int i=0; i< 3; i++)
+            for(unsigned int j=0; j< 3; j++)
+                torsoVRWristP[i][j+3] = 0;
+
+        // Transform the matrix
+        eJe = torsoVRWristP *tJe;
+
+
+#else
+        throw vpRobotException (vpRobotException::readingParametersError,
+                                "Metapod is not installed");
+
+#endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
     }
 
 
@@ -1273,7 +1463,7 @@ std::vector <vpMatrix> vpNaoqiRobot::get_d_eJe(const std::string &chainName) con
 {
     std::vector <vpMatrix> dtJe;
 
-    if (chainName == "LArm")
+    if (chainName == "LArm" && m_robotType == Romeo)
     {
 
 
@@ -1456,7 +1646,12 @@ vpColVector vpNaoqiRobot::getJointVelocity(const std::vector <std::string> &name
 
     for (unsigned int i = 0; i < names.size(); i++)
     {
-        std::string key = "Device/SubDeviceList/" + names[i] + "/Speed/Actuator/Value";
+        std::string key;
+        if (m_robotType == Pepper )
+            key = "Motion/Velocity/Sensor/" + names[i];
+        else
+            key = "Device/SubDeviceList/" + names[i] + "/Speed/Actuator/Value";
+
         list.arrayPush(key);
     }
 
@@ -1477,12 +1672,22 @@ void vpNaoqiRobot::getJointVelocity(const std::vector <std::string> &names, std:
 
     for (unsigned int i = 0; i < names.size(); i++)
     {
-        std::string key = "Device/SubDeviceList/" + names[i] + "/Speed/Actuator/Value";
+        std::string key;
+        if (m_robotType == Pepper )
+            key = "Motion/Velocity/Sensor/" + names[i];
+        else
+            key = "Device/SubDeviceList/" + names[i] + "/Speed/Actuator/Value";
+
         list.arrayPush(key);
     }
-
-    jointVel = m_memProxy->getListData(list);
-
+    try
+    {
+        jointVel = m_memProxy->getListData(list);
+    }
+    catch (const AL::ALError &e)
+    {
+        std::cerr << "Caught exception: " << e.what() << std::endl;
+    }
 
     return;
 

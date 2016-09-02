@@ -5,7 +5,8 @@
    at http://www.irisa.fr/lagadic/visp/visp.html .
    It can be read with the parse method of
    the vpXmlParserCamera class.-->
-  <!-- Romeo cameras -->
+
+<!-- ******************** ROMEO CAMERA PARAMETERS ******************** -->
   <camera>
     <!--Name of the camera-->
     <name>CameraLeft</name>
@@ -265,4 +266,70 @@
       <kdu>-0.0066035652</kdu>
     </model>
   </camera>
+<!-- ******************** PEPPER CAMERA PARAMETERS ******************** -->
+  <camera>
+    <!--Name of the camera-->
+    <name>CameraTopPepper</name>
+    <!--Size of the image on which camera calibration was performed-->
+    <image_width>320</image_width>
+    <image_height>240</image_height>
+    <!--Intrinsic camera parameters computed for each projection model-->
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithoutDistortion</type>
+      <!--Pixel ratio-->
+      <px>298.1338580414</px>
+      <py>298.7175694490</py>
+      <!--Principal point-->
+      <u0>159.1476351771</u0>
+      <v0>118.9052995583</v0>
+    </model>
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithDistortion</type>
+      <!--Pixel ratio-->
+      <px>300.0232250495</px>
+      <py>300.9510204793</py>
+      <!--Principal point-->
+      <u0>159.2218697340</u0>
+      <v0>119.5548764302</v0>
+      <!--Undistorted to distorted distortion parameter-->
+      <kud>0.0275116017</kud>
+      <!--Distorted to undistorted distortion parameter-->
+      <kdu>-0.0273747837</kdu>
+    </model>
+  </camera>
+  <camera>
+    <!--Name of the camera-->
+    <name>CameraBottomPepper</name>
+    <!--Size of the image on which camera calibration was performed-->
+    <image_width>320</image_width>
+    <image_height>240</image_height>
+    <!--Intrinsic camera parameters computed for each projection model-->
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithoutDistortion</type>
+      <!--Pixel ratio-->
+      <px>296.3437428191</px>
+      <py>296.6441607237</py>
+      <!--Principal point-->
+      <u0>158.2733787287</u0>
+      <v0>118.0622191474</v0>
+    </model>
+    <model>
+      <!--Projection model type-->
+      <type>perspectiveProjWithDistortion</type>
+      <!--Pixel ratio-->
+      <px>298.0538525268</px>
+      <py>298.3795400144</py>
+      <!--Principal point-->
+      <u0>159.1025801858</u0>
+      <v0>118.1337203441</v0>
+      <!--Undistorted to distorted distortion parameter-->
+      <kud>0.0208072256</kud>
+      <!--Distorted to undistorted distortion parameter-->
+      <kdu>-0.0206371588</kdu>
+    </model>
+  </camera>
+
 </root>

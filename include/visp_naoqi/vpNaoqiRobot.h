@@ -42,7 +42,6 @@
 #include <iostream>
 #include <string>
 
-#define BOOST_SIGNALS_NO_DEPRECATION_WARNING
 
 // Aldebaran includes
 #include <alproxies/almotionproxy.h>
@@ -50,13 +49,14 @@
 #include <alcommon/alproxy.h>
 #include <alerror/alerror.h>
 
+
 // ViSP includes
 #include <visp/vpColVector.h>
 #include <visp/vpHomogeneousMatrix.h>
 #include <visp/vpMatrix.h>
 #include <visp/vpRobotException.h>
 
-
+#define BOOST_SIGNALS_NO_DEPRECATION_WARNING
 
 
 /*!
@@ -179,6 +179,18 @@ public:
     \return Joint position in radians.
    */
   vpColVector getPosition(const AL::ALValue& names, const bool& useSensors=true) const;
+
+  /*!
+    Get the position of all the joints of the chain.
+
+    \param names :  Names the joints, chains, "Body", "JointActuators",
+    "Joints" or "Actuators".
+    \param useSensors :  If true, sensor positions will be returned. If
+    false, it will be the command.
+    \param q : Joint position in radians.
+   */
+  void getPosition(const AL::ALValue& names, std::vector<float>& q, const bool& useSensors=true) const;
+
 
   /*!
    Return the video proxy used to grab images.
@@ -322,6 +334,7 @@ protected:
   std::string m_robotName; //!< Name of the robot
   RobotType m_robotType; //!< Indicate if the robot is Romeo, Nao or Pepper
   AL::ALMemoryProxy * m_memProxy; //!< Memory Proxy
+
 };
 
 #endif

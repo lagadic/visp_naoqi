@@ -666,6 +666,7 @@ vpCameraParameters vpNaoqiGrabber::getIntrinsicCameraParameters(const int & reso
   sprintf(filename, "%s", VISP_NAOQI_INTRINSIC_CAMERA_FILE);
   if (p.parse(cam, filename, cameraName, projModel, width, height) != vpXmlParserCamera::SEQUENCE_OK) {
     std::cout << "Cannot found camera parameters in file: " << filename << std::endl;
+    exit(0);
   }
 
   return cam;
@@ -715,7 +716,7 @@ vpHomogeneousMatrix vpNaoqiGrabber::getExtrinsicCameraParameters(const std::stri
   std::string name;
   vpXmlParserHomogeneousMatrix p; // Create a XML parser
 
-  if (cameraName == "CameraLeftEye" || cameraName == "CameraRightEye" )
+  if (cameraName == "CameraLeftEye" || cameraName == "CameraRightEye")
   {
     for(unsigned int i=0; i<3; i++)
       eMc[i][i] = 0; // remove identity
@@ -727,6 +728,40 @@ vpHomogeneousMatrix vpNaoqiGrabber::getExtrinsicCameraParameters(const std::stri
     eMc[0][3] = 0.01299;
     eMc[1][3] = 0.;
     eMc[2][3] = 0.;
+  }
+  else if ( cameraName == "CameraTopPepper" )
+  {
+    for(unsigned int i=0; i<3; i++)
+      eMc[i][i] = 0; // remove identity
+    //Set Rotation
+    eMc[0][2] = 1.;
+    eMc[1][0] = -1.;
+    eMc[2][1] = -1.;
+    //Set Translation:
+    eMc[0][3] = 0.08601;
+    eMc[1][3] = 0.;
+    eMc[2][3] = 0.16284;
+  }
+  else if (cameraName == "CameraBottomPepper")
+  {
+    vpRzyxVector r(0., 0.698132, 0.); // Roll pitch and yaw
+    vpRotationMatrix R(r);
+    vpTranslationVector t(0.09262, 0., 0.06177 );
+    vpHomogeneousMatrix eMca_(t, R);
+    vpHomogeneousMatrix aMv; // From aldebaran to visp frame convention
+
+    for(unsigned int i=0; i<3; i++)
+      aMv[i][i] = 0; // remove identity
+    //Set Rotation
+    aMv[0][2] = 1.;
+    aMv[1][0] = -1.;
+    aMv[2][1] = -1.;
+    //Set Translation:
+    aMv[0][3] = 0. ;
+    aMv[1][3] = 0.;
+    aMv[2][3] = 0.;
+
+    eMc = eMca_ * aMv;
   }
   else
   {
@@ -740,9 +775,8 @@ vpHomogeneousMatrix vpNaoqiGrabber::getExtrinsicCameraParameters(const std::stri
 
     if (p.parse(eMc,filename, name) != vpXmlParserHomogeneousMatrix::SEQUENCE_OK) {
       std::cout << "Cannot found the Homogeneous matrix named " << name << " in the file " <<  filename << std::endl;
-
+     // exit(0);
     }
-
     else
       std::cout << "Read correctly the Homogeneous matrix named " << name << std::endl;
   }
@@ -781,13 +815,13 @@ vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel
 {
 
   vpHomogeneousMatrix eMc;
- // std::string name;
+  // std::string name;
   vpXmlParserHomogeneousMatrix p; // Create a XML parser
 
   if (cameraName == "")
     cameraName = m_cameraName;
 
- eMc = getExtrinsicCameraParameters(cameraName, projModel);
+  eMc = getExtrinsicCameraParameters(cameraName, projModel);
 
   return eMc;
 }
