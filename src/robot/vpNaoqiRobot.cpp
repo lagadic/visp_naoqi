@@ -36,13 +36,13 @@
  * Giovanni Claudio
  *
  *****************************************************************************/
+// VispNaoqi
+#include <visp_naoqi/vpNaoqiRobot.h>
+#include <visp_naoqi/vpNaoqiConfig.h>
 
 // Visp
 #include <visp/vpVelocityTwistMatrix.h>
 
-// VispNaoqi
-#include <visp_naoqi/vpNaoqiRobot.h>
-#include <visp_naoqi/vpNaoqiConfig.h>
 
 // Aldebaran SDK
 #include <alcommon/albroker.h>
@@ -71,7 +71,7 @@ typedef pepper<LocalFloatType> PepperModel;
   */
 vpNaoqiRobot::vpNaoqiRobot()
     : m_motionProxy(NULL),m_proxy(NULL), m_robotIp("198.18.0.1"), m_isOpen(false), m_collisionProtection(true),
-      m_robotName(""), m_robotType(Unknown), m_memProxy(NULL)//, m_qiProxy(NULL)
+      m_robotName(""), m_robotType(Unknown), m_memProxy(NULL), m_session(), m_pepper_control()
 {
 
 }
@@ -142,6 +142,21 @@ void vpNaoqiRobot::open()
 
             m_motionProxy->setMotionConfig(config);
 
+            try
+            {
+                m_session = qi::makeSession();
+                std::string ip_port = "tcp://" + m_robotIp + ":9559";
+                m_session->connect(ip_port);
+                m_pepper_control = m_session->service("pepper_control");
+                m_pepper_control.call<void >("start");
+            }
+            catch (const AL::ALError &e)
+            {
+                std::cerr << "Caught exception: " << e.what() << std::endl;
+                std::cerr << "Check if the module pepper_control is running on the robot. " << std::endl;
+            }
+
+
             // qi::SessionPtr session = qi::makeSession();
             // std::string ip_port = "tcp://" + m_robotIp + ":9559";
             // session->connect(ip_port);
@@ -190,6 +205,22 @@ void vpNaoqiRobot::cleanup()
     if (m_motionProxy != NULL) {
         delete m_motionProxy;
         m_motionProxy = NULL;
+    }
+
+    if (m_proxy != NULL) {
+        delete m_proxy;
+        m_proxy = NULL;
+    }
+
+    if (m_memProxy != NULL) {
+        delete m_memProxy;
+        m_memProxy = NULL;
+    }
+
+    if (m_robotType == Pepper)
+    {
+      m_pepper_control.call<void >("stopJoint");
+      m_pepper_control.call<void >("stop");
     }
 
     m_isOpen = false;
@@ -372,94 +403,96 @@ void vpNaoqiRobot::setVelocity(const AL::ALValue &names, const AL::ALValue &join
                                 "The dimensions of the joint array and the velocities array do not match.");
     }
 
-    AL::ALValue jointListStop;
-    AL::ALValue jointListMove;
-    AL::ALValue angles;
-    std::vector<float> fractions;
-
-    for (unsigned i = 0 ; i < jointVel.getSize() ; ++i)
+    if (m_robotType == Romeo || m_robotType == Nao)
     {
-        std::string jointName = jointNames[i];
-        if (verbose)
-            std::cout << "Joint name: " << jointName << std::endl;
+      AL::ALValue jointListStop;
+      AL::ALValue jointListMove;
+      AL::ALValue angles;
+      std::vector<float> fractions;
 
-        float vel = jointVel[i];
+      for (unsigned i = 0 ; i < jointVel.getSize() ; ++i)
+      {
+          std::string jointName = jointNames[i];
+          if (verbose)
+              std::cout << "Joint name: " << jointName << std::endl;
 
-        if (verbose)
-            std::cout << "Desired velocity =  " << vel << "rad/s to the joint " << jointName << "." << std::endl;
+          float vel = jointVel[i];
 
-        //Get the limits of the joint
-        AL::ALValue limits = m_motionProxy->getLimits(jointName);
+          if (verbose)
+              std::cout << "Desired velocity =  " << vel << "rad/s to the joint " << jointName << "." << std::endl;
 
-
-        if (vel == 0.0f)
-        {
-            if (verbose)
-                std::cout << "Stop the joint" << std::endl ;
-
-            jointListStop.arrayPush(jointName);
-        }
-        else
-        {
-
-            if (vel > 0.0f)
-            {
-                //Reach qMax
-                angles.arrayPush(limits[0][1]);
-                if (verbose)
-                    std::cout << "Reach qMax (" << limits[0][1] << ") ";
-            }
-
-            else if (vel < 0.0f)
-            {
-                //Reach qMin
-                angles.arrayPush(limits[0][0]);
-                if (verbose)
-                    std::cout << "Reach qMin (" << limits[0][0] << ") ";
-            }
+          //Get the limits of the joint
+          AL::ALValue limits = m_motionProxy->getLimits(jointName);
 
 
-            jointListMove.arrayPush(jointName);
-            float fraction = fabs( float (vel/float(limits[0][2])));
-            if (fraction >= 1.0 )
-            {
-                if (verbose) {
-                    std::cout << "Given velocity is too high: " <<  vel << "rad/s for " << jointName << "." << std::endl;
-                    std::cout << "Max allowed is: " << limits[0][2] << "rad/s for "<< std::endl;
-                }
-                fraction = 1.0;
-            }
+          if (vel == 0.0f)
+          {
+              if (verbose)
+                  std::cout << "Stop the joint" << std::endl ;
 
-            fractions.push_back(fraction);
+              jointListStop.arrayPush(jointName);
+          }
+          else
+          {
 
-        }
-    }
-    if (verbose) {
-        std::cout << "Apply Velocity to joints " << jointListMove << std::endl;
-        std::cout << "Stop List joints: " << jointListStop << std::endl;
-        std::cout << "with fractions " << angles << std::endl;
-        std::cout << "to angles " << fractions << std::endl;
-    }
+              if (vel > 0.0f)
+              {
+                  //Reach qMax
+                  angles.arrayPush(limits[0][1]);
+                  if (verbose)
+                      std::cout << "Reach qMax (" << limits[0][1] << ") ";
+              }
 
-    if (jointListMove.getSize()>0)
+              else if (vel < 0.0f)
+              {
+                  //Reach qMin
+                  angles.arrayPush(limits[0][0]);
+                  if (verbose)
+                      std::cout << "Reach qMin (" << limits[0][0] << ") ";
+              }
+
+
+              jointListMove.arrayPush(jointName);
+              float fraction = fabs( float (vel/float(limits[0][2])));
+              if (fraction >= 1.0 )
+              {
+                  if (verbose) {
+                      std::cout << "Given velocity is too high: " <<  vel << "rad/s for " << jointName << "." << std::endl;
+                      std::cout << "Max allowed is: " << limits[0][2] << "rad/s for "<< std::endl;
+                  }
+                  fraction = 1.0;
+              }
+
+              fractions.push_back(fraction);
+
+          }
+      }
+      if (verbose) {
+          std::cout << "Apply Velocity to joints " << jointListMove << std::endl;
+          std::cout << "Stop List joints: " << jointListStop << std::endl;
+          std::cout << "with fractions " << angles << std::endl;
+          std::cout << "to angles " << fractions << std::endl;
+      }
+
+      if (jointListMove.getSize()>0)
+      {
+          m_proxy->callVoid("setAngles", jointListMove, angles, fractions);
+      }
+
+      if (jointListStop.getSize()>0)
+      {
+          std::vector<float> zeros( jointListStop.getSize() );
+          m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
+
+      }
+    } // End Romeo
+    else if (m_robotType == Pepper)
     {
-        //        if (m_robotType == Pepper)
-        //        {
-        //          m_qiProxy->async<void>("setAngles", jointListMove, angles, fractions);
-        //        }
-        //        else
-        m_proxy->callVoid("setAngles", jointListMove, angles, fractions);
+      std::vector<float> vel(jointNames.size());
+      jointVel.ToFloatArray(vel);
+      m_pepper_control.async<void >("setDesJointVelocity", jointNames, vel);
     }
 
-    if (jointListStop.getSize()>0)
-    {
-        std::vector<float> zeros( jointListStop.getSize() );
-        //        if (m_robotType == Pepper)
-        //          m_qiProxy->async<void>("changeAngles", jointListStop, zeros, 0.1f);
-        //        else
-        m_proxy->callVoid("changeAngles", jointListStop, zeros, 0.1f);
-
-    }
 }
 
 /*!
@@ -477,17 +510,68 @@ void vpNaoqiRobot::stop(const AL::ALValue &names) const
     else
         throw vpRobotException (vpRobotException::readingParametersError,
                                 "Unable to decode the joint chain.");
-
-    std::vector<float> angles;
-    for (unsigned i = 0 ; i < jointNames.size() ; ++i)
-        m_motionProxy->changeAngles(jointNames[i], 0.0f, 0.1f);
-    //      {
-    //    angles = m_motionProxy->getAngles(jointNames[i],true);
-    //    m_motionProxy->setAngles(jointNames[i],angles[0],1.0);
-
-    //  }
+    if (m_robotType == Romeo || m_robotType == Nao)
+    {
+      for (unsigned i = 0 ; i < jointNames.size() ; ++i)
+          m_motionProxy->changeAngles(jointNames[i], 0.0f, 0.1f);
+    }
+    else if (m_robotType == Pepper)
+    {
+      m_pepper_control.call<void >("stopJoint");
+    }
 
 }
+
+/*!
+  Stop the velocity of the base.
+ */
+void vpNaoqiRobot::stopBase() const
+{
+  m_motionProxy->move(0.0, 0.0, 0.0);
+}
+
+
+
+
+
+/*!
+  Apply a velocity Vx, Vy, Wz to Pepper.
+  \param vel : Joint velocity vector with values expressed in rad/s.
+ */
+
+void vpNaoqiRobot::setBaseVelocity(const vpColVector &jointVel) const
+{
+    std::vector<float> jointVel_(jointVel.size());
+    for (unsigned int i=0; i< jointVel.size(); i++)
+        jointVel_[i] = jointVel[i];
+    setBaseVelocity(jointVel_);
+}
+
+/*!
+  Apply a velocity Vx, Vy, Wz to Pepper.
+  \param vel : Joint velocity vector with values expressed in rad/s.
+ */
+
+void vpNaoqiRobot::setBaseVelocity(const std::vector<float> &jointVel) const
+{
+ if (jointVel.size() == 3)
+  m_motionProxy->move(jointVel[0],jointVel[1],jointVel[2]);
+ else
+   std::cerr << "ERROR: Cannot apply velocity to the base. Check the size of the vector, it has to be of size 3." << std::endl
+             << "Current size: " << jointVel.size() << std::endl;
+}
+
+
+/*!
+  Apply a velocity Vx, Vy, Wz to Pepper.
+  \param vel : Joint velocity vector with values expressed in rad/s.
+ */
+
+void vpNaoqiRobot::setBaseVelocity(const float &vx,const float &vy,const float &wz) const
+{
+  m_motionProxy->move(vx,vy,wz);
+}
+
 
 /*!
   Get the name of all the joints of the chain.

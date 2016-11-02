@@ -48,7 +48,8 @@
 #include <alproxies/almemoryproxy.h>
 #include <alcommon/alproxy.h>
 #include <alerror/alerror.h>
-
+#include <qi/applicationsession.hpp>
+#include <qi/anyobject.hpp>
 
 // ViSP includes
 #include <visp/vpColVector.h>
@@ -323,7 +324,12 @@ public:
   void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
   void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
 
+  void setBaseVelocity(const std::vector<float> &jointVel) const;
+  void setBaseVelocity(const vpColVector &jointVel) const;
+  void setBaseVelocity(const float &vx,const float &vy,const float &wz) const;
+
   void stop(const AL::ALValue& names) const;
+  void stopBase() const;
 
 protected:
   AL::ALMotionProxy *m_motionProxy; //!< Motion proxy
@@ -334,7 +340,8 @@ protected:
   std::string m_robotName; //!< Name of the robot
   RobotType m_robotType; //!< Indicate if the robot is Romeo, Nao or Pepper
   AL::ALMemoryProxy * m_memProxy; //!< Memory Proxy
-
+  qi::SessionPtr m_session; //!< Session to connect to Pepper
+  qi::AnyObject  m_pepper_control;  //!< Proxy to Pepper_control
 };
 
 #endif
