@@ -523,15 +523,29 @@ void vpNaoqiRobot::stop(const AL::ALValue &names) const
 }
 
 /*!
+  Stop the service pepper_control.
+ */
+void vpNaoqiRobot::stopPepperControl() const
+{
+    m_pepper_control.call<void >("stop");
+}
+
+/*!
+  Start the service pepper_control.
+ */
+void vpNaoqiRobot::startPepperControl() const
+{
+    m_pepper_control.call<void >("start");
+}
+
+
+/*!
   Stop the velocity of the base.
  */
 void vpNaoqiRobot::stopBase() const
 {
   m_motionProxy->move(0.0, 0.0, 0.0);
 }
-
-
-
 
 
 /*!
@@ -1470,7 +1484,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
         std::vector<std::string> jointNames = m_motionProxy->getBodyNames(chainName);
         jointNames.pop_back(); // Delete last joints LHand, that we don't consider in the servo
 
-        std::cout << "jointNames: " <<std::endl << jointNames;
+       // std::cout << "jointNames: " <<std::endl << jointNames;
 
         // Get the angles of the joints in the chain we want to control
         std::vector<float> qmp = m_motionProxy->getAngles(chainName,true);

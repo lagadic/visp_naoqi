@@ -328,7 +328,9 @@ public:
   void setBaseVelocity(const vpColVector &jointVel) const;
   void setBaseVelocity(const float &vx,const float &vy,const float &wz) const;
 
+  void startPepperControl() const;
   void stop(const AL::ALValue& names) const;
+  void stopPepperControl() const;
   void stopBase() const;
 
 protected:
