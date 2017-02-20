@@ -148,24 +148,24 @@ int main(int argc, const char ** argv)
   try {
     std::string outputFileName = "camera.xml";
 
-//    std::cout << std::endl << "*********************************** " << std::endl;
+    //    std::cout << std::endl << "*********************************** " << std::endl;
 
-//    std::cout << std::endl << "Loading config file: " << std::endl;
-//    Settings s;
-//    const std::string inputSettingsFile = argc > 1 ? argv[1] : "default.cfg";
-//    if (! s.read(inputSettingsFile) ) {
-//      std::cout << "Could not open the configuration file: \"" << inputSettingsFile << "\"" << std::endl;
-//      std::cout << std::endl << "Usage: " << argv[0] << " <configuration file>.cfg" << std::endl;
-//      return -1;
-//    }
+    //    std::cout << std::endl << "Loading config file: " << std::endl;
+    //    Settings s;
+    //    const std::string inputSettingsFile = argc > 1 ? argv[1] : "default.cfg";
+    //    if (! s.read(inputSettingsFile) ) {
+    //      std::cout << "Could not open the configuration file: \"" << inputSettingsFile << "\"" << std::endl;
+    //      std::cout << std::endl << "Usage: " << argv[0] << " <configuration file>.cfg" << std::endl;
+    //      return -1;
+    //    }
 
-//    std::cout << std::endl << "*********************************** " << std::endl;
+    //    std::cout << std::endl << "*********************************** " << std::endl;
 
-//    if (! s.goodInput)
-//    {
-//      std::cout << "Invalid config file input detected. Application stopping. " << std::endl;
-//      return -1;
-//    }
+    //    if (! s.goodInput)
+    //    {
+    //      std::cout << "Invalid config file input detected. Application stopping. " << std::endl;
+    //      return -1;
+    //    }
 
     std::string opt_inputSettingsFile;
     std::string opt_ip;
@@ -218,6 +218,11 @@ int main(int argc, const char ** argv)
 
     vpNaoqiGrabber g;
     g.setCamera(opt_cam);
+
+    if (opt_VGA)
+      g.setCameraResolution(AL::kVGA);
+    else
+      g.setCameraResolution(AL::kQVGA);
 
     if (! opt_ip.empty()) {
       std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
