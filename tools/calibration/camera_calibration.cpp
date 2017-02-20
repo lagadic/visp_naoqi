@@ -148,29 +148,89 @@ int main(int argc, const char ** argv)
   try {
     std::string outputFileName = "camera.xml";
 
+//    std::cout << std::endl << "*********************************** " << std::endl;
+
+//    std::cout << std::endl << "Loading config file: " << std::endl;
+//    Settings s;
+//    const std::string inputSettingsFile = argc > 1 ? argv[1] : "default.cfg";
+//    if (! s.read(inputSettingsFile) ) {
+//      std::cout << "Could not open the configuration file: \"" << inputSettingsFile << "\"" << std::endl;
+//      std::cout << std::endl << "Usage: " << argv[0] << " <configuration file>.cfg" << std::endl;
+//      return -1;
+//    }
+
+//    std::cout << std::endl << "*********************************** " << std::endl;
+
+//    if (! s.goodInput)
+//    {
+//      std::cout << "Invalid config file input detected. Application stopping. " << std::endl;
+//      return -1;
+//    }
+
+    std::string opt_inputSettingsFile;
+    std::string opt_ip;
+    std::string camera_name = "camera";
+    int opt_port = -1;
+    int opt_cam = 0;
+    bool opt_VGA = false;
+
+
+    for (unsigned int i=0; i<argc; i++) {
+      if (std::string(argv[i]) == "--config")
+        opt_inputSettingsFile = argv[i+1];
+      if (std::string(argv[i]) == "--ip")
+        opt_ip = argv[i+1];
+      if (std::string(argv[i]) == "--cam")
+        opt_cam = atoi(argv[i+1]);
+      if (std::string(argv[i]) == "--name")
+        camera_name = argv[i+1];
+      if (std::string(argv[i]) == "--vga")
+        opt_VGA = true;
+      else if (std::string(argv[i]) == "--help") {
+        std::cout << "Usage: " << argv[0] << "  [ --config <configuration file>.cfg] [--ip <robot address>] [--cam camera_number] [--name camera_name] [--help] [--vga]" << std::endl;
+        return 0;
+      }
+    }
+
+    std::cout << std::endl << "*********************************** " << std::endl;
+
+    std::cout << std::endl << "Loading config file: " << std::endl;
     Settings s;
-    const std::string inputSettingsFile = argc > 1 ? argv[1] : "default.cfg";
-    if (! s.read(inputSettingsFile) ) {
-      std::cout << "Could not open the configuration file: \"" << inputSettingsFile << "\"" << std::endl;
+    if (! s.read(opt_inputSettingsFile) ) {
+      std::cout << "Could not open the configuration file: \"" << opt_inputSettingsFile << "\"" << std::endl;
       std::cout << std::endl << "Usage: " << argv[0] << " <configuration file>.cfg" << std::endl;
       return -1;
     }
 
+    std::cout << std::endl << "*********************************** " << std::endl;
+
     if (! s.goodInput)
     {
-      std::cout << "Invalid input detected. Application stopping. " << std::endl;
+      std::cout << "Invalid config file input detected. Application stopping. " << std::endl;
       return -1;
     }
+
+    std::cout << "Camera name: " << camera_name << std::endl;
+    std::cout << "Camera num: " << opt_cam << std::endl;
 
     // Start the calibration code
     vpImage<unsigned char> I;
 
     vpNaoqiGrabber g;
-    g.setCamera(2);
+    g.setCamera(opt_cam);
+
+    if (! opt_ip.empty()) {
+      std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
+      g.setRobotIp(opt_ip);
+    }
+    if ( opt_port > 0) {
+      std::cout << "Connect to robot with port: " << opt_port << std::endl;
+      g.setRobotPort(opt_port);
+    }
+
     g.open();
     g.acquire(I);
-
-    std::string camera_name = g.getCameraName();
+    std::cout << "Dimension image: " << g.getWidth() <<"x" << g.getHeight() << std::endl;
 
 #ifdef VISP_HAVE_X11
     vpDisplayX d(I);
@@ -211,6 +271,7 @@ int main(int argc, const char ** argv)
         status = NEW_IMAGE;
         sprintf(filename, "/tmp/I%03d.png", nb_data);
         vpImageIo::write(I, filename);
+        std::cout << "Image grabbed num: " << nb_data << std::endl;
 
         nb_data ++;
       }
@@ -334,7 +395,7 @@ int main(int argc, const char ** argv)
 #ifdef VISP_HAVE_XML2
       vpXmlParserCamera xml;
 
-      if(xml.save(cam, outputFileName.c_str(), camera_name, I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
+      if(xml.save(cam, outputFileName.c_str(), camera_name.c_str(), I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
         std::cout << "Camera parameters without distortion successfully saved in \"" << outputFileName << "\"" << std::endl;
       else {
         std::cout << "Failed to save the camera parameters without distortion in \"" << outputFileName << "\"" << std::endl;
@@ -353,7 +414,7 @@ int main(int argc, const char ** argv)
 #ifdef VISP_HAVE_XML2
       vpXmlParserCamera xml;
 
-      if(xml.save(cam, outputFileName.c_str(), camera_name, I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
+      if(xml.save(cam, outputFileName.c_str(), camera_name.c_str(), I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
         std::cout << "Camera parameters without distortion successfully saved in \"" << outputFileName << "\"" << std::endl;
       else {
         std::cout << "Failed to save the camera parameters without distortion in \"" << outputFileName << "\"" << std::endl;
