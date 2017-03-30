@@ -77,9 +77,9 @@ int main(int argc, char** argv)
   {
     for (unsigned int i=0; i<argc; i++) {
       if (std::string(argv[i]) == "--ip")
-        opt_ip = argv[2];
+        opt_ip = argv[i+1];
       if (std::string(argv[i]) == "--joint")
-        opt_ip = atoi(argv[i+1]);
+        joint_type = atoi(argv[i+1]);
       else if (std::string(argv[i]) == "--help") {
         std::cout << "Usage: " << argv[0] << "[--ip <robot address>] " << std::endl;
         return 0;
@@ -94,6 +94,10 @@ int main(int argc, char** argv)
   {
     std::cerr << "Caught exception: " << e.what() << std::endl;
   }
+
+
+  std::cout << "Using IP: " << opt_ip << std::endl;
+  std::cout << "Controlling joint num: " << joint_type << std::endl;
 
 
 
