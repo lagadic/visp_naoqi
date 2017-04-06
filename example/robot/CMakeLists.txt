@@ -21,3 +21,8 @@ foreach(src ${source})
 endforeach()
 
 
+  qi_create_bin(motion_pepper motion_pepper.cpp)
+  qi_use_lib(motion_pepper visp_naoqi ALCOMMON QI)
+
+  qi_create_bin(test_jacobian_pepper test_jacobian_pepper.cpp)
+  qi_use_lib(test_jacobian_pepper visp_naoqi ALCOMMON QI)
