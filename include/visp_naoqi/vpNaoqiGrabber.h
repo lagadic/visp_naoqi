@@ -43,10 +43,9 @@
 #include <string>
 #include <sys/time.h>
 
-// Aldebaran includes
-#include <alerror/alerror.h>
-#include <alvision/alvisiondefinitions.h>
-#include <alproxies/alvideodeviceproxy.h>
+#include <qi/log.hpp>
+#include <qi/applicationsession.hpp>
+#include <qi/anyobject.hpp>
 
 // Opencv includes for cv::Mat interface
 #include <opencv2/core/core.hpp>
@@ -69,9 +68,9 @@
   {
     vpImage<unsigned char> I;
 
-    vpNaoqiGrabber g;
+    vpNaoqiGrabber g(session);
     g.setRobotIp("131.254.13.37");
-    g.setFramerate(15);
+    g.setFramerate(30);
     g.setCamera(0);
     g.open();
     std::cout << "Image size: " << g.getWidth() << " " << g.getHeight() << std::endl;
@@ -84,22 +83,36 @@
  */
 class vpNaoqiGrabber
 {
+
+protected:
+  qi::AnyObject m_pVideo; //!< Video proxy
+  qi::AnyObject m_pMemory; //!< Memory proxy
+  std::string m_clientName; //!< Client name
+  std::string m_handle; //!< Handle Video proxy
+  int m_fps; //!< Requested frame per second
+  bool m_isOpen; //!< Proxy opened status
+  int m_width; //!<  Image width
+  int m_height; //!< Image height
+  cv::Mat m_img; //!< Image data
+  std::string m_cameraName; //!< Camera name
+  int m_cameraId; //!< Camera identifier
+  int m_resolution;  //!< Resolution camera
+  std::string m_robotType; //!< Nao, Pepper or Romeo
+  bool m_romeo; //!< True if robot is Romeo
+  bool m_pepper; //!< True if robot is Pepper
+  bool m_nao; //!< True if robot is Nao
+
+  // Multi stream
+  bool m_cameraMulti;
+
 public:
-  vpNaoqiGrabber();
+  vpNaoqiGrabber(const qi::SessionPtr &session);
   virtual ~vpNaoqiGrabber();
 
   void acquire(vpImage<unsigned char> &I);
   void acquire(vpImage<unsigned char> &I, struct timeval &timestamp);
-  //void acquire(vpImage<vpRGBa> &I);
-  //void acquire(vpImage<vpRGBa> &I, struct timeval &timestamp);
   void acquire(cv::Mat &I);
   void acquire(cv::Mat &I, struct timeval &timestamp);
-
-  void acquireMulti(vpImage<unsigned char> &Ia,vpImage<unsigned char> &Ib);
-  void acquireMulti(vpImage<unsigned char> &Ia, vpImage<unsigned char> &Ib, struct timeval &timestamp_a, timeval &timestamp_b);
-
-  void acquireMulti(cv::Mat &Ia, cv::Mat &Ib);
-  void acquireMulti(cv::Mat &Ia, cv::Mat &Ib, struct timeval &timestamp_a, timeval &timestamp_b);
 
   /*!
     Destroy the connexion to the video proxy.
@@ -107,17 +120,11 @@ public:
   void cleanup();
 
   vpCameraParameters getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
-
   vpCameraParameters getCameraParameters(const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
-
   static vpCameraParameters getIntrinsicCameraParameters(const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel);
-
-  static vpHomogeneousMatrix getExtrinsicCameraParameters(const std::string cameraName, const vpCameraParameters::vpCameraParametersProjType projModel) ;
-
+  static vpHomogeneousMatrix getExtrinsicCameraParameters(const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel) ;
   vpHomogeneousMatrix get_eMc(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion, std::string cameraName = "" ) const;
-
   std::string getCameraName(){return m_cameraName;}
-
   std::string getClientName(){return m_clientName;}
   /*!
 
@@ -146,62 +153,20 @@ public:
       vpNaoqiGrabber g;
       ...
       g.open();
-      AL::ALVideoDeviceProxy *videoProxy = g.getProxy();
+      qi::AnyObject *videoProxy = g.getProxy();
     }
     \endcode
     \return The address of the video proxy.
    */
-  AL::ALVideoDeviceProxy *getProxy() const
-  {
-    return m_videoProxy;
-  }
-
-  /*!
-    Return the ip address used to access to the robot.
-   */
-  std::string getRobotIp() const { return m_robotIp; }
-  /*!
-    Return the Ethernet port used to access to the robot.
-   */
-  int getRobotPort() const { return m_robotPort; }
-
-  /*!
-    Open the connection with the robot.
-    All the parameters should be set before calling this function.
-    \code
-    #include <visp_naoqi/vpNaoqiGrabber.h>
-
-    int main()
+     qi::AnyObject getProxy() const
     {
-      vpNaoqiGrabber g;
-      g.setRobotIp("131.254.13.37");
-      g.setFramerate(15);
-      g.open();
+      return m_pVideo;
     }
-    \endcode
-   */
+
+
   void open();
 
-  /*!
-    Open the connection with the robot for stereo vision.
-    All the parameters should be set before calling this function.
-    \code
-    #include <visp_naoqi/vpNaoqiGrabber.h>
-
-    int main()
-    {
-      vpNaoqiGrabber g;
-      g.setRobotIp("131.254.13.37");
-      g.setFramerate(15);
-      g.setCamerasMulti(0); // 0 to activate the front-head cameras, 1 for the eyes cameras
-      g.openMulti();
-    }
-    \endcode
-   */
-  void openMulti();
-
   void setCamera(const int &camera_id);
-  void setCamerasMulti(const int &cameras_id);
 
   /*!
     Set the camera framerate.
@@ -227,61 +192,7 @@ public:
     m_resolution = resolution;
   }
 
-
-
-  /*!
-    Set the robot ip address.
-    In the constructor, the default ip is set to "198.18.0.1".
-    \param robotIp : New robot ip address.
-
-    \sa open()
-  */
-  void setRobotIp(const std::string &robotIp)
-  {
-    m_robotIp = robotIp;
-  }
-
-  /*!
-    Set the robot port.
-    In the constructor, the default port is set to 9559.
-    \param robotPort : New robot port.
-
-    \sa open()
-  */
-  void setRobotPort(int robotPort)
-  {
-    m_robotPort = robotPort;
-  }
-
-  /*!
-    Set a camera parameter.
-    \param parameterId : Camera parameter requested.
-    \param value : Value requested.
-
-    \return True if succesfull.
-  */
-
   bool setCameraParameter( const int& parameterId, const int& value);
-
-
-
-protected:
-  AL::ALVideoDeviceProxy *m_videoProxy; //!< Video proxy
-  std::string m_robotIp; //!< Robot Ethernet address
-  int m_robotPort; //!< Robot Ethernet port
-  std::string m_clientName; //!< Client name
-  int m_fps; //!< Requested frame per second
-  bool m_isOpen; //!< Proxy opened status
-  int m_width; //!<  Image width
-  int m_height; //!< Image height
-  AL::ALValue m_img; //!< Image data
-  std::string m_cameraName; //!< Camera name
-  int m_cameraId; //!< Camera identifier
-  int m_resolution;  //!< Resolution camera
-
-  // Multi stream
-  bool m_cameraMulti;
-
 
 };
 

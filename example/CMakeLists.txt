@@ -1,3 +1,3 @@
 subdirs(grabber)
-subdirs(parserHomogeneousMatrix)
-subdirs(robot)
+#subdirs(parserHomogeneousMatrix)
+#subdirs(robot)

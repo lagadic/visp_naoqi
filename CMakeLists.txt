@@ -4,12 +4,17 @@ project(visp_naoqi)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-# this lets you find the qibuild cmake framework
-find_package(qibuild)
+#if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=deprecated-declarations -std=c++11 -std=gnu++11")
+#endif()
 
 find_package(VISP REQUIRED)
-
 find_package(Metapod)
+
+find_package(Boost REQUIRED filesystem)
+find_package(naoqi_libqi)
+find_package(naoqi_libqicore)
+
 
 if(METAPOD_FOUND)
   option(USE_METAPOD "Enable Metapod usage" ON)
@@ -52,27 +57,59 @@ configure_file(${PROJECT_SOURCE_DIR}/include/visp_naoqi/vpNaoqiConfig.h.cmake
   ${CMAKE_BINARY_DIR}/include/visp_naoqi/vpNaoqiConfig.h
 )
 
-qi_create_lib(visp_naoqi 
-  SRC
-    include/visp_naoqi/vpNaoqiConfig.h
-    include/visp_naoqi/vpNaoqiGrabber.h
-    include/visp_naoqi/vpNaoqiRobot.h
-    src/grabber/vpNaoqiGrabber.cpp
-    src/robot/vpNaoqiRobot.cpp
+
+include_directories(
+  ${VISP_INCLUDE_DIRS}
+  ${naoqi_libqi_INCLUDE_DIRS}
+  ${naoqi_libqicore_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 
-qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
+
+add_library(visp_naoqi
+    include/visp_naoqi/vpNaoqiConfig.h
+    include/visp_naoqi/vpNaoqiGrabber.h
+    include/al/alvisiondefinitions.h
+    include/al/from_any_value.cpp
+    include/al/naoqi_image.hpp
+    #include/visp_naoqi/vpNaoqiRobot.h
+    src/grabber/vpNaoqiGrabber.cpp
+    #src/robot/vpNaoqiRobot.cpp
+)
+
+
+#qi_create_lib(visp_naoqi
+#  SRC
+#    include/visp_naoqi/vpNaoqiConfig.h
+#    include/visp_naoqi/vpNaoqiGrabber.h
+#    include/visp_naoqi/vpNaoqiRobot.h
+#    src/grabber/vpNaoqiGrabber.cpp
+#    src/robot/vpNaoqiRobot.cpp
+#)
+
+#qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
+
+
+target_link_libraries(visp_naoqi
+    ${VISP_LIBRARIES}
+    ${naoqi_libqi_LIBRARIES}
+    ${naoqi_libqicore_LIBRARIES}
+    ${Boost_LIBRARIES}
+    )
 
 if(USE_METAPOD)
   target_link_libraries(visp_naoqi metapod_${model_name})
   target_link_libraries(visp_naoqi metapod_${model_name_pepper})
 endif()
 
-qi_stage_lib(visp_naoqi)
+
+#add_dependencies(visp_naoqi)
+
+#qi_stage_lib(visp_naoqi)
 
 subdirs(example)
-subdirs(tools/calibration)
+#subdirs(tools/calibration)
 
 # doxygen
 find_package(Doxygen)
@@ -90,6 +127,6 @@ if (DOXYGEN_FOUND)
     ${PROJECT_BINARY_DIR}/doc/config-doxygen
     @ONLY )
 
-  add_custom_target(html-doc ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/config-doxygen) 
+  add_custom_target(html-doc ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/config-doxygen)
 endif()
 
