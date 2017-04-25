@@ -37,10 +37,6 @@
  *
  *****************************************************************************/
 
-// Aldebaran includes.
-//#include <alvision/alimage.h>
-//#include <alcommon/albroker.h>
-
 // ViSP includes
 #include <visp/vpImageConvert.h>
 #include <visp/vpXmlParserCamera.h>
@@ -57,10 +53,11 @@
 /*!
   Default constructor that set the default parameters as:
   - camera framerate: 30 fps
+  - m_cameraId: 0
   */
 vpNaoqiGrabber::vpNaoqiGrabber(const qi::SessionPtr &session)
   : m_pVideo(session->service("ALVideoDevice")), m_pMemory(session->service("ALMemory")), m_fps(30), m_isOpen(false), m_width(0), m_height(0),
-    m_img(), m_cameraName("CameraLeftEye"), m_cameraId (0), m_cameraMulti(false), m_resolution(AL::kQVGA), m_robotType(""),m_romeo(0), m_pepper(0),
+    m_img(), m_cameraName("CameraLeftEye"), m_cameraId (0), m_cameraMulti(false), m_resolution(AL::kQVGA), m_robotType(""), m_romeo(0), m_pepper(0),
     m_nao(0)
 {
 
@@ -274,7 +271,6 @@ void vpNaoqiGrabber::acquire(cv::Mat &I)
 
   The image is not copied. Here we just update to pointer to the NaoQi image.
 
-  \warning Should be improved to detect the type cv::CV_8UC3, cv::CV_8UC1
  */
 void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
 {
@@ -318,7 +314,7 @@ vpCameraParameters
 vpNaoqiGrabber::getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel) const
 {
 
-  std::cout <<"This function is deprecated. Please use getIntrinsicCameraParameters" << std::endl;
+  std::cout <<"This function is deprecated. Please use getIntrinsicCameraParameters instead" << std::endl;
     vpCameraParameters cam;
     char filename[FILENAME_MAX];
     vpXmlParserCamera p; // Create a XML parser
@@ -390,7 +386,6 @@ vpCameraParameters vpNaoqiGrabber::getIntrinsicCameraParameters(const int & reso
 
   return cam;
 }
-
 
 
 /*!

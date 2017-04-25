@@ -66,7 +66,6 @@ include_directories(
 )
 
 
-
 add_library(visp_naoqi
     include/visp_naoqi/vpNaoqiConfig.h
     include/visp_naoqi/vpNaoqiGrabber.h
@@ -77,19 +76,6 @@ add_library(visp_naoqi
     src/grabber/vpNaoqiGrabber.cpp
     #src/robot/vpNaoqiRobot.cpp
 )
-
-
-#qi_create_lib(visp_naoqi
-#  SRC
-#    include/visp_naoqi/vpNaoqiConfig.h
-#    include/visp_naoqi/vpNaoqiGrabber.h
-#    include/visp_naoqi/vpNaoqiRobot.h
-#    src/grabber/vpNaoqiGrabber.cpp
-#    src/robot/vpNaoqiRobot.cpp
-#)
-
-#qi_use_lib(visp_naoqi VISP ALCOMMON ALPROXIES ALVISION)
-
 
 target_link_libraries(visp_naoqi
     ${VISP_LIBRARIES}
@@ -102,11 +88,6 @@ if(USE_METAPOD)
   target_link_libraries(visp_naoqi metapod_${model_name})
   target_link_libraries(visp_naoqi metapod_${model_name_pepper})
 endif()
-
-
-#add_dependencies(visp_naoqi)
-
-#qi_stage_lib(visp_naoqi)
 
 subdirs(example)
 #subdirs(tools/calibration)

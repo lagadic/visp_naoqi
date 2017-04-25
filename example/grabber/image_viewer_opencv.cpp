@@ -42,49 +42,66 @@
 #include <string>
 
 #include <visp_naoqi/vpNaoqiGrabber.h>
-
+#include <al/alvisiondefinitions.h>
 
 /*!
 
-   Connect to Nao or Romeo robot, grab and display images using OpenCV.
-   By default, this example connect to a robot with ip address: 198.18.0.1.
+   Connect to Nao, Pepper or Romeo robot, grab and display images using OpenCV.
+   By default, this example connect to a robot with ip address: 192.168.0.24.
    If you want to connect on an other robot, run:
 
    ./image_viewer_opencv --ip <robot ip address>
 
    Example:
 
-   ./image_viewer_opencv -ip 169.254.168.230
+   ./image_viewer_opencv -ip 192.168.0.24
  */
 int main(int argc, const char* argv[])
 {
   try
   {
-    std::string opt_ip;
+    std::string opt_ip = "192.168.0.24";
+    int opt_cam = 0;
+    bool opt_record = false;
+    bool opt_VGA = false;
 
-    if (argc == 3) {
-      if (std::string(argv[1]) == "--ip")
+    for (unsigned int i=0; i<argc; i++) {
+      if (std::string(argv[i]) == "--ip")
         opt_ip = argv[2];
+      if (std::string(argv[i]) == "--cam")
+        opt_cam = atoi(argv[i+1]);
+      if (std::string(argv[i]) == "--record")
+        opt_record = true;
+      if (std::string(argv[i]) == "--vga")
+        opt_VGA = true;
+      else if (std::string(argv[i]) == "--help") {
+        std::cout << "Usage: " << argv[0] << "[--ip <robot address>] [--record] [--cam num_camera] [--help]" << std::endl;
+        return 0;
+      }
     }
 
-    vpNaoqiGrabber g;
+    // Create a session to connect with the Robot
+    qi::SessionPtr m_session = qi::makeSession();
+    std::string ip_port = "tcp://" + opt_ip + ":9559";
+    m_session->connect(ip_port);
     if (! opt_ip.empty()) {
       std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
-      g.setRobotIp(opt_ip);
     }
 
+    // Open Grabber
+    vpNaoqiGrabber g(m_session);
+    g.setCamera(opt_cam); // Select camera
+    g.setCameraResolution(AL::kQVGA);
     g.open();
-    g.setCamera(0);
-    g.setFramerate(3);
-
+    std::cout << "Dimension image: " << g.getHeight() <<"x" << g.getWidth() << std::endl;
 
     std::cout << "Image size: " << g.getWidth() << " " << g.getHeight() << std::endl;
+
     // Create an OpenCV image container
     cv::Mat I = cv::Mat(cv::Size(g.getWidth(), g.getHeight()), CV_8UC3);
 
     // Create an OpenCV window to display the images
     cv::namedWindow("images");
-
 
 
     // Main loop. Exit when pressing ESC
@@ -97,47 +114,29 @@ int main(int argc, const char* argv[])
       // Display the image on screen
       cv::imshow("images", I);
 
-      if (key == 32)
+      if (key == 32) // if space is pressed
       {
         std::vector<int> compression_params; //vector that stores the compression parameters of the image
-
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY); //specify the compression technique
-
         compression_params.push_back(100); //specify the compression quality
-
-
 
         bool bSuccess = cv::imwrite("./TestImage.jpg", I, compression_params); //write the image to file
 
-
-
         if ( !bSuccess )
-
         {
-
           std::cout << "ERROR : Failed to save the image" << std::endl;
-
           //system("pause"); //wait for a key press
-
         }
-
       }
 
-
-
-      if (key == 27)
+      if (key == 27) // if Esc is pressed, exit the program
       break;
-
-
 
       std::cout << "Loop time: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
     }
+
   }
   catch (const vpException &e)
-  {
-    std::cerr << "Caught exception: " << e.what() << std::endl;
-  }
-  catch (const AL::ALError &e)
   {
     std::cerr << "Caught exception: " << e.what() << std::endl;
   }

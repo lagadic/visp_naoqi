@@ -41,26 +41,8 @@
 #include <iostream>
 #include <string>
 
-/*
-
-  KNOWN ISSUE DEALING WITH X11 and NAOQI
-
-  If you get a strange compiler error on the line with None, like the following:
-
-  naoqi-sdk-2.4.3.28-linux64/include/qi/type/detail/object.hxx:214:10: error: expected identifier before numeric constant
-    struct None {
-          ^
-  it's probably because you're including X11 headers before NAOQI headers
-  which defines also the symbol None.
-
-  The workarround consists in including X11 includes after NAOQI ones; that's why
-  vpNaoqiGrabber.h is included before vpDisplayX.h.
-
- */
-
 #include <visp_naoqi/vpNaoqiGrabber.h>
 #include <al/alvisiondefinitions.h>
-
 
 #include <visp/vpDisplayX.h>
 #include <visp/vpImage.h>
