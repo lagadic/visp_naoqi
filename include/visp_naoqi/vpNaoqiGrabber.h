@@ -50,6 +50,7 @@
 // Opencv includes for cv::Mat interface
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 // ViSP includes
 #include <visp/vpImage.h>
@@ -87,7 +88,6 @@ class vpNaoqiGrabber
 protected:
   qi::AnyObject m_pVideo; //!< Video proxy
   qi::AnyObject m_pMemory; //!< Memory proxy
-  std::string m_clientName; //!< Client name
   std::string m_handle; //!< Handle Video proxy
   int m_fps; //!< Requested frame per second
   bool m_isOpen; //!< Proxy opened status
@@ -114,18 +114,17 @@ public:
   void acquire(cv::Mat &I);
   void acquire(cv::Mat &I, struct timeval &timestamp);
 
-  /*!
-    Destroy the connexion to the video proxy.
-   */
   void cleanup();
 
   vpCameraParameters getCameraParameters(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
   vpCameraParameters getCameraParameters(const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion) const;
+
   static vpCameraParameters getIntrinsicCameraParameters(const int & resolution, const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel);
   static vpHomogeneousMatrix getExtrinsicCameraParameters(const std::string &cameraName, vpCameraParameters::vpCameraParametersProjType projModel) ;
+
   vpHomogeneousMatrix get_eMc(vpCameraParameters::vpCameraParametersProjType projModel=vpCameraParameters::perspectiveProjWithDistortion, std::string cameraName = "" ) const;
+
   std::string getCameraName(){return m_cameraName;}
-  std::string getClientName(){return m_clientName;}
   /*!
 
      \return Image width.

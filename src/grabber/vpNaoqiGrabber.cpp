@@ -75,7 +75,6 @@ vpNaoqiGrabber::vpNaoqiGrabber(const qi::SessionPtr &session)
   if (m_robotType == "romeo")
     m_romeo = 1;
 
-
   std::cout << "Connected to a " << m_robotType << " robot." << std::endl;
 }
 
@@ -172,7 +171,7 @@ void vpNaoqiGrabber::open()
 
     m_handle = m_pVideo.call<std::string>(
           "subscribeCamera",
-          "subscriberID",
+          m_cameraName,
           m_cameraId,
           m_resolution,
           AL::kYUV422ColorSpace,
@@ -237,20 +236,16 @@ void vpNaoqiGrabber::acquire(vpImage<unsigned char> &I, struct timeval &timestam
     return;
   }
 
-  // Convert images from YUV to RGB
-  cv::Mat cv_YUV(image.height, image.width, CV_8UC2, image.buffer);
-  cvtColor(cv_YUV, m_img, CV_YUV2RGB_YUYV);
-
+  //Convert in ViSP format
   m_width  = image.width;
   m_height = image.height;
+  I.resize(m_height, m_width);
+  vpImageConvert::YUYVToGrey((unsigned char *)image.buffer, (unsigned char *)I.bitmap, m_width * m_height);
 
   double tv_sec  = (double)image.timestamp_s;
   double tv_usec = (double)image.timestamp_us;
   timestamp.tv_sec  = (unsigned long) tv_sec;
   timestamp.tv_usec = (unsigned long) tv_usec;
-
-  I.resize(m_height, m_width);
-  vpImageConvert::RGBToGrey((unsigned char *)m_img.data, I.bitmap , m_width, m_height);
 
 }
 
@@ -290,7 +285,7 @@ void vpNaoqiGrabber::acquire(cv::Mat &I, struct timeval &timestamp)
   }
 
   cv::Mat cv_YUV(image.height, image.width, CV_8UC2, image.buffer);
-  cvtColor(cv_YUV, I, CV_YUV2RGB_YUYV);
+  cv::cvtColor(cv_YUV, I, CV_YUV2RGB_YUYV);
 
   m_width  = image.width;
   m_height = image.height;
@@ -538,7 +533,7 @@ vpNaoqiGrabber::get_eMc(vpCameraParameters::vpCameraParametersProjType projModel
 bool vpNaoqiGrabber::setCameraParameter(const int& parameterId, const int& value)
 {
 
-  bool result = m_pVideo.call<bool>("setCameraParameter", m_clientName,parameterId,value);
+  bool result = m_pVideo.call<bool>("setCameraParameter", m_handle, parameterId, value);
 
   return result;
 }

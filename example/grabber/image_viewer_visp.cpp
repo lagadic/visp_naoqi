@@ -112,7 +112,7 @@ int main(int argc, const char* argv[])
     g.setCamera(opt_cam); // Select camera
     g.setCameraResolution(AL::kQVGA);
     g.open();
-    std::cout << "Open camera parameters: " << g.getCameraParameters() << std::endl;
+   // std::cout << "Open camera parameters: " << g.getCameraParameters() << std::endl;
     std::cout << "Dimension image: " << g.getHeight() <<"x" << g.getWidth() << std::endl;
 
     vpImage<unsigned char> I(g.getHeight(), g.getWidth());
