@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 find_package(VISP REQUIRED)
 find_package(Metapod)
 
-find_package(Boost REQUIRED filesystem)
+find_package(Boost  COMPONENTS filesystem system REQUIRED)
 find_package(naoqi_libqi)
 find_package(naoqi_libqicore)
 
@@ -72,9 +72,9 @@ add_library(visp_naoqi
     include/al/alvisiondefinitions.h
     include/al/from_any_value.cpp
     include/al/naoqi_image.hpp
-    #include/visp_naoqi/vpNaoqiRobot.h
+    include/visp_naoqi/vpNaoqiRobot.h
     src/grabber/vpNaoqiGrabber.cpp
-    #src/robot/vpNaoqiRobot.cpp
+    src/robot/vpNaoqiRobot.cpp
 )
 
 target_link_libraries(visp_naoqi

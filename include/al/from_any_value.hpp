@@ -38,6 +38,8 @@ std::vector<std::string> fromAnyValueToStringVector(qi::AnyValue& value, std::ve
 
 std::vector<float> fromAnyValueToFloatVector(qi::AnyValue& value, std::vector<float>& result);
 
+std::vector<std::vector<float>> fromAnyValueToFloatVectorOfVector(qi::AnyValue& value, std::vector<std::vector<float>>& result);
+
 }
 
 }

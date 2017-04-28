@@ -43,15 +43,11 @@
 #include <string>
 
 
-// Aldebaran includes
-#include <alproxies/almotionproxy.h>
-#include <alproxies/almemoryproxy.h>
-#include <alcommon/alproxy.h>
-#include <alerror/alerror.h>
+//// Aldebaran includes
 #include <qi/applicationsession.hpp>
 #include <qi/anyobject.hpp>
 
-// ViSP includes
+//// ViSP includes
 #include <visp/vpColVector.h>
 #include <visp/vpHomogeneousMatrix.h>
 #include <visp/vpMatrix.h>
@@ -96,15 +92,26 @@
  */
 class vpNaoqiRobot
 {
-public:
+
+protected:
   typedef enum {
     Romeo,
     Nao,
     Pepper,
     Unknown
   } RobotType;
+  qi::AnyObject m_pMemory; //!< Memory proxy
+  qi::AnyObject m_pMotion;  //!< Motion proxy
+  qi::AnyObject m_pepper_control;  //!< Proxy to Pepper_control
+  bool m_isOpen; //!< Proxy opened status
+  bool m_collisionProtection; //!< Collition protection enabling status
+  std::string m_robotName; //!< Name of the robot
+  RobotType m_robotType; //!< Indicate if the robot is Romeo, Nao or Pepper
 
-  vpNaoqiRobot();
+
+public:
+
+  vpNaoqiRobot(const qi::SessionPtr &session);
   virtual ~vpNaoqiRobot();
 
   /*!
@@ -112,158 +119,32 @@ public:
    */
   void cleanup();
 
-  /*!
-    Get the Transformation matrix to the end-effectors
+  std::vector<float> getAngles(const std::string &name, const bool& useSensors=true) const;
+  std::vector<float> getAngles(const std::vector<std::string> &name, const bool& useSensors=true) const;
 
-    \param endEffectorName : Name of the end effector. Allowed values are "CameraLeft",
-    "CameraRight" for the fixed camera on the head, "RHand" and "LHand" for end-effector on the arms.
-
-    \return The transformation matrix to the end-effectors (computed from the last joint of the chain ending with the end-effector. )
-   */
   vpHomogeneousMatrix get_cMe(const std::string &endEffectorName);
-
-
-
-  /*!
-    Get the Jacobian specifying an end effector chain name.
-
-    \param chainName : Name of the end effector. Allowed values are "Head",
-    "LArm" for left arm and "RArm" for right arm.
-
-    \return The actual jacobian with respect to the end effector.
-   */
   vpMatrix get_eJe(const std::string &chainName) const;
-
-
-
-  /*!
-    Get the Jacobian specifying an end effector chain name.
-
-    \param chainName : Name of the end effector. Allowed values are "Head",
-    "LArm" for left arm and "RArm" for right arm.
-
-    \param tJe : Jacobian with respect to the torso
-
-    \return The actual jacobian with respect to the end effector.
-   */
   vpMatrix get_eJe(const std::string &chainName, vpMatrix & tJe) const;
-  /*!
-    Get the derivative of the kinematic jacobian specifying an end effector chain name.
-
-    \param chainName : Name of the end effector. Allowed values are "Head",
-    "LArm" for left arm and "RArm" for right arm.
-
-    \return The actual derivative of the kinematic jacobian.
-   */
   std::vector <vpMatrix> get_d_eJe(const std::string &chainName) const;
-  /*!
-    Get the name of all the joints of the chain.
 
-    \param names :  Names the joints, chains, "Body", "JointActuators",
-    "Joints" or "Actuators".
-
-    \return The name of the joints.
-   */
   std::vector<std::string> getBodyNames(const std::string &names) const;
-  vpColVector getJointMin(const AL::ALValue& names) const;
-  vpColVector getJointMax(const AL::ALValue& names) const;
+  vpColVector getJointMin(const std::string &name) const;
+  vpColVector getJointMax(const std::string &name) const;
   void getJointMinAndMax(const std::vector<std::string>& names, vpColVector &min, vpColVector &max) const;
 
-  /*!
-    Get the position of all the joints of the chain.
+  vpColVector getPosition(const std::string &names, const bool &useSensors=true) const;
+  void getPosition(const std::vector<std::string> &names, std::vector<float> &q, const bool& useSensors=true) const;
 
-    \param names :  Names the joints, chains, "Body", "JointActuators",
-    "Joints" or "Actuators".
-    \param useSensors :  If true, sensor positions will be returned. If
-    false, it will be the command.
+  std::vector<std::vector<float>> getLimits(const std::string & name) const;
 
-    \return Joint position in radians.
-   */
-  vpColVector getPosition(const AL::ALValue& names, const bool& useSensors=true) const;
-
-  /*!
-    Get the position of all the joints of the chain.
-
-    \param names :  Names the joints, chains, "Body", "JointActuators",
-    "Joints" or "Actuators".
-    \param useSensors :  If true, sensor positions will be returned. If
-    false, it will be the command.
-    \param q : Joint position in radians.
-   */
-  void getPosition(const AL::ALValue& names, std::vector<float>& q, const bool& useSensors=true) const;
-
-
-  /*!
-   Return the video proxy used to grab images.
-
-   \code
-   #include <visp_naoqi/vpNaoqiRobot.h>
-
-   int main()
-   {
-     vpNaoqiRobot robot;
-     ...
-     robot.open();
-     AL::ALMotionProxy *motionProxy = robot.getProxy();
-   }
-   \endcode
-   \return The address of the video proxy.
-  */
-  AL::ALMotionProxy *getProxy() const
-  {
-    return m_motionProxy;
-  }
-
-  /*!
-   Return the ip address used to access to the robot.
-  */
-  std::string getRobotIp() const { return m_robotIp; }
-  /*!
-   Return the name of the robot.
-   Values could be "romeoH37", "naoH25", "naoH21", "naoT14", "naoT2"...
-  */
   std::string getRobotName() const { return m_robotName; }
 
-  /*!
-
-     Return the type of the robot (Romeo, Nao, Pepper).
-   */
   RobotType getRobotType() const { return m_robotType; }
 
-  /*!
-    Get the joints velocities.
-
-    \param names :  Names of the joints, chains, "Body", "JointActuators",
-    "Joints" or "Actuators".
-
-    \return Joint velocities in radians/s.
-   */
   vpColVector getJointVelocity(const std::vector<std::string> &names) const;
 
-  /*!
-    Get the joints velocities.
-
-    \param names :  Names of the joints, chains, "Body", "JointActuators",
-    "Joints" or "Actuators".
-    \param useSensors :  Joint velocities in radians/s.
-
-   */
   void getJointVelocity(const std::vector<std::string> &names, std::vector<float> &jointVel) const;
 
-  /*!
-    Open the connection with the robot.
-    All the parameters should be set before calling this function.
-    \code
-    #include <visp_naoqi/vpNaoqiRobot.h>
-
-    int main()
-    {
-      vpNaoqiRobot robot;
-      robot.setRobotIp("131.254.13.37");
-      robot.open();
-    }
-    \endcode
-   */
   void open();
 
   /*!
@@ -276,74 +157,34 @@ public:
     m_collisionProtection = protection;
   }
 
-  /*!
-    Set the position of all the joints of the chain.
 
-    \param names :  Names the joints, chains, "Body", "JointActuators", "Joints" or "Actuators".
-    \param angles :  One or more joint positions in radians.
-    \param fractionMaxSpeed : The fraction of maximum speed to use. Value should be comprised between 0 and 1.
+  void setPosition(const std::string &name, const std::vector<float> &angles, const float &fractionMaxSpeed) const;
+  void setPosition(const std::vector<std::string> &names, const vpColVector &jointPosition, const float &fractionMaxSpeed) const;
+  void setPosition(const std::vector<std::string> &names, const std::vector<float> &jointPosition, const float &fractionMaxSpeed) const;
 
-   */
-  void setPosition(const AL::ALValue& names, const AL::ALValue& angles, const float& fractionMaxSpeed);
-  /*!
-    Set the position of all the joints of the chain.
+  void setStiffness(const std::string &names, const float &stiffness) const;
 
-    \param names :  Names the joints, chains, "Body", "JointActuators", "Joints" or "Actuators".
-    \param jointPosition :  One or more joint positions in radians.
-    \param fractionMaxSpeed : The fraction of maximum speed to use. Value should be comprised between 0 and 1.
+  //void setVelocity_eachJoint(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
+  //void setVelocity_eachJoint(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
+  //void setVelocity_eachJoint(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
+  // void setVelocity(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
+  //void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
+ // void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
+  void setVelocity(const std::vector<std::string> &names, const std::vector<float> &jointVel) const;
 
-   */
-  void setPosition(const AL::ALValue& names, const vpColVector &jointPosition, const float& fractionMaxSpeed);
-  /*!
-    Set the position of all the joints of the chain.
-
-    \param names :  Names the joints, chains, "Body", "JointActuators", "Joints" or "Actuators".
-    \param jointPosition :  One or more joint positions in radians.
-    \param fractionMaxSpeed : The fraction of maximum speed to use. Value should be comprised between 0 and 1.
-
-   */
-  void setPosition(const AL::ALValue& names, const std::vector<float> &jointPosition, const float& fractionMaxSpeed);
-  /*!
-    Set the robot ip address.
-    In the constructor, the default ip is set to "198.18.0.1".
-    \param robotIp : New robot ip address.
-
-    \sa open()
-  */
-  void setRobotIp(const std::string &robotIp)
-  {
-    m_robotIp = robotIp;
-  }
-
-  void setStiffness(const AL::ALValue& names, float stiffness);
-
-  void setVelocity_eachJoint(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
-  void setVelocity_eachJoint(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
-  void setVelocity_eachJoint(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
-  void setVelocity(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
-  void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
-  void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
 
   void setBaseVelocity(const std::vector<float> &jointVel) const;
   void setBaseVelocity(const vpColVector &jointVel) const;
   void setBaseVelocity(const float &vx,const float &vy,const float &wz) const;
 
   void startPepperControl() const;
-  void stop(const AL::ALValue& names) const;
+  void stop(const std::string &name) const;
+  void stop(const std::vector<std::string> &names) const;
   void stopPepperControl() const;
   void stopBase() const;
 
-protected:
-  AL::ALMotionProxy *m_motionProxy; //!< Motion proxy
-  AL::ALProxy *m_proxy; //!< General Proxy
-  std::string m_robotIp; //!<  Robot Ethernet address
-  bool m_isOpen; //!< Proxy opened status
-  bool m_collisionProtection; //!< Collition protection enabling status
-  std::string m_robotName; //!< Name of the robot
-  RobotType m_robotType; //!< Indicate if the robot is Romeo, Nao or Pepper
-  AL::ALMemoryProxy * m_memProxy; //!< Memory Proxy
-  qi::SessionPtr m_session; //!< Session to connect to Pepper
-  qi::AnyObject  m_pepper_control;  //!< Proxy to Pepper_control
+
+
 };
 
 #endif
