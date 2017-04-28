@@ -38,14 +38,10 @@
  *****************************************************************************/
 // VispNaoqi
 #include <visp_naoqi/vpNaoqiRobot.h>
-//#include <visp_naoqi/vpNaoqiConfig.h>
+#include <visp_naoqi/vpNaoqiConfig.h>
 #include "al/from_any_value.hpp"
-// Visp
-#include <visp/vpVelocityTwistMatrix.h>
 
-
-// Aldebaran SDK
-
+// Metapod
 #ifdef VISP_NAOQI_HAVE_MATAPOD
 #  include <romeo.hh>
 #  include <pepper.hh>
@@ -72,6 +68,23 @@ vpNaoqiRobot::vpNaoqiRobot(const qi::SessionPtr &session)
   : m_pMemory(session->service("ALMemory")), m_pMotion(session->service("ALMotion")), m_pepper_control(session->service("pepper_control")), m_isOpen(false), m_collisionProtection(true),
     m_robotName(""), m_robotType(Unknown)
 {
+  // Get the robot type
+  m_robotName = m_pMemory.call<std::string>("getData", "RobotConfig/Body/Type");
+  std::transform(m_robotName.begin(), m_robotName.end(), m_robotName.begin(), ::tolower);
+
+  if (m_robotName == "nao")
+    m_robotType = Nao;
+  else if (m_robotName == "romeo")
+    m_robotType = Romeo;
+  else if (m_robotName == "pepper" || m_robotName == "juliette")
+  {
+    m_robotName = "pepper";
+    m_robotType = Pepper;
+  }
+  else
+  {
+    std::cout << "Unknown robot" << std::endl;
+  }
 
 }
 
@@ -87,38 +100,38 @@ vpNaoqiRobot::~vpNaoqiRobot()
   Open the connection with the robot.
   All the parameters should be set before calling this function.
   \code
-  #include <visp_naoqi/vpNaoqiRobot.h>
+int main(int argc, char** argv)
+{
+  std::string opt_ip = "192.168.0.24";
 
-  int main()
-  {
-    vpNaoqiRobot robot;
-    robot.setRobotIp("131.254.13.37");
-    robot.open();
+    for (unsigned int i=0; i<argc; i++) {
+      if (std::string(argv[i]) == "--ip")
+        opt_ip = argv[i+1];
+      else if (std::string(argv[i]) == "--help") {
+        std::cout << "Usage: " << argv[0] << "[--ip <robot address>] " << std::endl;
+        return 0;
+      }
+    }
+
+  // Create a session to connect with the Robot
+  qi::SessionPtr session = qi::makeSession();
+  std::string ip_port = "tcp://" + opt_ip + ":9559";
+  session->connect(ip_port);
+  if (! opt_ip.empty()) {
+    std::cout << "Connect to robot with ip address: " << opt_ip << std::endl;
   }
+
+  vpNaoqiRobot robot(session);
+
+  robot.open();
+
+  return 0;
   \endcode
  */
 void vpNaoqiRobot::open()
 {
   if (! m_isOpen) {
     cleanup();
-
-    // Get the robot type
-    m_robotName = m_pMemory.call<std::string>("getData", "RobotConfig/Body/Type");
-    std::transform(m_robotName.begin(), m_robotName.end(), m_robotName.begin(), ::tolower);
-
-    if (m_robotName == "nao")
-      m_robotType = Nao;
-    else if (m_robotName == "romeo")
-      m_robotType = Romeo;
-    else if (m_robotName == "pepper" || m_robotName == "juliette")
-    {
-      m_robotName = "pepper";
-      m_robotType = Pepper;
-    }
-    else
-    {
-      std::cout << "Unknown robot" << std::endl;
-    }
 
     std::cout << "Connected to a " << m_robotName << " robot." << std::endl;
 
@@ -182,8 +195,6 @@ void vpNaoqiRobot::setStiffness(const std::string &names, const float &stiffness
 {
   m_pMotion.call<void>("setStiffnesses", names, stiffness );
 }
-
-
 
 /*!
   Apply a velocity vector to a vector of joints.
@@ -359,7 +370,6 @@ void vpNaoqiRobot::stop(const std::vector<std::string> &names) const
   else if (m_robotType == Pepper) //TODO: Add function to Pepper_control to stop only desired joints
     m_pepper_control.call<void >("stopJoint");
 }
-
 
 
 /*!
@@ -747,7 +757,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
     // Now we want to transform tJe to eJe
 
-    vpHomogeneousMatrix torsoMHeadRoll(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));// get transformation  matrix between torso and HeadRoll
+    vpHomogeneousMatrix torsoMHeadRoll(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true));// get transformation  matrix between torso and HeadRoll
     vpVelocityTwistMatrix HeadRollVLtorso(torsoMHeadRoll.inverse());
 
     for(unsigned int i=0; i< 3; i++)
@@ -822,7 +832,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
 
     // Now we want to transform tJe to eJe
-    vpHomogeneousMatrix torsoMLWristP(m_motionProxy->getTransform(jointNames[nJoints-1], 0, true));
+    vpHomogeneousMatrix torsoMLWristP(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true));
     vpVelocityTwistMatrix torsoVLWristP(torsoMLWristP.inverse());
 
     for(unsigned int i=0; i< 3; i++)
@@ -898,7 +908,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
       }
 
     //std::cout << "metapod_Jac:" <<std::endl << J << std::endl;
-    vpHomogeneousMatrix tMLWristP(m_motionProxy->getTransform(jointNames[jointNames.size()-1], 2, true));// get transformation  matrix base torso and LWrist
+    vpHomogeneousMatrix tMLWristP(m_pMotion.call<std::vector<float> >("getTransform",jointNames[jointNames.size()-1], 2, true));// get transformation  matrix base torso and LWrist
 
     vpVelocityTwistMatrix LWristPVTrunk(tMLWristP.inverse());
 
@@ -970,7 +980,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
 
     // Now we want to transform tJe to eJe
-    vpHomogeneousMatrix torsoMRWristP(m_pMotion_.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));
+    vpHomogeneousMatrix torsoMRWristP(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));
 
     vpVelocityTwistMatrix torsoVRWristP(torsoMRWristP.inverse());
 
@@ -1045,7 +1055,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
     //std::cout << "metapod_Jac:" <<std::endl << J;
 
     // Now we want to transform tJe to eJe
-    vpHomogeneousMatrix torsoMLEye(m_pMotion_.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));// get transformation  matrix between torso and LEye
+    vpHomogeneousMatrix torsoMLEye(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));// get transformation  matrix between torso and LEye
     vpVelocityTwistMatrix LEyeVLtorso(torsoMLEye.inverse());
 
     for(unsigned int i=0; i< 3; i++)
@@ -1161,7 +1171,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
     //std::cout << "tJe: " <<std::endl << tJe <<std::endl;
     // Now we want to transform tJe to eJe
-    vpHomogeneousMatrix tMREye(m_pMotion_.call<std::vector<float> >("getTransform", jointNamesEye[jointNamesEye.size()-1], 2, true ));// get transformation  matrix base torso and LEye
+    vpHomogeneousMatrix tMREye(m_pMotion.call<std::vector<float> >("getTransform", jointNamesEye[jointNamesEye.size()-1], 2, true ));// get transformation  matrix base torso and LEye
     // vpHomogeneousMatrix tMTrunk(m_motionProxy->getTransform("TrunkYaw", 0, true));// get transformation  matrix base torso and TrunkYaw
 
     vpVelocityTwistMatrix REyeVTrunk(tMREye.inverse());
@@ -1253,7 +1263,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
     //std::cout << "tJe: " <<std::endl << tJe <<std::endl;
 
     // Now we want to transform tJe to eJe // CHECK IF 0 or 2
-    vpHomogeneousMatrix torsoMREye(m_pMotion_.call<std::vector<float> >("getTransform", jointNamesEye[jointNamesEye.size()-1], 2, true ));// get transformation  matrix between torso and REye
+    vpHomogeneousMatrix torsoMREye(m_pMotion.call<std::vector<float> >("getTransform", jointNamesEye[jointNamesEye.size()-1], 2, true ));// get transformation  matrix between torso and REye
     vpVelocityTwistMatrix REyeVLtorso(torsoMREye.inverse());
 
     for(unsigned int i=0; i< 3; i++)
@@ -1321,7 +1331,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
     // std::cout << "metapod_Jac:" <<std::endl << J;
 
     // Now we want to transform tJe to eJe
-    vpHomogeneousMatrix torsoMHead(m_pMotion_.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));// get transformation  matrix between torso and Head
+    vpHomogeneousMatrix torsoMHead(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));// get transformation  matrix between torso and Head
     vpVelocityTwistMatrix HeadVLtorso(torsoMHead.inverse());
 
     for(unsigned int i=0; i< 3; i++)
@@ -1395,7 +1405,7 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
 
     // Now we want to transform tJe to eJe
-    vpHomogeneousMatrix torsoMRWristP(m_pMotion_.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));
+    vpHomogeneousMatrix torsoMRWristP(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));
 
     vpVelocityTwistMatrix torsoVRWristP(torsoMRWristP.inverse());
 
