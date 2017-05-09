@@ -141,6 +141,8 @@ public:
 
   RobotType getRobotType() const { return m_robotType; }
 
+  vpHomogeneousMatrix getTransform(const std::string &name, const unsigned int &reference) const;
+
   vpColVector getJointVelocity(const std::vector<std::string> &names) const;
 
   void getJointVelocity(const std::vector<std::string> &names, std::vector<float> &jointVel) const;

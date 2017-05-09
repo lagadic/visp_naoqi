@@ -167,6 +167,9 @@ void vpNaoqiRobot::open()
     //            AL::ALValue setting = AL::ALValue::array(std::string("ENABLE_DCM_LIKE_CLAMPING"),AL::ALValue(0));
     //            config_.arrayPush(setting);
     //        }
+    if (m_robotType == Pepper)
+      m_pepper_control.call<void >("start");
+
 
     m_isOpen = true;
   }
@@ -212,11 +215,18 @@ void vpNaoqiRobot::setStiffness(const std::string &names, const float &stiffness
 
 void vpNaoqiRobot::setVelocity(const std::vector<std::string> &names, const std::vector<float> &jointVel) const
 {
-  if (m_robotType == Pepper)
-    m_pepper_control.async<void >("setDesJointVelocity", names, jointVel);
+  if (m_robotType == Pepper) {
+    m_pepper_control.async<void>("setDesJointVelocity", names, jointVel);
+
+    for (unsigned int i = 0; i <names.size(); i++ )
+       std::cout << names[i] << std::endl;
+
+    for (unsigned int i = 0; i <jointVel.size(); i++ )
+      std::cout << jointVel[i] << std::endl;
+  }
   else
   {
-    std::cout << " The velocity controller for Romeo and Nao is not yet implemented" << std::endl;
+    std::cout << " The velocity controller for Romeo and Nao is not implemented yet" << std::endl;
     exit(0);
   }
 
@@ -1690,8 +1700,12 @@ void vpNaoqiRobot::getJointVelocity(const std::vector <std::string> &names, std:
       jointVel[i] = memData_anyref[i].content().asFloat();
   }
   return;
-
 }
 
+vpHomogeneousMatrix vpNaoqiRobot::getTransform(const std::string &name, const unsigned int &reference) const
+{
+  vpHomogeneousMatrix M(m_pMotion.call<std::vector<float> >("getTransform", name , reference, true));
+  return M;
+}
 
 

@@ -45,8 +45,8 @@ if(USE_METAPOD)
   set(VISP_NAOQI_HAVE_MATAPOD "yes")  # for header vpNaoqiConfig.h
 endif()
 
-
 include_directories("include")
+include_directories("${PROJECT_SOURCE_DIR}/src/common")
 include_directories("${CMAKE_BINARY_DIR}/include")
 
 set(VISP_NAOQI_INTRINSIC_CAMERA_FILE ${PROJECT_SOURCE_DIR}/include/visp_naoqi/camera.xml) # for header vpNaoqiConfig.h
@@ -57,7 +57,6 @@ configure_file(${PROJECT_SOURCE_DIR}/include/visp_naoqi/vpNaoqiConfig.h.cmake
   ${CMAKE_BINARY_DIR}/include/visp_naoqi/vpNaoqiConfig.h
 )
 
-
 include_directories(
   ${VISP_INCLUDE_DIRS}
   ${naoqi_libqi_INCLUDE_DIRS}
@@ -65,13 +64,25 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
+set( COMMON_SRC
+        src/common/vpFaceTrackerOkao.h
+        src/common/vpFaceTrackerOkao.cpp
+        src/common/vpPepperFollowPeople.h
+        src/common/vpPepperFollowPeople.cpp
+)
+
+set( NAOQI_SRC
+        include/al/alvisiondefinitions.h
+        include/al/from_any_value.cpp
+        include/al/naoqi_image.hpp
+)
+
 
 add_library(visp_naoqi
+    ${NAOQI_SRC}
+    ${COMMON_SRC}
     include/visp_naoqi/vpNaoqiConfig.h
     include/visp_naoqi/vpNaoqiGrabber.h
-    include/al/alvisiondefinitions.h
-    include/al/from_any_value.cpp
-    include/al/naoqi_image.hpp
     include/visp_naoqi/vpNaoqiRobot.h
     src/grabber/vpNaoqiGrabber.cpp
     src/robot/vpNaoqiRobot.cpp

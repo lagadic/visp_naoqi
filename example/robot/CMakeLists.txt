@@ -1,5 +1,6 @@
 set(source
   test_libqi.cpp
+  test_pepper_follow_me.cpp
   #head_control.cpp
   #motion_romeo.cpp
   #motion_nao.cpp
