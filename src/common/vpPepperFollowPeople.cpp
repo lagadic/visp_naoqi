@@ -1,9 +1,8 @@
 
 #include <visp/vpImageConvert.h>
-#include <vpPepperFollowPeople.h>
+#include "visp_naoqi/common/vpPepperFollowPeople.h"
 
 #include "al/alvisiondefinitions.h"
-#include "al/from_any_value.hpp"
 
 
 vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot) : m_pMemory(session->service("ALMemory")),m_pPeoplePerception(session->service("ALPeoplePerception")),

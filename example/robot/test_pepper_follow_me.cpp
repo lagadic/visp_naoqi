@@ -40,7 +40,7 @@
 #include <iostream>
 #include <string>
 
-#include <vpPepperFollowPeople.h>
+#include <visp_naoqi/common/vpPepperFollowPeople.h>
 #include <visp_naoqi/vpNaoqiRobot.h>
 
 #include <visp/vpTime.h>

@@ -48,7 +48,7 @@
 #include "al/from_any_value.hpp"
 
 #include "visp_naoqi/vpNaoqiRobot.h"
-#include "vpFaceTrackerOkao.h"
+#include "visp_naoqi/common/vpFaceTrackerOkao.h"
 /*!
 
    Connect to Pepper robot, and apply some motion.

@@ -45,8 +45,11 @@ if(USE_METAPOD)
   set(VISP_NAOQI_HAVE_MATAPOD "yes")  # for header vpNaoqiConfig.h
 endif()
 
-include_directories("include")
-include_directories("${PROJECT_SOURCE_DIR}/src/common")
+#include_directories("include")
+include_directories(
+        "${PROJECT_SOURCE_DIR}/src/common"
+        "${PROJECT_SOURCE_DIR}/include"
+)
 include_directories("${CMAKE_BINARY_DIR}/include")
 
 set(VISP_NAOQI_INTRINSIC_CAMERA_FILE ${PROJECT_SOURCE_DIR}/include/visp_naoqi/camera.xml) # for header vpNaoqiConfig.h
@@ -65,10 +68,12 @@ include_directories(
 )
 
 set( COMMON_SRC
-        src/common/vpFaceTrackerOkao.h
+        include/visp_naoqi/common/vpFaceTrackerOkao.h
         src/common/vpFaceTrackerOkao.cpp
-        src/common/vpPepperFollowPeople.h
+        include/visp_naoqi/common/vpPepperFollowPeople.h
         src/common/vpPepperFollowPeople.cpp
+        include/visp_naoqi/common/vpServoArm.h
+        src/common/vpServoArm.cpp
 )
 
 set( NAOQI_SRC
@@ -76,7 +81,6 @@ set( NAOQI_SRC
         include/al/from_any_value.cpp
         include/al/naoqi_image.hpp
 )
-
 
 add_library(visp_naoqi
     ${NAOQI_SRC}
@@ -121,4 +125,3 @@ if (DOXYGEN_FOUND)
 
   add_custom_target(html-doc ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/config-doxygen)
 endif()
-

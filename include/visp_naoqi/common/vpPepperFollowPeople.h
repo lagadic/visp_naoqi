@@ -32,7 +32,7 @@
 #include <visp_naoqi/vpNaoqiGrabber.h>
 #include <visp_naoqi/vpNaoqiRobot.h>
 
-#include <vpFaceTrackerOkao.h>
+#include <visp_naoqi/common/vpFaceTrackerOkao.h>
 
 #include <visp/vpDisplayX.h>
 

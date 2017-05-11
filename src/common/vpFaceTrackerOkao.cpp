@@ -1,5 +1,5 @@
 
-#include <vpFaceTrackerOkao.h>
+#include "visp_naoqi/common/vpFaceTrackerOkao.h"
 #include "al/alvisiondefinitions.h"
 
 vpFaceTrackerOkao::vpFaceTrackerOkao(const qi::SessionPtr &session) :m_pMemory(session->service("ALMemory")),m_pFaceDetection(session->service("ALFaceDetection")),
