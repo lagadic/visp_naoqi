@@ -189,7 +189,7 @@ void vpNaoqiRobot::cleanup()
 
 /*!
   Set the stiffness to a chain name, or to a specific joint.
-  \param names :  Names the joints, chains, "Body", "JointActuators",
+  \param names :  Names of the chains, "Body", "JointActuators",
   "Joints" or "Actuators".
   \param stiffness : Stiffness parameter that should be between
   0 (no stiffness) and 1 (full stiffness).
@@ -198,6 +198,31 @@ void vpNaoqiRobot::setStiffness(const std::string &names, const float &stiffness
 {
   m_pMotion.call<void>("setStiffnesses", names, stiffness );
 }
+
+
+/*!
+  Set the stiffness of a list of joints.
+  \param names : Vector with the joint names.
+  \param stiffness : Stiffness parameters that should be between
+  0 (no stiffness) and 1 (full stiffness).
+ */
+void vpNaoqiRobot::setStiffness(const std::vector<std::string> &names, const std::vector<float> &stiffness) const
+{
+  m_pMotion.call<void>("setStiffnesses", names, stiffness );
+}
+
+/*!
+  Set the stiffness of a list of joints.
+  \param names : Vector with the joint names.
+  \param stiffness : Stiffness parameter that should be between
+  0 (no stiffness) and 1 (full stiffness).
+ */
+void vpNaoqiRobot::setStiffness(const std::vector<std::string> &names, const float &stiffness) const
+{
+  m_pMotion.call<void>("setStiffnesses", names, stiffness );
+}
+
+
 
 /*!
   Apply a velocity vector to a vector of joints.
@@ -234,21 +259,21 @@ void vpNaoqiRobot::setVelocity(const std::vector<std::string> &names, const std:
 }
 
 
-///*!
-//  Apply a velocity vector to a vector of joints.Use just one call to apply the velocities.
-//  \param names :  Names the joints, chains, "Body", "JointActuators",
-//  "Joints" or "Actuators".
-//  \param jointVel : Joint velocity vector with values expressed in rad/s.
-//  \param verbose : If true activates printings.
-// */
+/*!
+  Apply a velocity vector to a vector of joints.Use just one call to apply the velocities.
+  \param names :  Names the joints, chains, "Body", "JointActuators",
+  "Joints" or "Actuators".
+  \param jointVel : Joint velocity vector with values expressed in rad/s (vpColVector).
+  \param verbose : If true activates printings.
+ */
 
-//void vpNaoqiRobot::setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose)
-//{
-//  std::vector<float> jointVel_(jointVel.size());
-//  for (unsigned int i=0; i< jointVel.size(); i++)
-//    jointVel_[i] = jointVel[i];
-//  setVelocity(names, jointVel_, verbose);
-//}
+void vpNaoqiRobot::setVelocity(const std::vector<std::string> &names, const vpColVector &jointVel) const
+{
+  std::vector<float> jointVel_(jointVel.size());
+  for (unsigned int i=0; i< jointVel.size(); i++)
+    jointVel_[i] = jointVel[i];
+  setVelocity(names, jointVel_);
+}
 
 /*!
   Apply a velocity vector to a vector of joints. Use just one call to apply the velocities.
@@ -364,6 +389,19 @@ void vpNaoqiRobot::setVelocity(const std::vector<std::string> &names, const std:
 //  }
 //
 //}
+
+
+/*!
+  Makes the robot move to the given pose in the ground plane, relative to FRAME_ROBOT. This is a blocking call.  \param x : Distance along the X axis in meters.
+  \param y : Distance along the Y axis in meters.
+  \param theta : Rotation around the Z axis in radians [-3.1415 to 3.1415]
+ */
+
+  void vpNaoqiRobot::moveTo(const float& x, const float& y, const float& theta) const
+  {
+    m_pMotion.call<void>("moveTo",x, y, theta);
+  }
+
 
 /*!
   Stop joints.
@@ -588,6 +626,15 @@ vpNaoqiRobot::getJointMinAndMax(const std::vector<std::string> &names, vpColVect
   return;
 }
 
+/*!
+   Get the motion proxy
+   \return pointer to the motion proxy
+*/
+qi::AnyObject * vpNaoqiRobot::getMotionProxy()
+{
+    return &m_pMotion;
+}
+
 
 /*!
   Get the position of all the joints of the chain.
@@ -599,7 +646,6 @@ vpNaoqiRobot::getJointMinAndMax(const std::vector<std::string> &names, vpColVect
 
   \return Joint position in radians.
  */
-
 vpColVector vpNaoqiRobot::getPosition(const std::string &name, const bool &useSensors) const
 {
   std::vector<float> sensorAngles = getAngles(name, useSensors);
@@ -641,6 +687,15 @@ std::vector<std::vector<float>> vpNaoqiRobot::getLimits(const std::string & name
 
 }
 
+/*!
+  Set External collision
+  \param name :  The name {“All”, “Move”, “Arms”, “LArm” or “RArm”}.
+  \param enable: Activate or deactivate the external collision of the desired name.
+ */
+  void vpNaoqiRobot::setExternalCollisionProtectionEnabled(const std::string& name, const bool& enable) const
+  {
+    m_pMotion.call<void>("setExternalCollisionProtectionEnabled", name, enable);
+  }
 
 /*!
   Set the position of all the joints of the chain.
@@ -650,9 +705,9 @@ std::vector<std::vector<float>> vpNaoqiRobot::getLimits(const std::string & name
   \param fractionMaxSpeed : The fraction of maximum speed to use. Value should be comprised between 0 and 1.
 
  */
-void vpNaoqiRobot::setPosition(const std::string &name, const std::vector<float> &angles, const float& fractionMaxSpeed) const
-{ 
-  m_pMotion.async<void>("setAngles", name, angles, fractionMaxSpeed);
+void vpNaoqiRobot::setPosition(const std::string &name, const float &angle, const float& fractionMaxSpeed) const
+{
+  m_pMotion.async<void>("setAngles", name, angle, fractionMaxSpeed);
 }
 
 /*!

@@ -135,6 +135,8 @@ public:
   vpColVector getPosition(const std::string &names, const bool &useSensors=true) const;
   void getPosition(const std::vector<std::string> &names, std::vector<float> &q, const bool& useSensors=true) const;
 
+  qi::AnyObject * getMotionProxy();
+
   std::vector<std::vector<float>> getLimits(const std::string & name) const;
 
   std::string getRobotName() const { return m_robotName; }
@@ -149,6 +151,8 @@ public:
 
   void open();
 
+  void moveTo(const float& x, const float& y, const float& theta) const;
+
   /*!
     Enable/disable the collision protection.
     In the constructor, the collision protection is enabled by default.
@@ -159,21 +163,23 @@ public:
     m_collisionProtection = protection;
   }
 
+  void setExternalCollisionProtectionEnabled(const std::string& name, const bool& enable) const;
 
-  void setPosition(const std::string &name, const std::vector<float> &angles, const float &fractionMaxSpeed) const;
+  void setPosition(const std::string &name, const float &angles, const float &fractionMaxSpeed) const;
   void setPosition(const std::vector<std::string> &names, const vpColVector &jointPosition, const float &fractionMaxSpeed) const;
   void setPosition(const std::vector<std::string> &names, const std::vector<float> &jointPosition, const float &fractionMaxSpeed) const;
 
   void setStiffness(const std::string &names, const float &stiffness) const;
+  void setStiffness(const std::vector<std::string> &names, const std::vector<float> &stiffness) const;
+  void setStiffness(const std::vector<std::string> &names, const float &stiffness) const;
 
   //void setVelocity_eachJoint(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
   //void setVelocity_eachJoint(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
   //void setVelocity_eachJoint(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
   // void setVelocity(const AL::ALValue& names, const std::vector<float> &jointVel, bool verbose=false);
-  //void setVelocity(const AL::ALValue& names, const vpColVector &jointVel, bool verbose=false);
+  void setVelocity(const std::vector<std::string> &names, const vpColVector &jointVel) const;
  // void setVelocity(const AL::ALValue& names, const AL::ALValue &jointVel, bool verbose=false);
   void setVelocity(const std::vector<std::string> &names, const std::vector<float> &jointVel) const;
-
 
   void setBaseVelocity(const std::vector<float> &jointVel) const;
   void setBaseVelocity(const vpColVector &jointVel) const;

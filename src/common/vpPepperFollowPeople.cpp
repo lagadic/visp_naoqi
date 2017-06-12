@@ -223,10 +223,10 @@ bool vpPepperFollowPeople::computeAndApplyServo()
 
   // std::cout << "Loop time check_speech: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
-
+std::cout << "2.5" << std::endl;
   // Detect Face from Okao
   bool face_found = m_face_tracker.detect();
-
+std::cout << "2.6" << std::endl;
   // std::cout << "Loop time face_tracker: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
   if (face_found) {
     m_pLeds.async<void>("fadeRGB", "FaceLeds", "blue", 0.1);
