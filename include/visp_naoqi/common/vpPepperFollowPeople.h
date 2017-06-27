@@ -56,7 +56,7 @@ protected:
   //AL::ALPeoplePerceptionProxy m_people_proxy;
   qi::AnyObject m_pPeoplePerception; //!< PeoplePerception proxy
   //AL::ALSpeechRecognitionProxy * m_asr_proxy;
-  qi::AnyObject *m_pSpeechRecognition; //!< ALSpeechRecognition proxy
+  qi::AnyObject * m_pSpeechRecognition; //!< ALSpeechRecognition proxy
   qi::AnyObject m_pLeds; //!< ALLeds proxy
   //AL::ALTextToSpeechProxy m_tts_proxy;
   qi::AnyObject m_pTextToSpeech; //!< TextToSpeech proxy
@@ -104,7 +104,7 @@ protected:
 
 public:
   vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot);
-  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot, qi::AnyObject &asr_proxy, std::vector<std::string> vocabulary);
+  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot *robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary);
   ~vpPepperFollowPeople();
 
   void activateTranslationBase();

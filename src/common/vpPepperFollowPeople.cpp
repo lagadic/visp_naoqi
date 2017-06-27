@@ -11,7 +11,7 @@ vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoq
 
 {
   m_robot = &robot;
-  m_pSpeechRecognition = new  qi::AnyObject(session->service("ALSpeechRecognition"));
+  m_pSpeechRecognition = new qi::AnyObject(session->service("ALSpeechRecognition"));
   //m_asr_proxy = new  AL::ALSpeechRecognitionProxy(ip, port);
   m_vocabulary.push_back("follow me");
   m_vocabulary.push_back("stop");
@@ -21,20 +21,16 @@ vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoq
 }
 
 
-vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot, qi::AnyObject &asr_proxy, std::vector<std::string> vocabulary ) :m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
-                                                                                                                                                                m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALLeds")), m_face_tracker(session),
+vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary ) :m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
+                                                                                                                                                                m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session),
                                                                                                                                                                 m_robot(NULL),  m_image_height(240), m_image_width(320)
 {
-  m_robot = &robot;
-  m_pSpeechRecognition = &asr_proxy;
+  m_robot = robot;
+  m_pSpeechRecognition = asr_proxy;
 
   m_vocabulary.push_back("follow me");
   m_vocabulary.push_back("stop");
   m_vocabulary.insert( m_vocabulary.end(), vocabulary.begin(), vocabulary.end() );
-
-  std::cout << "Vocabulary"<< std::endl;
-  for(unsigned int i = 0;i < m_vocabulary.size();i++)
-    std::cout << m_vocabulary[i] << std::endl;
 
   initialization();
 
@@ -76,8 +72,6 @@ void vpPepperFollowPeople::initialization()
   // Start the speech recognition engine with user Test_m_asr_proxy
   m_pSpeechRecognition->call<void>("pause", false);
   m_pSpeechRecognition->call<void>("subscribe","Test_ASR");
-
-  std::cout << "Speech recognition engine started" << std::endl;
 
   //Set bool
   m_stop_vxy = false;
@@ -130,12 +124,7 @@ void vpPepperFollowPeople::initialization()
  // m_robot->getProxy()->setExternalCollisionProtectionEnabled("Move", false);
 
 
-//  I.init(m_image_height, m_image_width,0);
-//  d.init(I);
-//  vpDisplay::setTitle(I, "ViSP viewer");
-//  vpDisplay::display(I);
 
-  std::cout << "Init" << std::endl;
 }
 
 
@@ -171,16 +160,9 @@ bool vpPepperFollowPeople::computeAndApplyServo()
     m_reinit_servo = false;
     m_pLeds.async<void>("fadeRGB", "FaceLeds", "white", 0.1);
 
-
     //m_led_proxy.post.fadeRGB("FaceLeds","white",0.1);
-    std::cout << "REINIT SERVO ms" << std::endl;
-
+    //std::cout << "REINIT SERVO ms" << std::endl;
   }
-  std::cout << "Display" << std::endl;
-
-//  vpDisplay::display(I);
-
-  //std::cout << "Loop time check_speech 0: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
   m_stop_vxy = false;
 
@@ -188,10 +170,7 @@ bool vpPepperFollowPeople::computeAndApplyServo()
   qi::AnyValue data_word_recognized = m_pMemory.call<qi::AnyValue>("getData", "WordRecognized");
   qi::AnyReferenceVector result_speech = data_word_recognized.asListValuePtr();
 
-  std::cout << "1" << std::endl;
-
   // std::cout << "Loop time check_speech 1: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
-
 
   if ( ((result_speech[0].content().toString()) == m_vocabulary[0]) && (result_speech[1].content().toFloat() > 0.4 )) //move
   {
@@ -206,27 +185,19 @@ bool vpPepperFollowPeople::computeAndApplyServo()
     m_task.setLambda(m_lambda_nobase) ;
     m_move_base = false;
   }
-  //std::cout << "Loop time check_speech 2: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
-  std::cout << "2" << std::endl;
   if (m_move_base != m_move_base_prev)
   {
     if (m_move_base)
       m_pTextToSpeech.async<void>("say", "Ok, I will follow you.");
-      //m_tts_proxy.post.say("Ok, I will follow you.");
     else
       m_pTextToSpeech.async<void>("say", "Ok, I will stop.");
-     //m_tts_proxy.post.say("Ok, I will stop.");
   }
 
   m_move_base_prev = m_move_base;
 
-  // std::cout << "Loop time check_speech: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
-
-std::cout << "2.5" << std::endl;
   // Detect Face from Okao
   bool face_found = m_face_tracker.detect();
-std::cout << "2.6" << std::endl;
   // std::cout << "Loop time face_tracker: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
   if (face_found) {
     m_pLeds.async<void>("fadeRGB", "FaceLeds", "blue", 0.1);
@@ -246,7 +217,6 @@ std::cout << "2.6" << std::endl;
       m_head_cog_cur.set_uv(u,v);
   }
   // Detect Person from Depth Camera
-  //AL::ALValue result = m_mem_proxy.getData("PeoplePerception/VisiblePeopleList");
   qi::AnyValue data_people = m_pMemory.call<qi::AnyValue>("getData", "PeoplePerception/VisiblePeopleList");
   qi::AnyReferenceVector data_people_ref = data_people.asListValuePtr() ;
   // std::cout << "Loop time get Data PeoplePerception " << vpTime::measureTimeMs() - t << " ms" << std::endl;
@@ -254,10 +224,8 @@ std::cout << "2.6" << std::endl;
   m_person_found = false;
   if (data_people_ref.size() > 0)
   {
-    //AL::ALValue info = m_mem_proxy.getData("PeoplePerception/PeopleDetected");
     qi::AnyValue info = m_pMemory.call<qi::AnyValue>("getData", "PeoplePerception/PeopleDetected");
     qi::AnyReferenceVector result = info.asListValuePtr();
-
     qi::AnyReferenceVector person_datas = result[1].asListValuePtr();
 
     int num_people = person_datas.size();
@@ -268,7 +236,6 @@ std::cout << "2.6" << std::endl;
 
     if (face_found) // Try to find the match between two detection
     {
-      std::cout << "3" << std::endl;
       vpImagePoint cog_face;
       double dist_min = 1000;
       unsigned int index_person = 0;
@@ -278,8 +245,6 @@ std::cout << "2.6" << std::endl;
         qi::AnyReference ref1 = person_datas[i].content(); // PersonData_i[i]
         float alpha = ref1[2].content().asFloat();
         float beta = ref1[3].content().asFloat();
-        //float alpha =  info[1][i][2];
-        //float beta =  info[1][i][3];
         //Z = Zd;
         // Centre of face into the image
         float x =  m_image_width/2 -  m_image_width * beta;
@@ -297,7 +262,6 @@ std::cout << "2.6" << std::endl;
 
       if (dist_min < 55.)
       {
-        std::cout << "4" << std::endl;
         qi::AnyReference ref_person = person_datas[index_person].content();
         m_Z = ref_person[1].content().asFloat(); // Current distance
       }
@@ -305,20 +269,15 @@ std::cout << "2.6" << std::endl;
     }
     else // Take the first one on the list and use cog face from PeoplePerception
     {
-      std::cout << "5" << std::endl;
       qi::AnyReference ref1 = person_datas[0].content(); // PersonData_i[i]
       float alpha = ref1[2].content().asFloat();
       float beta = ref1[3].content().asFloat();
-      //float alpha =  info[1][0][2];
-      //float beta =  info[1][0][3];
       //Z = Zd;
       // Centre of face into the image
       float x =  m_image_width/2 -  m_image_width * beta;
       float y =  m_image_height/2  + m_image_height * alpha;
       m_head_cog_cur.set_uv(x,y);
       m_Z = ref1[1].content().asFloat();
-
-      //m_Z = info[1][0][1]; // Current distance
     }
   }
   else
@@ -344,8 +303,6 @@ std::cout << "2.6" << std::endl;
       for (unsigned int j = 0; j < torso_eJe_head.getCols(); j++)
         tJe[i][j+3] = torso_eJe_head[i][j];
 
-    // std::cout << "tJe" << std::endl << tJe << std::endl;
-
     vpHomogeneousMatrix torsoMHeadPith = m_robot->getTransform("HeadPitch", 0);// get transformation  matrix between torso and HeadRoll
     vpVelocityTwistMatrix HeadPitchVLtorso(torsoMHeadPith.inverse());
 
@@ -353,17 +310,11 @@ std::cout << "2.6" << std::endl;
       for(unsigned int j=0; j< 3; j++)
         HeadPitchVLtorso[i][j+3] = 0;
 
-    //std::cout << "HeadPitchVLtorso: " << std::endl << HeadPitchVLtorso << std::endl;
-    // Transform the matrix
     eJe = HeadPitchVLtorso *tJe;
-
-    // std::cout << "eJe" << std::endl << eJe << std::endl;
 
     m_task.set_eJe( eJe );
     m_task.set_cVe( vpVelocityTwistMatrix(m_eMc.inverse()) );
 
-//        vpDisplay::displayCross(I, m_ip, 10, vpColor::blue);
-//        vpDisplay::displayCross(I, m_head_cog_cur, 10, vpColor::green);
     //  std::cout << "head_cog_des:" << std::endl << head_cog_des << std::endl;
     //  std::cout << "head_cog_cur:" << std::endl << head_cog_cur << std::endl;
 
@@ -404,11 +355,11 @@ std::cout << "2.6" << std::endl;
 
     if (std::fabs(m_Z - m_Zd) < 0.05 || m_stop_vxy || !m_move_base)
     {
-      std::cout << "#################################################!" << std::endl;
-      std::cout << std::fabs(m_Z - m_Zd) << std::endl;
-      std::cout << m_stop_vxy << std::endl;
-      std::cout << !m_move_base << std::endl;
-      std::cout << "#################################################!" << std::endl;
+      //      std::cout << "#################################################!" << std::endl;
+      //      std::cout << std::fabs(m_Z - m_Zd) << std::endl;
+      //      std::cout << m_stop_vxy << std::endl;
+      //      std::cout << !m_move_base << std::endl;
+      //      std::cout << "#################################################!" << std::endl;
       m_robot->setBaseVelocity(0.0, 0.0, m_q_dot[2]);
     }
     else
@@ -421,10 +372,6 @@ std::cout << "2.6" << std::endl;
     std::cout << "Stop******************************!" << std::endl;
     m_reinit_servo = true;
   }
-
-
-//   vpDisplay::flush(I);
-
 
   std::cout << "Loop time internal: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
