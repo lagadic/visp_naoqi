@@ -49,7 +49,7 @@
 #  include <metapod/tools/initconf.hh>
 #  include <metapod/algos/jac_point_chain.hh>
 #  include <metapod/tools/jcalc.hh>
-#  include <metapod/algos/djac.hh>
+#  include <metapod/algos/djac.hh> // Was used for Romeo, to compute the derivative of the Jacobian for singularity avoidance
 #  include <metapod/algos/rnea.hh>
 
 using namespace metapod;
@@ -1269,7 +1269,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
     //jointNames.insert(jointNames.end(), jointNamesEye.begin(), jointNamesEye.end());
 
-
     // Get the angles of the joints in the chain we want to control
     std::vector<float> qmp_head = getAngles(jointNamesHead, true );
     std::vector<float> qmp_leye = getAngles(jointNamesEye, true );
@@ -1388,15 +1387,14 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
     for(unsigned int i=0;i<3;i++)
       for(unsigned int j=0;j<nJoints;j++)
       {
-        tJe[i][j]=J(i+3, index_confVec +j);
-        tJe[i+3][j]=J(i, index_confVec +j);
-
+        tJe[i][j]=J(i+3, index_confVec +j); // translation
+        tJe[i+3][j]=J(i, index_confVec +j); // orientation
       }
 
     // std::cout << "metapod_Jac:" <<std::endl << J;
 
     // Now we want to transform tJe to eJe
-    vpHomogeneousMatrix torsoMHead(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));// get transformation  matrix between torso and Head
+    vpHomogeneousMatrix torsoMHead(m_pMotion.call<std::vector<float> >("getTransform", jointNames[nJoints-1], 0, true ));// get transformation matrix between torso and Head
     vpVelocityTwistMatrix HeadVLtorso(torsoMHead.inverse());
 
     for(unsigned int i=0; i< 3; i++)
@@ -1488,8 +1486,6 @@ vpMatrix vpNaoqiRobot::get_eJe(const std::string &chainName, vpMatrix &tJe) cons
 
 #endif // #ifdef VISP_NAOQI_HAVE_MATAPOD
   }
-
-
 
   else
   {

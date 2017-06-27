@@ -48,15 +48,16 @@ bool vpFaceTrackerOkao::detect()
   qi::AnyValue data = m_pMemory.call<qi::AnyValue>("getData", "FaceDetected");
   qi::AnyReferenceVector result;
   std::ostringstream ss;
- // try
- // {
+  try
+  {
     result = data.asListValuePtr();
- // }
- // catch(std::runtime_error& e)
- // {
- //   ss << "Could not transform AnyValue into list: " << e.what();
- //   throw std::runtime_error(ss.str());
- // }
+  }
+  catch(std::runtime_error& e)
+  {
+    ss << "Could not transform AnyValue into list: " << e.what();
+    //throw std::runtime_error(ss.str());
+    return target_found;
+  }
 
   //-- Detect faces
 
