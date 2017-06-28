@@ -8,6 +8,8 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=deprecated-declarations -std=c++11 -std=gnu++11")
 #endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+
 find_package(VISP REQUIRED)
 find_package(Metapod)
 
