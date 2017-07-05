@@ -76,6 +76,8 @@ set( COMMON_SRC
         src/common/vpPepperFollowPeople.cpp
         include/visp_naoqi/common/vpServoArm.h
         src/common/vpServoArm.cpp
+        include/visp_naoqi/common/vpServoHead.h
+        src/common/vpServoHead.cpp
 )
 
 set( NAOQI_SRC
@@ -108,6 +110,8 @@ endif()
 
 subdirs(example)
 #subdirs(tools/calibration)
+subdirs(demos/gaze)
+subdirs(demos/follow-me)
 
 # doxygen
 find_package(Doxygen)

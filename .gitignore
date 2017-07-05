@@ -4,3 +4,4 @@ build-toolchain*
 *.cmake.user
 build-doc/
 doc/
+build
