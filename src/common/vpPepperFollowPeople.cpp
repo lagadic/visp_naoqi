@@ -5,9 +5,10 @@
 #include "al/alvisiondefinitions.h"
 
 
-vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot) : m_pMemory(session->service("ALMemory")),m_pPeoplePerception(session->service("ALPeoplePerception")),
-                                                                            m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session), m_robot(NULL),
-                                                                            m_image_height(240), m_image_width(320)
+vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot)
+  : m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
+    m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session), m_robot(NULL),
+    m_image_height(240), m_image_width(320)
 
 {
   m_robot = &robot;
@@ -15,21 +16,24 @@ vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoq
   //m_asr_proxy = new  AL::ALSpeechRecognitionProxy(ip, port);
   m_vocabulary.push_back("follow me");
   m_vocabulary.push_back("stop");
+  m_vocabulary.push_back("close");
 
   initialization();
 
 }
 
 
-vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary ) :m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
-                                                                                                                                                                m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session),
-                                                                                                                                                                m_robot(NULL),  m_image_height(240), m_image_width(320)
+vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary)
+  : m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
+    m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session),
+    m_robot(NULL),  m_image_height(240), m_image_width(320)
 {
   m_robot = robot;
   m_pSpeechRecognition = asr_proxy;
 
   m_vocabulary.push_back("follow me");
   m_vocabulary.push_back("stop");
+  m_vocabulary.push_back("close");
   m_vocabulary.insert( m_vocabulary.end(), vocabulary.begin(), vocabulary.end() );
 
   initialization();
@@ -75,8 +79,8 @@ void vpPepperFollowPeople::initialization()
 
   //Set bool
   m_stop_vxy = false;
-  m_move_base = true;
-  m_move_base_prev = true;
+  m_state = state_base_rotate;
+  m_state_prev = m_state;
   m_servo_time_init = false;
   m_reinit_servo = true;
   m_person_found = false;
@@ -85,10 +89,8 @@ void vpPepperFollowPeople::initialization()
   // Set Visual Servoing:
   m_task.setServo(vpServo::EYEINHAND_L_cVe_eJe) ;
   m_task.setInteractionMatrixType(vpServo::CURRENT, vpServo::PSEUDO_INVERSE);
-  m_lambda_base.initStandard(1.0, 0.8, 7); // 2.3, 0.7, 15
-  m_lambda_nobase.initStandard(5, 2.9, 15); // 4, 0.5, 15
-  m_task.setLambda(m_lambda_base) ;
-
+  m_lambda_base_follow.initStandard(1.0, 0.8, 7); // 2.3, 0.7, 15
+  m_lambda_base_rotate.initStandard(5, 2.9, 15); // 4, 0.5, 15
 
   // Create the desired visual feature
   m_head_cog_cur.set_uv(m_image_width/2, m_image_height/2);
@@ -150,51 +152,52 @@ vpPepperFollowPeople::~vpPepperFollowPeople()
 }
 
 
-bool vpPepperFollowPeople::computeAndApplyServo()
+vpPepperFollowPeople::state_t vpPepperFollowPeople::computeAndApplyServo()
 {
-  double t = vpTime::measureTimeMs();
-
   if (m_reinit_servo) {
     m_servo_time_init = vpTime::measureTimeSecond();
     m_t_prev = vpTime::measureTimeSecond();
     m_reinit_servo = false;
     m_pLeds.async<void>("fadeRGB", "FaceLeds", "white", 0.1);
-
-    //m_led_proxy.post.fadeRGB("FaceLeds","white",0.1);
-    //std::cout << "REINIT SERVO ms" << std::endl;
   }
 
   m_stop_vxy = false;
 
-  //std::vector<std::string> result_speech;
   qi::AnyValue data_word_recognized = m_pMemory.call<qi::AnyValue>("getData", "WordRecognized");
   qi::AnyReferenceVector result_speech = data_word_recognized.asListValuePtr();
 
-  // std::cout << "Loop time check_speech 1: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
-
+  // move base
   if ( ((result_speech[0].content().toString()) == m_vocabulary[0]) && (result_speech[1].content().toFloat() > 0.4 )) //move
   {
     std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat()  << std::endl;
-    m_task.setLambda(m_lambda_base) ;
-
-    m_move_base = true;
+    m_task.setLambda(m_lambda_base_follow) ;
+    m_state = state_base_follow;
   }
+  // stop base motion
   else if ( (result_speech[0].content().toString() == m_vocabulary[1]) && (result_speech[1].content().toFloat() > 0.4 )) //stop
   {
     std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat() << std::endl;
-    m_task.setLambda(m_lambda_nobase) ;
-    m_move_base = false;
+    m_task.setLambda(m_lambda_base_rotate) ;
+    m_state = state_base_rotate;
   }
-
-  if (m_move_base != m_move_base_prev)
+  else if ( (result_speech[0].content().toString() == m_vocabulary[2]) && (result_speech[1].content().toFloat() > 0.4 )) //stop
   {
-    if (m_move_base)
-      m_pTextToSpeech.async<void>("say", "Ok, I will follow you.");
-    else
-      m_pTextToSpeech.async<void>("say", "Ok, I will stop.");
+    std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat() << std::endl;
+    m_task.setLambda(m_lambda_base_rotate) ;
+    m_state = state_finish;
   }
 
-  m_move_base_prev = m_move_base;
+  if (m_state != m_state_prev)
+  {
+    if (m_state == state_base_follow)
+      m_pTextToSpeech.async<void>("say", "Ok, I will follow you.");
+    else if (m_state == state_base_rotate)
+      m_pTextToSpeech.async<void>("say", "Ok, I will stop following you.");
+    else if (m_state == state_finish)
+      m_pTextToSpeech.async<void>("say", "Ok, I will close this application.");
+  }
+
+  m_state_prev = m_state;
 
   // Detect Face from Okao
   bool face_found = m_face_tracker.detect();
@@ -202,24 +205,15 @@ bool vpPepperFollowPeople::computeAndApplyServo()
   if (face_found) {
     m_pLeds.async<void>("fadeRGB", "FaceLeds", "blue", 0.1);
 
-//        for(size_t i=0; i < m_face_tracker.getNbObjects(); i++) {
-//          vpRect bbox = m_face_tracker.getBBox(i);
-//          if (i == 0)
-//            vpDisplay::displayRectangle(I, bbox, vpColor::red, false, 2);
-//          else
-//            vpDisplay::displayRectangle(I, bbox, vpColor::green, false, 1);
-//          vpDisplay::displayText(I, (int)bbox.getTop()-10, (int)bbox.getLeft(), m_face_tracker.getMessage(i) , vpColor::red);
-//        }
-
     double u = m_face_tracker.getCog(0).get_u();
     double v = m_face_tracker.getCog(0).get_v();
-    if (u<= m_image_width && v <= m_image_height)
+    if (u <= m_image_width && v <= m_image_height)
       m_head_cog_cur.set_uv(u,v);
   }
+
   // Detect Person from Depth Camera
   qi::AnyValue data_people = m_pMemory.call<qi::AnyValue>("getData", "PeoplePerception/VisiblePeopleList");
   qi::AnyReferenceVector data_people_ref = data_people.asListValuePtr() ;
-  // std::cout << "Loop time get Data PeoplePerception " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
   m_person_found = false;
   if (data_people_ref.size() > 0)
@@ -280,15 +274,10 @@ bool vpPepperFollowPeople::computeAndApplyServo()
       m_Z = ref1[1].content().asFloat();
     }
   }
-  else
-  {
+  else {
     std::cout << "No distance computed " << std::endl;
     m_stop_vxy = true;
-   // m_robot->getProxy()->setAngles("HipRoll",0.0,1.0);
-  }  //  m_robot->stop(m_jointNames_head);
-  //  m_robot->stopBase();
-  //  std::cout << "Stop request!" << std::endl;
-  //  m_reinit_servo = true;
+  }
 
   //std::cout << "Loop time before VS: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
@@ -353,7 +342,7 @@ bool vpPepperFollowPeople::computeAndApplyServo()
 
     std::cout << "q:" << m_q_dot << std::endl;
 
-    if (std::fabs(m_Z - m_Zd) < 0.05 || m_stop_vxy || !m_move_base)
+    if ( (std::fabs(m_Z - m_Zd) < 0.05) || m_stop_vxy || (m_state == state_base_rotate) )
     {
       //      std::cout << "#################################################!" << std::endl;
       //      std::cout << std::fabs(m_Z - m_Zd) << std::endl;
@@ -362,9 +351,9 @@ bool vpPepperFollowPeople::computeAndApplyServo()
       //      std::cout << "#################################################!" << std::endl;
       m_robot->setBaseVelocity(0.0, 0.0, m_q_dot[2]);
     }
-    else
+    else if(m_state == state_base_follow) {
       m_robot->setBaseVelocity(m_q_dot[0], m_q_dot[1], m_q_dot[2]);
-
+    }
   }
   else {
     m_robot->stop(m_jointNames_head);
@@ -373,9 +362,7 @@ bool vpPepperFollowPeople::computeAndApplyServo()
     m_reinit_servo = true;
   }
 
-  std::cout << "Loop time internal: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
-
-  return true;
+  return m_state;
 }
 
 void  vpPepperFollowPeople::setDesiredDistance(double dist)
@@ -404,18 +391,18 @@ void vpPepperFollowPeople::stop()
 
 void vpPepperFollowPeople::stopTranslationBase()
 {
-  m_move_base = false;
+  m_state = state_base_rotate;
 }
 
 void vpPepperFollowPeople::activateTranslationBase()
 {
-  m_move_base = true;
+  m_state = state_base_follow;
 }
 
 
 void vpPepperFollowPeople::exit()
 {
-  m_move_base = true;
+  m_state = state_finish;;
 }
 
 

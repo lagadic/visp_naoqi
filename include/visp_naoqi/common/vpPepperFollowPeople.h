@@ -39,6 +39,13 @@
 
 class vpPepperFollowPeople
 {
+public:
+  typedef enum {
+    state_base_follow, //!< Move base in translation and rotation
+    state_base_rotate,   //!< Move base in rotation only
+    state_finish        //!< Ends the demo
+  } state_t;
+
 protected:
 
   // Robot
@@ -66,8 +73,8 @@ protected:
 
   // Servo
   vpServo m_task;
-  vpAdaptiveGain m_lambda_base;
-  vpAdaptiveGain m_lambda_nobase;
+  vpAdaptiveGain m_lambda_base_follow;
+  vpAdaptiveGain m_lambda_base_rotate;
  // AL::ALFaceDetectionProxy m_proxy;
   std::vector<cv::Rect> m_faces;  //!< Bounding box of each detected face.
   std::vector<float> m_scores;
@@ -95,8 +102,8 @@ protected:
 
   //Bool
   bool m_stop_vxy;
-  bool m_move_base;
-  bool m_move_base_prev;
+  state_t m_state;
+  state_t m_state_prev;
   bool m_reinit_servo;
   bool m_person_found;
   bool m_reverse;
@@ -108,7 +115,7 @@ public:
   ~vpPepperFollowPeople();
 
   void activateTranslationBase();
-  bool computeAndApplyServo();
+  state_t computeAndApplyServo();
   void exit();
   double getActualDistance() const;
   void initialization();
