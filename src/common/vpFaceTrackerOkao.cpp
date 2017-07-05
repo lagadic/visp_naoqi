@@ -65,7 +65,6 @@ bool vpFaceTrackerOkao::detect()
   {
     std::cout << "face detected" << std::endl;
     qi::AnyReferenceVector info_face_array = result[1].asListValuePtr();
-    std::cout << "info_face_array.size()" <<info_face_array.size() << std::endl;
     target_found = true;
     double min_dist = m_image_width*m_image_height;
     unsigned int index_closest_cog = 0;
