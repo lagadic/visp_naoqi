@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     std::cout << jointNames_head[i] << std::endl;
 
   vpMatrix torso_eJe_head;
-  robot.get_eJe("Head",torso_eJe_head);
+  robot.get_eJe("Head", torso_eJe_head);
 
   std::cout << "Jacobian Head: " << std::endl << torso_eJe_head << std::endl;
 
@@ -109,10 +109,7 @@ int main(int argc, char** argv)
       text << "Found " << face_tracker.getNbObjects() << " face(s)";
     }
 
-    robot.setVelocity(jointNames_head,vel);
-
-
-
+    robot.setVelocity(jointNames_head, vel);
   }
 
 
