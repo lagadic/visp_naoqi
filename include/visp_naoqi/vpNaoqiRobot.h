@@ -93,13 +93,15 @@
 class vpNaoqiRobot
 {
 
-protected:
+public:
   typedef enum {
     Romeo,
     Nao,
     Pepper,
     Unknown
   } RobotType;
+
+protected:
   qi::AnyObject m_pMemory; //!< Memory proxy
   qi::AnyObject m_pMotion;  //!< Motion proxy
   qi::AnyObject m_pepper_control;  //!< Proxy to Pepper_control
