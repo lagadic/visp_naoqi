@@ -1,0 +1,17 @@
+# - Config file for the visp_naoqi package
+# It defines the following variables
+#  visp_naoqi_INCLUDE_DIRS - include directories for visp_naoqi
+#  visp_naoqi_LIBRARIES    - libraries to link against
+ 
+# Compute paths
+get_filename_component(visp_naoqi_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(visp_naoqi_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+ 
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET foo AND NOT FooBar_BINARY_DIR)
+  include("${visp_naoqi_CMAKE_DIR}/visp_naoqiTargets.cmake")
+endif()
+ 
+# These are IMPORTED targets created by visp_naoqiTargets.cmake
+set(visp_naoqi_LIBRARIES visp_naoqi)
+

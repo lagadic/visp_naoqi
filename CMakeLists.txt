@@ -2,6 +2,25 @@ cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 
 project(visp_naoqi)
 
+# By default set release configuration
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE String "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
+set(visp_naoqi_MAJOR_VERSION 1)
+set(visp_naoqi_MINOR_VERSION 0)
+set(visp_naoqi_PATCH_VERSION 0)
+set(visp_naoqi_VERSION ${visp_naoqi_MAJOR_VERSION}.${visp_naoqi_MINOR_VERSION}.${visp_naoqi_PATCH_VERSION})
+
+find_file(GNU_INSTALL_DIRS_FROM_CMAKE NAMES GNUInstallDirs.cmake PATHS ${CMAKE_ROOT}/Modules)
+mark_as_advanced(GNU_INSTALL_DIRS_FROM_CMAKE)
+if(GNU_INSTALL_DIRS_FROM_CMAKE)
+  include(${CMAKE_ROOT}/Modules/GNUInstallDirs.cmake)
+else()
+  #include(cmake/GNUInstallDirs.cmake)
+  message("Cannot find GNUInstallDirs.cmake")
+endif()
+
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
@@ -35,8 +54,8 @@ if(USE_METAPOD)
 
 # Include Romeo Robot
   #set(WITH_METAPODFROMURDF TRUE)
-  set(model_name "romeo")
-  ADD_SAMPLEURDFMODEL(${model_name})
+  set(model_name_romeo "romeo")
+  ADD_SAMPLEURDFMODEL(${model_name_romeo})
   include_directories("${CMAKE_BINARY_DIR}/include/metapod/models/romeo")
 
 # Include Pepper Robot
@@ -69,31 +88,34 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-set( COMMON_SRC
-        include/visp_naoqi/common/vpFaceTrackerOkao.h
-        src/common/vpFaceTrackerOkao.cpp
-        include/visp_naoqi/common/vpPepperFollowPeople.h
-        src/common/vpPepperFollowPeople.cpp
-        include/visp_naoqi/common/vpServoArm.h
-        src/common/vpServoArm.cpp
-        include/visp_naoqi/common/vpServoHead.h
-        src/common/vpServoHead.cpp
+set(SOURCES
+  src/common/vpFaceTrackerOkao.cpp
+  src/common/vpPepperFollowPeople.cpp
+  src/common/vpServoArm.cpp
+  src/common/vpServoHead.cpp
+  src/grabber/vpNaoqiGrabber.cpp
+  src/robot/vpNaoqiRobot.cpp
+  include/al/from_any_value.cpp
 )
 
-set( NAOQI_SRC
-        include/al/alvisiondefinitions.h
-        include/al/from_any_value.cpp
-        include/al/naoqi_image.hpp
+set(HEADERS_VISP_NAOQI
+  include/visp_naoqi/common/vpFaceTrackerOkao.h
+  include/visp_naoqi/common/vpPepperFollowPeople.h
+  include/visp_naoqi/common/vpServoArm.h
+  include/visp_naoqi/common/vpServoHead.h
+  include/visp_naoqi/vpNaoqiGrabber.h
+  include/visp_naoqi/vpNaoqiRobot.h
+)
+set(HEADERS_AL
+  include/al/alvisiondefinitions.h
+  include/al/naoqi_image.hpp
 )
 
-add_library(visp_naoqi
-    ${NAOQI_SRC}
-    ${COMMON_SRC}
-    include/visp_naoqi/vpNaoqiConfig.h
-    include/visp_naoqi/vpNaoqiGrabber.h
-    include/visp_naoqi/vpNaoqiRobot.h
-    src/grabber/vpNaoqiGrabber.cpp
-    src/robot/vpNaoqiRobot.cpp
+add_library(visp_naoqi SHARED
+  ${SOURCES}
+  ${HEADERS_VISP_NAOQI}
+  ${HEADERS_AL}
+  include/visp_naoqi/vpNaoqiConfig.h
 )
 
 target_link_libraries(visp_naoqi
@@ -104,7 +126,7 @@ target_link_libraries(visp_naoqi
     )
 
 if(USE_METAPOD)
-  target_link_libraries(visp_naoqi metapod_${model_name})
+  target_link_libraries(visp_naoqi metapod_${model_name_romeo})
   target_link_libraries(visp_naoqi metapod_${model_name_pepper})
 endif()
 
@@ -131,3 +153,67 @@ if (DOXYGEN_FOUND)
 
   add_custom_target(html-doc ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/config-doxygen)
 endif()
+
+
+install(TARGETS visp_naoqi metapod_${model_name_romeo} metapod_${model_name_pepper}
+  # IMPORTANT: Add the visp_naoqi library to the "export-set"
+  EXPORT visp_naoqiTargets
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT libs
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT libs
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT dev
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/visp_naoqi" COMPONENT dev)
+
+# headers installation
+install(FILES ${HEADERS_VISP_NAOQI} ${CMAKE_BINARY_DIR}/include/visp_naoqi/vpNaoqiConfig.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/visp_naoqi
+  COMPONENT dev  )
+install(FILES ${HEADERS_AL}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/al
+  COMPONENT dev
+  )
+
+install(FILES include/visp_naoqi/camera.xml
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/visp_naoqi
+  COMPONENT dev
+  )
+
+
+# Add all targets to the build-tree export set
+export(TARGETS visp_naoqi metapod_${model_name_romeo} metapod_${model_name_pepper} FILE "${PROJECT_BINARY_DIR}/visp_naoqiTargets.cmake")
+#export(TARGETS visp_naoqi FILE "${PROJECT_BINARY_DIR}/visp_naoqiTargets.cmake")
+#export(TARGETS metapod_${model_name_romeo} FILE "${PROJECT_BINARY_DIR}/metapod_${model_name_romeo}Targets.cmake")
+#export(TARGETS metapod_${model_name_pepper} FILE "${PROJECT_BINARY_DIR}/metapod_${model_name_pepper}Targets.cmake")
+
+# Export the package for use from the build-tree
+# (this registers the build-tree with a global CMake-registry)
+export(PACKAGE visp_naoqi)
+
+# --------------------------------------------------------------------------------------------
+#  Part 1/3: ${BIN_DIR}/visp_naoqiConfig.cmake -> For use *with* "make"
+# -------------------------------------------------------------------------------------------
+
+set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include" )
+
+configure_file(cmake/visp_naoqiConfig.cmake.in "${PROJECT_BINARY_DIR}/visp_naoqiConfig.cmake" @ONLY)
+# ... for both
+configure_file(cmake/visp_naoqiConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/visp_naoqiConfigVersion.cmake" @ONLY)
+
+# --------------------------------------------------------------------------------------------
+#  Part 2/3: ${BIN_DIR}/unix-install/VISPConfig.cmake -> For use *with* "make install"
+# -------------------------------------------------------------------------------------------
+
+set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
+
+configure_file(cmake/visp_naoqiConfig.cmake.in "${PROJECT_BINARY_DIR}/tmp-install/visp_naoqiConfig.cmake" @ONLY)
+# ... for both
+configure_file(cmake/visp_naoqiConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/tmp-install/visp_naoqiConfigVersion.cmake" @ONLY)
+
+# Install the visp_naoqiConfig.cmake and visp_naoqiConfigVersion.cmake
+install(FILES
+  "${PROJECT_BINARY_DIR}/tmp-install/visp_naoqiConfig.cmake"
+  "${PROJECT_BINARY_DIR}/tmp-install/visp_naoqiConfigVersion.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/visp_naoqi" COMPONENT dev)
+
+# Install the export set for use with the install-tree
+install(EXPORT visp_naoqiTargets DESTINATION
+  "${CMAKE_INSTALL_LIBDIR}/cmake/visp_naoqi" COMPONENT dev)
