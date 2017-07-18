@@ -1,9 +1,0 @@
-<project version="3" >
-
-  <!-- used by qibuild to build your library -->
-  <qibuild name="visp_naoqi" />
-
-  <!-- used by qidoc to build the Doxygen documentation -->
-  <qidoc name="visp_naoqi-dox" type="doxygen" />
-
-</project>
