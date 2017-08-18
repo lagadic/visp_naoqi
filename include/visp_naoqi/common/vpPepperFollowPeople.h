@@ -106,19 +106,27 @@ protected:
   state_t m_state_prev;
   bool m_reinit_servo;
   bool m_person_found;
+  bool m_person_or_face_detected;
   bool m_reverse;
 
 
 public:
   vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot);
+  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot *robot);
   vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot *robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary);
   ~vpPepperFollowPeople();
 
   void activateTranslationBase();
-  state_t computeAndApplyServo();
+  state_t computeAndApplyServo(bool apply_command = true);
   void exit();
   double getActualDistance() const;
+  vpColVector getCommand() const
+  { return m_q_dot;}
+  bool getStatusDetection() const
+  {return m_person_or_face_detected;}
   void initialization();
+  void setLambdaBaseFollow(vpAdaptiveGain &gain)
+  { m_lambda_base_follow = gain;}
   void setDesiredDistance(double dist);
   void setReverse(bool flag);
   void stopTranslationBase();

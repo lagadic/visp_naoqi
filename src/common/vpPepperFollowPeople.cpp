@@ -13,7 +13,6 @@ vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoq
 {
   m_robot = &robot;
   m_pSpeechRecognition = new qi::AnyObject(session->service("ALSpeechRecognition"));
-  //m_asr_proxy = new  AL::ALSpeechRecognitionProxy(ip, port);
   m_vocabulary.push_back("follow me");
   m_vocabulary.push_back("stop");
   m_vocabulary.push_back("close");
@@ -21,6 +20,24 @@ vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoq
   initialization();
 
 }
+
+
+vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot)
+  : m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
+    m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session), m_robot(NULL),
+    m_image_height(240), m_image_width(320)
+
+{
+  m_robot = robot;
+  m_pSpeechRecognition = new qi::AnyObject(session->service("ALSpeechRecognition"));
+  m_vocabulary.push_back("follow me");
+  m_vocabulary.push_back("stop");
+  m_vocabulary.push_back("close");
+
+  initialization();
+
+}
+
 
 
 vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary)
@@ -77,13 +94,22 @@ void vpPepperFollowPeople::initialization()
   m_pSpeechRecognition->call<void>("pause", false);
   m_pSpeechRecognition->call<void>("subscribe","Test_ASR");
 
+  try
+  {
+    m_pMemory.call<void>("removeData", "WordRecognized");
+  }
+  catch (const std::exception& e) { // reference to the base of a polymorphic object
+    std::cout << e.what(); // information from length_error printed
+  }
+
   //Set bool
   m_stop_vxy = false;
-  m_state = state_base_rotate;
+  m_state = state_base_follow;
   m_state_prev = m_state;
   m_servo_time_init = false;
   m_reinit_servo = true;
   m_person_found = false;
+  m_person_or_face_detected = false;
   m_reverse = true;
 
   // Set Visual Servoing:
@@ -119,11 +145,12 @@ void vpPepperFollowPeople::initialization()
   tJe[5][2]= 1;
   eJe.resize(6,5,true);
 
- // m_limit_yaw = m_robot->getProxy()->getLimits("HeadYaw");
+  // m_limit_yaw = m_robot->getProxy()->getLimits("HeadYaw");
 
   m_t_prev = vpTime::measureTimeSecond();
+  m_q_dot.resize(6,true);
 
- // m_robot->getProxy()->setExternalCollisionProtectionEnabled("Move", false);
+  // m_robot->getProxy()->setExternalCollisionProtectionEnabled("Move", false);
 
 
 
@@ -141,18 +168,18 @@ vpPepperFollowPeople::~vpPepperFollowPeople()
   m_pSpeechRecognition->call<void>("unsubscribe", "Test_ASR");
   //m_asr_proxy->unsubscribe("Test_ASR");
   m_pSpeechRecognition->call<void>("removeAllContext");
- // m_asr_proxy->removeAllContext();
+  // m_asr_proxy->removeAllContext();
   m_pSpeechRecognition->call<void>("setVisualExpression", true);
   //m_asr_proxy->setVisualExpression(true);
   m_pSpeechRecognition->call<void>("setLanguage", "French");
 
 
- // m_robot->getProxy()->setExternalCollisionProtectionEnabled("Move", true);
+  // m_robot->getProxy()->setExternalCollisionProtectionEnabled("Move", true);
   // m_robot = NULL;
 }
 
 
-vpPepperFollowPeople::state_t vpPepperFollowPeople::computeAndApplyServo()
+vpPepperFollowPeople::state_t vpPepperFollowPeople::computeAndApplyServo(bool apply_command)
 {
   if (m_reinit_servo) {
     m_servo_time_init = vpTime::measureTimeSecond();
@@ -163,28 +190,38 @@ vpPepperFollowPeople::state_t vpPepperFollowPeople::computeAndApplyServo()
 
   m_stop_vxy = false;
 
-  qi::AnyValue data_word_recognized = m_pMemory.call<qi::AnyValue>("getData", "WordRecognized");
-  qi::AnyReferenceVector result_speech = data_word_recognized.asListValuePtr();
+  qi::AnyValue data_word_recognized;
+  qi::AnyReferenceVector result_speech;
 
-  // move base
-  if ( ((result_speech[0].content().toString()) == m_vocabulary[0]) && (result_speech[1].content().toFloat() > 0.4 )) //move
-  {
-    std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat()  << std::endl;
-    m_task.setLambda(m_lambda_base_follow) ;
-    m_state = state_base_follow;
+  try{
+    data_word_recognized =  m_pMemory.call<qi::AnyValue>("getData", "WordRecognized");
+    result_speech = data_word_recognized.asListValuePtr();
   }
-  // stop base motion
-  else if ( (result_speech[0].content().toString() == m_vocabulary[1]) && (result_speech[1].content().toFloat() > 0.4 )) //stop
-  {
-    std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat() << std::endl;
-    m_task.setLambda(m_lambda_base_rotate) ;
-    m_state = state_base_rotate;
+  catch(const std::exception& e) { // reference to the base of a polymorphic object
+    std::cout << e.what(); // information from length_error printed
   }
-  else if ( (result_speech[0].content().toString() == m_vocabulary[2]) && (result_speech[1].content().toFloat() > 0.4 )) //stop
+  if ( !result_speech.empty() )
   {
-    std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat() << std::endl;
-    m_task.setLambda(m_lambda_base_rotate) ;
-    m_state = state_finish;
+    // move base
+    if ( ((result_speech[0].content().toString()) == m_vocabulary[0]) && (result_speech[1].content().toFloat() > 0.4 )) //move
+    {
+      std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat()  << std::endl;
+      m_task.setLambda(m_lambda_base_follow) ;
+      m_state = state_base_follow;
+    }
+    // stop base motion
+    else if ( (result_speech[0].content().toString() == m_vocabulary[1]) && (result_speech[1].content().toFloat() > 0.4 )) //stop
+    {
+      std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat() << std::endl;
+      m_task.setLambda(m_lambda_base_rotate) ;
+      m_state = state_base_rotate;
+    }
+    else if ( (result_speech[0].content().toString() == m_vocabulary[2]) && (result_speech[1].content().toFloat() > 0.4 )) //stop
+    {
+      std::cout << "Recognized: " << result_speech[0].content().toString() << "with confidence of " << result_speech[1].content().toFloat() << std::endl;
+      m_task.setLambda(m_lambda_base_rotate) ;
+      m_state = state_finish;
+    }
   }
 
   if (m_state != m_state_prev)
@@ -281,6 +318,8 @@ vpPepperFollowPeople::state_t vpPepperFollowPeople::computeAndApplyServo()
 
   //std::cout << "Loop time before VS: " << vpTime::measureTimeMs() - t << " ms" << std::endl;
 
+  m_person_or_face_detected = false;
+
   if (face_found || m_person_found )
   {
     // Get Head Jacobian (6x2)
@@ -332,27 +371,33 @@ vpPepperFollowPeople::state_t vpPepperFollowPeople::computeAndApplyServo()
     z_q2[3] = 2 * alpha * q_yaw[0]/ pow((max - min),2);
 
     vpColVector q3 = P * z_q2;
-    m_q_dot =  m_q_dot + q3;
+    //m_q_dot =  m_q_dot + q3; HACK for DEMO
 
     std::vector<float> vel(m_jointNames_head.size());
     vel[0] = m_q_dot[3];
     vel[1] = m_q_dot[4];
 
-    m_robot->setVelocity(m_jointNames_head, vel);
+    m_person_or_face_detected = true;
 
-    std::cout << "q:" << m_q_dot << std::endl;
-
-    if ( (std::fabs(m_Z - m_Zd) < 0.05) || m_stop_vxy || (m_state == state_base_rotate) )
+    if (apply_command)
     {
-      //      std::cout << "#################################################!" << std::endl;
-      //      std::cout << std::fabs(m_Z - m_Zd) << std::endl;
-      //      std::cout << m_stop_vxy << std::endl;
-      //      std::cout << !m_move_base << std::endl;
-      //      std::cout << "#################################################!" << std::endl;
-      m_robot->setBaseVelocity(0.0, 0.0, m_q_dot[2]);
-    }
-    else if(m_state == state_base_follow) {
-      m_robot->setBaseVelocity(m_q_dot[0], m_q_dot[1], m_q_dot[2]);
+      m_robot->setVelocity(m_jointNames_head, vel);
+
+      std::cout << "q:" << m_q_dot << std::endl;
+
+      if ( (std::fabs(m_Z - m_Zd) < 0.05) || m_stop_vxy || (m_state == state_base_rotate) )
+      {
+        //      std::cout << "#################################################!" << std::endl;
+        //      std::cout << std::fabs(m_Z - m_Zd) << std::endl;
+        //      std::cout << m_stop_vxy << std::endl;
+        //      std::cout << !m_move_base << std::endl;
+        //      std::cout << "#################################################!" << std::endl;
+        m_robot->setBaseVelocity(0.0, 0.0, m_q_dot[2]);
+      }
+      else if(m_state == state_base_follow) {
+        m_robot->setBaseVelocity(m_q_dot[0], m_q_dot[1], m_q_dot[2]);
+      }
+
     }
   }
   else {
@@ -398,7 +443,6 @@ void vpPepperFollowPeople::activateTranslationBase()
 {
   m_state = state_base_follow;
 }
-
 
 void vpPepperFollowPeople::exit()
 {
