@@ -104,7 +104,7 @@ void vpPepperFollowPeople::initialization()
 
   //Set bool
   m_stop_vxy = false;
-  m_state = state_base_follow;
+  m_state = state_base_rotate;
   m_state_prev = m_state;
   m_servo_time_init = false;
   m_reinit_servo = true;
