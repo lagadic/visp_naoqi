@@ -50,12 +50,14 @@
 
 int main(int argc, const char* argv[])
 {
-
+  std::string opt_language = "English";
   std::string opt_ip = "192.168.0.24";
 
   for (unsigned int i=0; i<argc; i++) {
     if (std::string(argv[i]) == "--ip")
       opt_ip = argv[i+1];
+    else if (std::string(argv[i]) == "--fr")
+      opt_language = "French";
     else if (std::string(argv[i]) == "--help") {
       std::cout << "Usage: " << argv[0] << " [--ip <robot address>] " << std::endl;
       return 0;
@@ -75,7 +77,7 @@ int main(int argc, const char* argv[])
   robot.open();
   
 
-  vpPepperFollowPeople task(session, robot);
+  vpPepperFollowPeople task(session, robot, opt_language);
   double dist = 1.0;
   task.setDesiredDistance(dist);
   task.setReverse(true);

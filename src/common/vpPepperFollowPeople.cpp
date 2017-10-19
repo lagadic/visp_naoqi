@@ -5,56 +5,62 @@
 #include "al/alvisiondefinitions.h"
 
 
-vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot)
+vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot, const std::string &language)
   : m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
-    m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session), m_robot(NULL),
-    m_image_height(240), m_image_width(320)
+    m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session), m_robot(&robot),
+    m_image_height(240), m_image_width(320), m_language(language)
 
 {
-  m_robot = &robot;
   m_pSpeechRecognition = new qi::AnyObject(session->service("ALSpeechRecognition"));
-  m_vocabulary.push_back("follow me");
-  m_vocabulary.push_back("stop");
-  m_vocabulary.push_back("close");
+  //m_asr_proxy = new  AL::ALSpeechRecognitionProxy(ip, port);
+  if (language == "French") {
+    m_vocabulary.push_back("suis moi");
+    m_vocabulary.push_back("stop");
+    m_vocabulary.push_back("quitte");
+  }
+  else {
+    m_vocabulary.push_back("follow me");
+    m_vocabulary.push_back("stop");
+    m_vocabulary.push_back("close");
+  }
 
   initialization();
-
 }
 
 
-vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot)
+vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot, const std::string &language)
   : m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
-    m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session), m_robot(NULL),
-    m_image_height(240), m_image_width(320)
+    m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session), m_robot(robot),
+    m_image_height(240), m_image_width(320), m_language(language)
 
 {
-  m_robot = robot;
   m_pSpeechRecognition = new qi::AnyObject(session->service("ALSpeechRecognition"));
-  m_vocabulary.push_back("follow me");
-  m_vocabulary.push_back("stop");
-  m_vocabulary.push_back("close");
+
+  if (language == "French") {
+    m_vocabulary.push_back("suis moi");
+    m_vocabulary.push_back("stop");
+    m_vocabulary.push_back("quitte");
+  }
+  else {
+    m_vocabulary.push_back("follow me");
+    m_vocabulary.push_back("stop");
+    m_vocabulary.push_back("close");
+  }
 
   initialization();
-
 }
 
 
-
-vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary)
+vpPepperFollowPeople::vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot * robot, qi::AnyObject * asr_proxy, const std::vector<std::string> &vocabulary, const std::string &language)
   : m_pMemory(session->service("ALMemory")), m_pPeoplePerception(session->service("ALPeoplePerception")),
     m_pLeds(session->service("ALLeds")), m_pTextToSpeech(session->service("ALTextToSpeech")), m_face_tracker(session),
-    m_robot(NULL),  m_image_height(240), m_image_width(320)
+    m_robot(robot),  m_image_height(240), m_image_width(320), m_language(language)
 {
-  m_robot = robot;
   m_pSpeechRecognition = asr_proxy;
 
-  m_vocabulary.push_back("follow me");
-  m_vocabulary.push_back("stop");
-  m_vocabulary.push_back("close");
-  m_vocabulary.insert( m_vocabulary.end(), vocabulary.begin(), vocabulary.end() );
+  m_vocabulary.insert( vocabulary.end(), vocabulary.begin(), vocabulary.end() );
 
   initialization();
-
 }
 
 
@@ -71,8 +77,8 @@ void vpPepperFollowPeople::initialization()
   m_jointNames_head = m_robot->getBodyNames("Head");
 
   // Open Proxy for the speech
-  m_pTextToSpeech.call<void>("setLanguage", "English");
-  m_phrase = " Hi";
+  m_pTextToSpeech.call<void>("setLanguage", m_language);
+  //m_phrase = " Hi";
 
   // Initialize PeoplePerception
   m_pPeoplePerception.call<void>("subscribe","People", 30, 0.0);
@@ -80,7 +86,7 @@ void vpPepperFollowPeople::initialization()
   std::cout << "PeoplePerception started" << std::endl;
 
   // Open Proxy for the recognition speech
-  m_pSpeechRecognition->call<void>("setLanguage", "English");
+  m_pSpeechRecognition->call<void>("setLanguage", m_language);
   m_pSpeechRecognition->call<void>("pause", true);
   m_pSpeechRecognition->call<void>("setVisualExpression", false);
   //m_asr_proxy->pause(true);
@@ -162,7 +168,7 @@ vpPepperFollowPeople::~vpPepperFollowPeople()
   m_pTextToSpeech.call<void>("setLanguage", "French");
   //m_tts_proxy.setLanguage("French");
 
-  m_pTextToSpeech.call<void>("setLanguage", "English");
+  //m_pTextToSpeech.call<void>("setLanguage", "English");
   m_pPeoplePerception.call<void>("unsubscribe", "People");
 
   m_pSpeechRecognition->call<void>("unsubscribe", "Test_ASR");
@@ -226,12 +232,22 @@ vpPepperFollowPeople::state_t vpPepperFollowPeople::computeAndApplyServo(bool ap
 
   if (m_state != m_state_prev)
   {
-    if (m_state == state_base_follow)
-      m_pTextToSpeech.async<void>("say", "Ok, I will follow you.");
-    else if (m_state == state_base_rotate)
-      m_pTextToSpeech.async<void>("say", "Ok, I will stop following you.");
-    else if (m_state == state_finish)
-      m_pTextToSpeech.async<void>("say", "Ok, I will close this application.");
+    if (m_language == "French") {
+      if (m_state == state_base_follow)
+        m_pTextToSpeech.async<void>("say", "Ok, Je vais te suivre.");
+      else if (m_state == state_base_rotate)
+        m_pTextToSpeech.async<void>("say", "Ok, J'arrete de te suivre.");
+      else if (m_state == state_finish)
+        m_pTextToSpeech.async<void>("say", "Ok, Je vais quitter l'application.");
+    }
+    else {
+      if (m_state == state_base_follow)
+        m_pTextToSpeech.async<void>("say", "Ok, I will follow you.");
+      else if (m_state == state_base_rotate)
+        m_pTextToSpeech.async<void>("say", "Ok, I will stop following you.");
+      else if (m_state == state_finish)
+        m_pTextToSpeech.async<void>("say", "Ok, I will close this application.");
+    }
   }
 
   m_state_prev = m_state;

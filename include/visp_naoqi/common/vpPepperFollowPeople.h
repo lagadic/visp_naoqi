@@ -109,11 +109,13 @@ protected:
   bool m_person_or_face_detected;
   bool m_reverse;
 
+  std::string m_language;
 
 public:
-  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot);
-  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot *robot);
-  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot *robot, qi::AnyObject * asr_proxy, std::vector<std::string> vocabulary);
+  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot &robot, const std::string &language="English");
+  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot *robot, const std::string &language="English");
+  vpPepperFollowPeople(const qi::SessionPtr &session, vpNaoqiRobot *robot, qi::AnyObject * asr_proxy, const std::vector<std::string> &vocabulary, const std::string &language="English");
+
   ~vpPepperFollowPeople();
 
   void activateTranslationBase();
@@ -129,6 +131,7 @@ public:
   { m_lambda_base_follow = gain;}
   void setDesiredDistance(double dist);
   void setReverse(bool flag);
+
   void stopTranslationBase();
   void stop();
 
