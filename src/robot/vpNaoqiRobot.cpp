@@ -399,7 +399,7 @@ void vpNaoqiRobot::setVelocity(const std::vector<std::string> &names, const vpCo
 
   void vpNaoqiRobot::moveTo(const float& x, const float& y, const float& theta) const
   {
-    m_pMotion.call<void>("moveTo",x, y, theta);
+    m_pMotion.async<void>("moveTo", x, y, theta);
   }
 
 
